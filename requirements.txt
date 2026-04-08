@@ -1,0 +1,11 @@
+pynput
+pystray
+Pillow
+fastapi
+uvicorn
+python-dotenv
+groq
+tweepy
+mss
+pytesseract
+httpx
