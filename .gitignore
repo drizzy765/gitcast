@@ -7,3 +7,7 @@ venv/
 dist/
 build/
 .pytest_cache/
+
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
