@@ -90,6 +90,13 @@ def get_ocr_threshold() -> int:
     return int(get("ocr_confidence_threshold") or DEFAULTS["ocr_confidence_threshold"])
 
 
+def get_tesseract_cmd() -> str:
+    configured = os.getenv("TESSERACT_CMD", "").strip()
+    if configured:
+        return configured
+    return "tesseract"
+
+
 def is_onboarding_complete() -> bool:
     return bool(get("onboarding_complete"))
 

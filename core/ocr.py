@@ -1,0 +1,164 @@
+import os
+import pytesseract
+from PIL import Image
+from pathlib import Path
+from config.settings import get_ocr_threshold
+
+# ── Tesseract path (Windows) ──────────────────────────────────────────────────
+
+# explicitly set the tesseract path for Windows
+# if installed elsewhere, update this path
+TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+if Path(TESSERACT_PATH).exists():
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+else:
+    # fallback — rely on PATH
+    print("[OCR] Warning: Tesseract not found at default path. Relying on PATH.")
+
+
+# ── OCR runner ────────────────────────────────────────────────────────────────
+
+def run_ocr(image_path: str) -> dict:
+    """
+    Runs Tesseract OCR on the given image.
+    Returns extracted text, confidence score, and a flag indicating
+    whether the result is reliable enough to send to the AI.
+
+    If confidence is below threshold, the caller should send the
+    raw screenshot to the Gemini vision endpoint instead.
+    """
+    threshold = get_ocr_threshold()  # default 60, set in config/settings.py
+
+    try:
+        img = Image.open(image_path)
+
+        # get detailed output including confidence scores per word
+        data = pytesseract.image_to_data(
+            img,
+            output_type=pytesseract.Output.DICT,
+            config="--psm 6"  # assume uniform block of text — best for code/IDE
+        )
+
+        # calculate mean confidence from words that were actually detected
+        confidences = [
+            int(c) for c in data["conf"]
+            if str(c).strip() != "-1" and str(c).strip() != ""
+        ]
+
+        if not confidences:
+            return _low_confidence_result("No text detected in screenshot")
+
+        mean_confidence = sum(confidences) / len(confidences)
+
+        # extract clean text — filter out empty strings
+        raw_text = pytesseract.image_to_string(
+            img,
+            config="--psm 6"
+        )
+        clean_text = _clean_ocr_text(raw_text)
+
+        is_reliable = mean_confidence >= threshold
+
+        print(f"[OCR] Confidence: {mean_confidence:.1f}% — {'reliable' if is_reliable else 'low, will use vision fallback'}")
+
+        return {
+            "success": True,
+            "text": clean_text if is_reliable else "",
+            "raw_text": clean_text,
+            "confidence": round(mean_confidence, 1),
+            "reliable": is_reliable,
+            "use_vision_fallback": not is_reliable,
+            "error": "",
+        }
+
+    except FileNotFoundError:
+        return _error_result(f"Screenshot file not found: {image_path}")
+    except pytesseract.TesseractNotFoundError:
+        return _error_result(
+            "Tesseract executable not found. "
+            "Install from https://github.com/UB-Mannheim/tesseract/wiki"
+        )
+    except Exception as e:
+        return _error_result(str(e))
+
+
+# ── Text cleaning ─────────────────────────────────────────────────────────────
+
+def _clean_ocr_text(raw: str) -> str:
+    """
+    Cleans raw Tesseract output for use in AI prompts.
+    Removes excessive whitespace and blank lines while
+    preserving code indentation structure.
+    """
+    lines = raw.splitlines()
+
+    # remove completely empty lines that are repeated
+    cleaned = []
+    prev_empty = False
+    for line in lines:
+        is_empty = line.strip() == ""
+        if is_empty and prev_empty:
+            continue  # skip consecutive blank lines
+        cleaned.append(line)
+        prev_empty = is_empty
+
+    result = "\n".join(cleaned).strip()
+
+    # cap at 2000 chars to stay within token budget
+    if len(result) > 2000:
+        result = result[:2000] + "\n... [truncated]"
+
+    return result
+
+
+# ── Result helpers ────────────────────────────────────────────────────────────
+
+def _low_confidence_result(reason: str) -> dict:
+    return {
+        "success": True,
+        "text": "",
+        "raw_text": "",
+        "confidence": 0.0,
+        "reliable": False,
+        "use_vision_fallback": True,
+        "error": reason,
+    }
+
+
+def _error_result(error: str) -> dict:
+    return {
+        "success": False,
+        "text": "",
+        "raw_text": "",
+        "confidence": 0.0,
+        "reliable": False,
+        "use_vision_fallback": True,
+        "error": error,
+    }
+
+
+# ── Test ──────────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import sys
+    from core.capture import capture_active_window
+
+    print("[OCR] Taking a fresh screenshot to test on...")
+    screenshot = capture_active_window()
+
+    if not screenshot["path"]:
+        print("[OCR] Screenshot failed — cannot test OCR")
+        sys.exit(1)
+
+    print(f"[OCR] Running OCR on: {screenshot['path']}")
+    result = run_ocr(screenshot["path"])
+
+    print("\n=== OCR RESULT ===")
+    print(f"Success:           {result['success']}")
+    print(f"Confidence:        {result['confidence']}%")
+    print(f"Reliable:          {result['reliable']}")
+    print(f"Use vision fallback: {result['use_vision_fallback']}")
+    print(f"Error:             {result['error'] or 'none'}")
+    print(f"\nExtracted text preview:")
+    print(result['raw_text'][:500] if result['raw_text'] else "(none)")
