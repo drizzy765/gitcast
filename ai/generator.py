@@ -99,10 +99,12 @@ async def _groq_call(system_prompt: str, user_message: str) -> str:
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         response = await client.post(GROQ_URL, headers=headers, json=body)
+        if response.status_code != 200:
+            print(f"[Groq Error] Status: {response.status_code}")
+            print(f"[Groq Error] Body: {response.text}")
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"].strip()
-
 
 # ── Gemini vision call ────────────────────────────────────────────────────────
 
@@ -141,11 +143,13 @@ async def _gemini_vision_call(
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-        response = await client.post(url, json=body)
+        response = await client.post(GROQ_URL, headers=headers, json=body)
+        if response.status_code != 200:
+            print(f"[Groq Error] Status: {response.status_code}")
+            print(f"[Groq Error] Body: {response.text}")
         response.raise_for_status()
         data = response.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
+        return data["choices"][0]["message"]["content"].strip()
 
 # ── Test ──────────────────────────────────────────────────────────────────────
 
