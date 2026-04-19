@@ -6,7 +6,7 @@ from config.settings import GROQ_API_KEY, GEMINI_API_KEY
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama3-70b-8192"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 MAX_TOKENS = 1024
 TIMEOUT = 30
@@ -171,6 +171,10 @@ if __name__ == "__main__":
             ocr_result=ocr,
             capture_result=capture,
         )
+
+        # force Groq for testing — bypass vision fallback
+        payload["use_vision_fallback"] = False
+        payload["screenshot_b64"] = None
 
         print("[Generator] Firing parallel AI calls...")
         results = await generate_posts(payload)
