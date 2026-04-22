@@ -4,5 +4,5 @@
   "tone_memory_enabled": true,
   "ocr_confidence_threshold": 60,
   "post_char_limit": 280,
-  "onboarding_complete": false
+  "onboarding_complete": true
 }
