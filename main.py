@@ -45,14 +45,43 @@ def on_trigger():
 
     def on_submit(raw_thought):
         print(f"[Main] Raw thought received: '{raw_thought}'")
+
         payload = build_payload(
             raw_thought=raw_thought,
             ocr_result=ocr,
             capture_result=capture,
         )
-        print("[Main] Payload built — ready for AI generation.")
-        print(f"[Main] Payload preview: {payload['user_message'][:200]}")
 
+        # force Groq until Gemini key is added
+        payload["use_vision_fallback"] = False
+        payload["screenshot_b64"] = None
+
+        print("[Main] Generating posts...")
+
+        import asyncio
+        from ai.generator import generate_posts
+        from ui.review import show_review
+
+        def generate_and_show():
+            variations = asyncio.run(generate_posts(payload))
+
+            def on_publish(post_text, format_key, screenshot_path):
+                print(f"[Main] Publishing: {format_key}")
+                print(post_text)
+
+            def on_close():
+                print("[Main] Review closed.")
+
+            show_review(
+                payload=payload,
+                variations=variations,
+                on_publish=on_publish,
+                on_close=on_close,
+            )
+
+        threading.Thread(target=generate_and_show, daemon=True).start()
+    
+    # Launch the popup and pass the callback function
     def on_dismiss():
         print("[Main] Capture dismissed.")
 

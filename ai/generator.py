@@ -15,70 +15,39 @@ TIMEOUT = 30
 # ── Main generator ────────────────────────────────────────────────────────────
 
 async def generate_posts(payload: dict) -> dict[str, str]:
-    """
-    Fires all post format completions in parallel.
-    Routes to Gemini vision if OCR fallback is flagged.
-    Returns a dict of format_key → generated content.
-    """
     prompts = get_all_prompts()
     format_keys = payload.get("format_keys", list(prompts.keys()))
     user_message = payload.get("user_message", "")
     use_vision = payload.get("use_vision_fallback", False)
     screenshot_b64 = payload.get("screenshot_b64", None)
 
-    # filter to only requested formats
     selected_prompts = {k: v for k, v in prompts.items() if k in format_keys}
 
-    tasks = []
-    keys = []
-
-    for format_key, system_prompt in selected_prompts.items():
-        if use_vision and screenshot_b64:
-            task = _gemini_vision_call(
-                system_prompt=system_prompt,
-                user_message=user_message,
-                screenshot_b64=screenshot_b64,
-            )
-        else:
-            task = _groq_call(
-                system_prompt=system_prompt,
-                user_message=user_message,
-            )
-        tasks.append(task)
-        keys.append(format_key)
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
     output = {}
-    for key, result in zip(keys, results):
-        if isinstance(result, Exception):
-            output[key] = f"[Error] {str(result)}"
-        else:
-            output[key] = result
+    for format_key, system_prompt in selected_prompts.items():
+        try:
+            if use_vision and screenshot_b64:
+                result = await _gemini_vision_call(
+                    system_prompt=system_prompt,
+                    user_message=user_message,
+                    screenshot_b64=screenshot_b64,
+                )
+            else:
+                result = await _groq_call(
+                    system_prompt=system_prompt,
+                    user_message=user_message,
+                )
+            output[format_key] = result
+            # small delay between calls to respect TPM limit
+            await asyncio.sleep(1.5)
+        except Exception as e:
+            output[format_key] = f"[Error] {str(e)}"
 
     return output
 
-
-async def generate_sprint_summary(entries: list[dict], narrative: str = "") -> str:
-    """Generates a sprint thread from a batch of silent captures."""
-    from api.payload import build_sprint_payload
-    sprint_payload = build_sprint_payload(entries)
-    system_prompt = sprint_summary_prompt(len(entries))
-    user_message = sprint_payload["user_message"]
-
-    return await _groq_call(
-        system_prompt=system_prompt,
-        user_message=user_message,
-    )
-
-
 # ── Groq call ─────────────────────────────────────────────────────────────────
 
-async def _groq_call(system_prompt: str, user_message: str) -> str:
-    """
-    Single async call to Groq API.
-    Uses llama3-70b — fast, cheap, excellent for structured text output.
-    """
+async def _groq_call(system_prompt: str, user_message: str, retries: int = 3) -> str:
     if not GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY is not set in .env")
 
@@ -90,22 +59,33 @@ async def _groq_call(system_prompt: str, user_message: str) -> str:
     body = {
         "model": GROQ_MODEL,
         "max_tokens": MAX_TOKENS,
-        "temperature": 0.85,  # slight creativity without going off-rails
+        "temperature": 0.85,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ],
     }
 
-    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-        response = await client.post(GROQ_URL, headers=headers, json=body)
-        if response.status_code != 200:
-            print(f"[Groq Error] Status: {response.status_code}")
-            print(f"[Groq Error] Body: {response.text}")
-        response.raise_for_status()
-        data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+    for attempt in range(retries):
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            response = await client.post(GROQ_URL, headers=headers, json=body)
 
+            if response.status_code == 429:
+                # parse wait time from error message if available
+                wait = 4 + (attempt * 2)
+                print(f"[Groq] Rate limited — waiting {wait}s before retry {attempt + 1}/{retries}...")
+                await asyncio.sleep(wait)
+                continue
+
+            if response.status_code != 200:
+                print(f"[Groq Error] Status: {response.status_code}")
+                print(f"[Groq Error] Body: {response.text}")
+
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
+
+    raise Exception("Groq rate limit exceeded after retries. Try again in a few seconds.")
 # ── Gemini vision call ────────────────────────────────────────────────────────
 
 async def _gemini_vision_call(
