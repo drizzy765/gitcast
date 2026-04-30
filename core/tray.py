@@ -1,4 +1,5 @@
 import pystray
+import os
 from PIL import Image, ImageDraw
 from pystray import MenuItem as item
 from .hotkey import start_hotkey_listener
@@ -21,8 +22,9 @@ def run_tray(trigger_callback):
     # Start the hotkey listener
     start_hotkey_listener(trigger_callback)
 
-    def quit_action(icon, item):
+    def on_quit(icon, item):
         icon.stop()
+        os._exit(0)
 
     def trigger_action(icon, item):
         trigger_callback()
@@ -30,7 +32,7 @@ def run_tray(trigger_callback):
     image = create_image()
     menu = pystray.Menu(
         item('Trigger Capture (Ctrl+Shift+P)', trigger_action),
-        item('Quit', quit_action)
+        item('Quit', on_quit)
     )
 
     icon = pystray.Icon("context_engine", image, "Context Engine", menu)

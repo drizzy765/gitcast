@@ -1,6 +1,7 @@
 import threading
 import signal
 import sys
+import os
 from core.tray import run_tray
 from core.capture import run_capture
 from core.ocr import run_ocr
@@ -19,7 +20,7 @@ from storage.sprint import log_sprint_capture
 
 def handle_exit(sig, frame):
     print("\n[Context Engine] Shutting down... bye.")
-    sys.exit(0)
+    os._exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)   # Ctrl+C
 signal.signal(signal.SIGTERM, handle_exit)  # kill signal
@@ -67,7 +68,36 @@ def on_trigger():
 
             def on_publish(post_text, format_key, screenshot_path):
                 print(f"[Main] Publishing: {format_key}")
-                print(post_text)
+
+                from publisher.twitter import publish_post
+                from storage.logger import log_post
+
+                result = publish_post(post_text, screenshot_path)
+
+                if result.get("success") and not result.get("fallback"):
+                    tweet_url = result.get("tweet_url", "")
+                    tweet_id = result.get("tweet_id", "")
+                    print(f"[Main] Tweet posted — {tweet_url}")
+                    log_post(
+                        post_text=post_text,
+                        format_key=format_key,
+                        screenshot_path=screenshot_path,
+                        tweet_url=tweet_url,
+                        tweet_id=tweet_id,
+                        fallback=False,
+                    )
+                elif result.get("fallback"):
+                    print("[Main] Clipboard fallback was used.")
+                    log_post(
+                        post_text=post_text,
+                        format_key=format_key,
+                        screenshot_path=screenshot_path,
+                        tweet_url="",
+                        tweet_id="",
+                        fallback=True,
+                    )
+                else:
+                    print(f"[Main] Publish failed: {result.get('error', 'unknown error')}")
 
             def on_close():
                 print("[Main] Review closed.")
