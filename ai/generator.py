@@ -25,6 +25,7 @@ async def generate_posts(payload: dict) -> dict[str, str]:
 
     output = {}
     for format_key, system_prompt in selected_prompts.items():
+        print(f"[Generator] Thinking about: {format_key}...")
         try:
             if use_vision and screenshot_b64:
                 result = await _gemini_vision_call(
@@ -38,12 +39,16 @@ async def generate_posts(payload: dict) -> dict[str, str]:
                     user_message=user_message,
                 )
             output[format_key] = result
+            print(f"[Generator] Variation '{format_key}' ready.")
             # small delay between calls to respect TPM limit
-            await asyncio.sleep(1.5)
+            if format_key != list(selected_prompts.keys())[-1]:
+                await asyncio.sleep(1.5)
         except Exception as e:
+            print(f"[Generator Error] Failed '{format_key}': {e}")
             output[format_key] = f"[Error] {str(e)}"
 
     return output
+
 
 # ── Groq call ─────────────────────────────────────────────────────────────────
 
@@ -86,6 +91,8 @@ async def _groq_call(system_prompt: str, user_message: str, retries: int = 3) ->
             return data["choices"][0]["message"]["content"].strip()
 
     raise Exception("Groq rate limit exceeded after retries. Try again in a few seconds.")
+
+
 # ── Gemini vision call ────────────────────────────────────────────────────────
 
 async def _gemini_vision_call(
@@ -101,6 +108,7 @@ async def _gemini_vision_call(
         raise ValueError("GEMINI_API_KEY is not set in .env")
 
     url = f"{GEMINI_URL}?key={GEMINI_API_KEY}"
+    headers = {"Content-Type": "application/json"}
 
     body = {
         "contents": [
@@ -123,13 +131,20 @@ async def _gemini_vision_call(
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-        response = await client.post(GROQ_URL, headers=headers, json=body)
+        response = await client.post(url, headers=headers, json=body)
+        
         if response.status_code != 200:
-            print(f"[Groq Error] Status: {response.status_code}")
-            print(f"[Groq Error] Body: {response.text}")
+            print(f"[Gemini Error] Status: {response.status_code}")
+            print(f"[Gemini Error] Body: {response.text}")
+            
         response.raise_for_status()
         data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        
+        # Parse Gemini's response format
+        try:
+            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError):
+            raise Exception("Gemini response format unexpected")
 
 # ── Test ──────────────────────────────────────────────────────────────────────
 
