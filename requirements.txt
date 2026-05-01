@@ -10,4 +10,4 @@ mss
 pytesseract
 httpx
 config
-storage
+storageo
