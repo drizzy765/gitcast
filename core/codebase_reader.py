@@ -15,7 +15,7 @@ def read_repo_structure(repo_path: str) -> str:
     ignore_dirs = {".git", "node_modules", "venv", "__pycache__", ".npm-global"}
     summary_parts = []
     total_chars = 0
-    char_limit = 6000
+    char_limit = 4000 # Reduced from 6000
 
     for root, dirs, files in os.walk(repo_root):
         # In-place modification to skip ignored directories
@@ -28,13 +28,13 @@ def read_repo_structure(repo_path: str) -> str:
             file_path = Path(root) / file
             
             # Skip binary or irrelevant files
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.ico', '.pyc', '.exe', '.bin')):
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.ico', '.pyc', '.exe', '.bin', '.json', '.txt', '.log')):
                 continue
 
             try:
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read(1000) # Read enough for 50 lines approx
-                    lines = content.splitlines()[:50]
+                    content = f.read(500) # Read less per file
+                    lines = content.splitlines()[:15] # Only first 15 lines
                     snippet = "\n".join(lines)
                     
                     rel_path = file_path.relative_to(repo_root)
