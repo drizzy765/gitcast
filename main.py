@@ -5,7 +5,7 @@ import os
 import time
 import webbrowser
 import json
-from core.tray import run_tray
+from core.tray import run_tray, stop_tray
 from api.server import start_server
 from core.capture import run_capture
 from core.ocr import run_ocr
@@ -15,7 +15,7 @@ from config.settings import (
     is_onboarding_complete,
     is_sprint_mode,
     complete_onboarding,
-    CURRENT_DRAFT_FILE,
+    CURRENT_DRAFT,
 )
 from storage.sprint import log_sprint_capture
 from storage.cleanup import run_cleanup
@@ -26,6 +26,7 @@ from storage.engagement import run_engagement_worker
 
 def handle_exit(sig, frame):
     print("\n[Context Engine] Shutting down... bye.")
+    stop_tray()
     os._exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)   # Ctrl+C
@@ -44,6 +45,7 @@ def on_trigger():
     
     _is_processing = True
     print("[Main] Hotkey fired — starting capture...")
+    time.sleep(0.5) # Small sleep to avoid double-firing
 
     try:
         capture = run_capture()
@@ -81,17 +83,17 @@ def on_trigger():
                 print("[Main] Generating initial post variations...")
                 variations = asyncio.run(generate_posts(payload))
                 
-                # Save to CURRENT_DRAFT_FILE for Phase 2
+                # Save to CURRENT_DRAFT for Phase 2
                 draft_data = {
                     "payload": payload,
                     "variations": variations,
                     "timestamp": payload.get("timestamp", ""),
                     "status": "ready"
                 }
-                with open(CURRENT_DRAFT_FILE, "w", encoding="utf-8") as f:
+                with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
                     json.dump(draft_data, f, indent=4)
                 
-                print(f"[Main] Variations ready — stored in {CURRENT_DRAFT_FILE.name}")
+                print(f"[Main] Variations ready — stored in {CURRENT_DRAFT.name}")
                 
             except Exception as e:
                 print(f"[Main] Error in generation: {e}")

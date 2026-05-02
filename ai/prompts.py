@@ -72,22 +72,26 @@ def load_prompt_definitions() -> dict:
 
 def get_prompt(format_key: str) -> str:
     """Returns the fully assembled system prompt for a given format key."""
+    pattern = get_viral_pattern(format_key)
+    
     # Check if we have a hardcoded function for this format
     if format_key in PROMPT_MAP:
         func_name = PROMPT_MAP[format_key]
         if func_name == "linkedin_post_prompt":
-            return linkedin_post_prompt()
-        if func_name == "article_prompt":
-            return article_prompt()
-
-    definitions = load_prompt_definitions()
-    if format_key not in definitions:
-        raise ValueError(f"Unknown prompt format: '{format_key}'")
-    
-    template = definitions[format_key]["system_prompt"]
+            template = linkedin_post_prompt()
+        elif func_name == "article_prompt":
+            template = article_prompt()
+        else:
+            # Fallback for any other PROMPT_MAP entries
+            definitions = load_prompt_definitions()
+            template = definitions.get(format_key, {}).get("system_prompt", "")
+    else:
+        definitions = load_prompt_definitions()
+        if format_key not in definitions:
+            raise ValueError(f"Unknown prompt format: '{format_key}'")
+        template = definitions[format_key]["system_prompt"]
     
     # Assembly with viral pattern injection
-    pattern = get_viral_pattern(format_key)
     prompt = f"{template}\n\n{pattern}\n\n{BASE_RULES}{_narrative_block()}{_tone_block()}{_plan_block()}"
     return prompt
 
@@ -97,9 +101,11 @@ def get_all_prompts() -> dict[str, str]:
     definitions = load_prompt_definitions()
     prompts = {key: get_prompt(key) for key in definitions.keys() if key != "sprint_summary"}
     
-    # Ensure linkedin is included if not in definitions
+    # Ensure linkedin and article are included
     if "linkedin" not in prompts:
-        prompts["linkedin"] = linkedin_post_prompt()
+        prompts["linkedin"] = get_prompt("linkedin")
+    if "article" not in prompts:
+        prompts["article"] = get_prompt("article")
         
     return prompts
 
@@ -107,8 +113,8 @@ def get_all_prompts() -> dict[str, str]:
 # ── Specialized Prompts ───────────────────────────────────────────────────────
 
 def linkedin_post_prompt() -> str:
-    """Professional but human LinkedIn post prompt."""
-    return f"""You are a developer writing a professional but human post for LinkedIn.
+    """Professional but human LinkedIn post prompt template."""
+    return """You are a developer writing a professional but human post for LinkedIn.
 
 Your goal is to share a technical win or insight in a way that builds your professional brand without sounding like a corporate robot. LinkedIn posts perform best with white space, a strong hook, and a personal narrative.
 
@@ -119,13 +125,11 @@ Format guidance:
 - CTA: End with a call to action or a question to your network.
 - No hashtag spam (max 3). No generic 'thrilled to announce' filler.
 
-Character target: 800–1300 characters.
-
-{BASE_RULES}{_narrative_block()}{_tone_block()}"""
+Character target: 800–1300 characters."""
 
 
 def article_prompt(codebase_summary: str = "") -> str:
-    """Generates a full Medium-ready markdown article."""
+    """Generates a full Medium-ready markdown article template."""
     codebase_block = f"\n\nCodebase Summary:\n{codebase_summary}" if codebase_summary else ""
     return f"""You are a developer writing a full Medium-ready technical article in Markdown.
 
@@ -139,10 +143,7 @@ Sections to include:
 5. Resolution: What is now built and working that wasn't before? What does it unlock?
 6. Takeaway: One specific thing other developers can apply to their own work.
 
-Target length: 800–1500 words. Be comprehensive and use Markdown formatting for headers, lists, and code blocks.
-{codebase_block}
-
-{BASE_RULES}{_narrative_block()}"""
+Target length: 800–1500 words. Be comprehensive and use Markdown formatting for headers, lists, and code blocks.{codebase_block}"""
 
 
 def article_refinement_prompt(current_article: str, instruction: str) -> str:

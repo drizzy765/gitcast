@@ -3,7 +3,9 @@ import os
 from PIL import Image, ImageDraw
 from pystray import MenuItem as item
 import webbrowser
-from .hotkey import start_hotkey_listener
+from .hotkey import start_hotkey_listener, stop_hotkey_listener
+
+_icon = None
 
 def create_image():
     # Generate a simple icon
@@ -20,11 +22,12 @@ def create_image():
     return image
 
 def run_tray(trigger_callback):
+    global _icon
     # Start the hotkey listener
     start_hotkey_listener(trigger_callback)
 
     def on_quit(icon, item):
-        icon.stop()
+        stop_tray()
         os._exit(0)
 
     def trigger_action(icon, item):
@@ -40,5 +43,12 @@ def run_tray(trigger_callback):
         item('Quit', on_quit)
     )
 
-    icon = pystray.Icon("context_engine", image, "Context Engine", menu)
-    icon.run()
+    _icon = pystray.Icon("context_engine", image, "Context Engine", menu)
+    _icon.run()
+
+def stop_tray():
+    global _icon
+    stop_hotkey_listener()
+    if _icon:
+        _icon.stop()
+        print("[Tray] Icon stopped.")
