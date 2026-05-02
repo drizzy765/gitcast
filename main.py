@@ -44,10 +44,11 @@ def on_trigger():
         return
     
     _is_processing = True
-    print("[Main] Hotkey fired — starting 5s countdown...")
+    print("[Main] Hotkey fired — capturing code instantly...")
     
     try:
-        capture = run_capture(delay=5)
+        # 0.5s buffer to allow hotkey release/OS graphics to clear
+        capture = run_capture(delay=0.5)
         ocr = run_ocr(capture["screenshot"]["path"])
 
         if is_sprint_mode():
@@ -121,7 +122,7 @@ if __name__ == "__main__":
         print("[Context Engine] First launch — set your Project Narrative via tray → Settings.")
         complete_onboarding()
 
-    print("[Context Engine] Running — press Ctrl+Alt+S to trigger (5s delay).")
+    print("[Context Engine] Running — press Ctrl+Alt+S to trigger (Instant).")
     print("[Context Engine] Press Ctrl+C to quit.\n")
 
     # Run maintenance tasks
