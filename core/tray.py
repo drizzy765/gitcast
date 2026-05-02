@@ -2,6 +2,7 @@ import pystray
 import os
 from PIL import Image, ImageDraw
 from pystray import MenuItem as item
+import webbrowser
 from .hotkey import start_hotkey_listener
 
 def create_image():
@@ -29,8 +30,12 @@ def run_tray(trigger_callback):
     def trigger_action(icon, item):
         trigger_callback()
 
+    def open_dashboard(icon, item):
+        webbrowser.open("http://127.0.0.1:8000")
+
     image = create_image()
     menu = pystray.Menu(
+        item('Dashboard', open_dashboard),
         item('Trigger Capture (Ctrl+Shift+P)', trigger_action),
         item('Quit', on_quit)
     )

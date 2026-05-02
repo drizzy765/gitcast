@@ -1,0 +1,35 @@
+import sys
+import httpx
+import webbrowser
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: ce \"your thought here\"")
+        sys.exit(1)
+
+    thought = " ".join(sys.argv[1:])
+    print(f"[CE] Initializing capture with thought: '{thought}'")
+
+    try:
+        # We'll call an internal trigger endpoint or just fire the main logic
+        # For v1 of the CLI, we'll keep it simple and just ping the local server
+        # to trigger a capture with a forced thought.
+        
+        response = httpx.post(
+            "http://127.0.0.1:8000/api/cli/trigger",
+            json={"thought": thought},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            print("[CE] Context captured. Opening Draft Room...")
+            webbrowser.open("http://127.0.0.1:8000")
+        else:
+            print(f"[CE Error] Failed to trigger: {response.text}")
+            
+    except Exception as e:
+        print(f"[CE Error] Connection failed: {e}")
+        print("Is the Context Engine running? (python main.py)")
+
+if __name__ == "__main__":
+    main()

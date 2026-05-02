@@ -50,6 +50,30 @@ async def generate_posts(payload: dict) -> dict[str, str]:
     return output
 
 
+# ── Sprint generator ──────────────────────────────────────────────────────────
+
+async def generate_sprint_summary(entries: list[dict], narrative: str = "") -> str:
+    """
+    Synthesizes multiple sprint captures into a single cohesive thread.
+    """
+    from api.payload import build_sprint_payload
+    
+    print(f"[Generator] Synthesizing {len(entries)} captures into a sprint thread...")
+    
+    payload = build_sprint_payload(entries)
+    system_prompt = sprint_summary_prompt(len(entries))
+    
+    try:
+        result = await _groq_call(
+            system_prompt=system_prompt,
+            user_message=payload["user_message"]
+        )
+        return result
+    except Exception as e:
+        print(f"[Generator Error] Sprint synthesis failed: {e}")
+        return f"[Error] {str(e)}"
+
+
 # ── Groq call ─────────────────────────────────────────────────────────────────
 
 async def _groq_call(system_prompt: str, user_message: str, retries: int = 3) -> str:

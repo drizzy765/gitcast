@@ -3,18 +3,23 @@ import signal
 import sys
 import os
 import time
+import webbrowser
+import json
 from core.tray import run_tray
+from api.server import start_server
 from core.capture import run_capture
 from core.ocr import run_ocr
 from api.payload import build_payload
-from ui.popup import show_popup
 from config.settings import (
     missing_api_keys,
     is_onboarding_complete,
     is_sprint_mode,
     complete_onboarding,
+    CURRENT_DRAFT_FILE,
 )
 from storage.sprint import log_sprint_capture
+from storage.cleanup import run_cleanup
+from storage.engagement import run_engagement_worker
 
 
 # ── Graceful shutdown ─────────────────────────────────────────────────────────
@@ -55,87 +60,49 @@ def on_trigger():
             _is_processing = False
             return
 
-        def on_submit(raw_thought):
-            print(f"[Main] Raw thought received: '{raw_thought}'")
-
-            payload = build_payload(
-                raw_thought=raw_thought,
-                ocr_result=ocr,
-                capture_result=capture,
-            )
-
-            # force Groq until Gemini key is added
-            payload["use_vision_fallback"] = False
-            payload["screenshot_b64"] = None
-
-            print("[Main] Generating posts...")
-
-            import asyncio
-            from ai.generator import generate_posts
-            from ui.review import show_review
-
-            def generate_and_show():
-                try:
-                    variations = asyncio.run(generate_posts(payload))
-
-                    def on_publish(post_text, format_key, screenshot_path):
-                        print(f"[Main] Publishing: {format_key}")
-
-                        from publisher.twitter import publish_post
-                        from storage.logger import log_post
-
-                        result = publish_post(post_text, screenshot_path)
-
-                        if result.get("success") and not result.get("fallback"):
-                            tweet_url = result.get("tweet_url", "")
-                            tweet_id = result.get("tweet_id", "")
-                            print(f"[Main] Tweet posted — {tweet_url}")
-                            log_post(
-                                post_text=post_text,
-                                format_key=format_key,
-                                screenshot_path=screenshot_path,
-                                tweet_url=tweet_url,
-                                tweet_id=tweet_id,
-                                fallback=False,
-                            )
-                        elif result.get("fallback"):
-                            print("[Main] Clipboard fallback was used.")
-                            log_post(
-                                post_text=post_text,
-                                format_key=format_key,
-                                screenshot_path=screenshot_path,
-                                tweet_url="",
-                                tweet_id="",
-                                fallback=True,
-                            )
-                        else:
-                            print(f"[Main] Publish failed: {result.get('error', 'unknown error')}")
-
-                    def on_close():
-                        global _is_processing
-                        print("[Main] Review closed.")
-                        _is_processing = False
-
-                    show_review(
-                        payload=payload,
-                        variations=variations,
-                        on_publish=on_publish,
-                        on_close=on_close,
-                    )
-                except Exception as e:
-                    global _is_processing
-                    print(f"[Main] Error in generation/review: {e}")
-                    _is_processing = False
-
-            threading.Thread(target=generate_and_show, daemon=True).start()
+        # V3 Workflow: Capture context and open dashboard
+        print("[Main] Context captured — opening dashboard for refinement...")
         
-        # Launch the popup and pass the callback function
-        def on_dismiss():
-            global _is_processing
-            print("[Main] Capture dismissed.")
-            _is_processing = False
+        payload = build_payload(
+            raw_thought="", # No popup, user adds thought in web chat
+            ocr_result=ocr,
+            capture_result=capture,
+        )
 
-        show_popup(on_submit=on_submit, on_dismiss=on_dismiss)
+        # force Groq until Gemini key is added
+        payload["use_vision_fallback"] = False
+        payload["screenshot_b64"] = None
+
+        import asyncio
+        from ai.generator import generate_posts
+
+        def generate_and_save():
+            try:
+                print("[Main] Generating initial post variations...")
+                variations = asyncio.run(generate_posts(payload))
+                
+                # Save to CURRENT_DRAFT_FILE for Phase 2
+                draft_data = {
+                    "payload": payload,
+                    "variations": variations,
+                    "timestamp": payload.get("timestamp", ""),
+                    "status": "ready"
+                }
+                with open(CURRENT_DRAFT_FILE, "w", encoding="utf-8") as f:
+                    json.dump(draft_data, f, indent=4)
+                
+                print(f"[Main] Variations ready — stored in {CURRENT_DRAFT_FILE.name}")
+                
+            except Exception as e:
+                print(f"[Main] Error in generation: {e}")
+            finally:
+                global _is_processing
+                _is_processing = False
+
+        threading.Thread(target=generate_and_save, daemon=True).start()
+        
+        # Open the dashboard
+        webbrowser.open("http://127.0.0.1:8000")
     
     except Exception as e:
         print(f"[Main] Error during capture: {e}")
@@ -155,6 +122,14 @@ if __name__ == "__main__":
 
     print("[Context Engine] Running — press Ctrl+Shift+P to trigger.")
     print("[Context Engine] Press Ctrl+C to quit.\n")
+
+    # Run maintenance tasks
+    run_cleanup()
+    run_engagement_worker()
+
+    # Start API server in a daemon thread
+    api_thread = threading.Thread(target=start_server, daemon=True)
+    api_thread.start()
 
     # Start tray in a daemon thread so it doesn't block signal handling in main thread
     tray_thread = threading.Thread(

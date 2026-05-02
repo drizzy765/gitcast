@@ -8,10 +8,15 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config"
 STORAGE_DIR = BASE_DIR / "storage" / "data"
+PROMPTS_FILE = STORAGE_DIR / "prompts.json"
+CURRENT_DRAFT = STORAGE_DIR / "current_draft.json"
 SPRINT_LOG = STORAGE_DIR / "sprint_log.txt"
 POST_LOG = STORAGE_DIR / "post_log.json"
 TONE_LOG = STORAGE_DIR / "tone_log.json"
+ENGAGEMENT_LOG = STORAGE_DIR / "engagement_log.json"
+ENCRYPTION_KEY_PATH = CONFIG_DIR / ".secret_key"
 SETTINGS_FILE = CONFIG_DIR / "user_settings.json"
+screenshot_retention_hours = 24
 
 load_dotenv(BASE_DIR / ".env")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -32,6 +37,7 @@ DEFAULTS = {
     "tone_memory_enabled": True,
     "ocr_confidence_threshold": 60,
     "post_char_limit": 280,
+    "twitter_plan": "free",
     "onboarding_complete": False,
 }
 
@@ -103,6 +109,15 @@ def is_onboarding_complete() -> bool:
 
 def complete_onboarding() -> None:
     set("onboarding_complete", True)
+
+
+def get_twitter_plan() -> str:
+    return str(get("twitter_plan") or "free")
+
+
+def set_twitter_plan(plan: str) -> None:
+    if plan.lower() in ["free", "basic", "premium"]:
+        set("twitter_plan", plan.lower())
 
 
 def validate_api_keys() -> dict:

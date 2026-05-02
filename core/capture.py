@@ -1,8 +1,10 @@
 import os
 import subprocess
+import time
 from pathlib import Path
 from datetime import datetime
 from config.settings import STORAGE_DIR
+from .framing import add_programming_frame
 
 
 # ── Screenshot capture ────────────────────────────────────────────────────────
@@ -11,10 +13,10 @@ def capture_active_window() -> dict:
     """
     Takes a screenshot of the entire screen and saves it to storage/data/screenshots.
     Returns a dict with the image path and dimensions.
-
-    Note: mss captures the full screen on Windows. Active window cropping
-    happens later in ui/review.py when the user previews the post.
     """
+    # Small delay to allow UI to settle (e.g. hide hotkey-triggered popups)
+    time.sleep(0.5)
+
     screenshot_dir = STORAGE_DIR / "screenshots"
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 
@@ -157,6 +159,19 @@ def detect_working_directory() -> str:
 def run_capture() -> dict:
     working_dir = detect_working_directory()
     screenshot = capture_active_window()
+    
+    # Apply programming frame if capture succeeded
+    if screenshot.get("success") and screenshot.get("path"):
+        try:
+            framed_path = add_programming_frame(screenshot["path"])
+            screenshot["framed_path"] = framed_path
+            # By default, use the framed path for downstream preview/publishing
+            screenshot["raw_path"] = screenshot["path"]
+            screenshot["path"] = framed_path
+        except Exception as e:
+            print(f"[Capture] Framing failed: {e}")
+            screenshot["framed_path"] = ""
+
     git_diff = get_git_diff(working_dir)
     return {
         "screenshot": screenshot,

@@ -1,14 +1,18 @@
-from config.settings import get_project_narrative, is_tone_memory_enabled
+import json
+from config.settings import get_project_narrative, is_tone_memory_enabled, PROMPTS_FILE, get_twitter_plan
 from storage.tone_memory import get_few_shot_examples
+from ai.viral_patterns import get_viral_pattern
+
+# ── PROMPT_MAP ───────────────────────────────────────────────────────────────
+PROMPT_MAP = {
+    "linkedin": "linkedin_post_prompt",
+    "article": "article_prompt"
+}
 
 
 # ── Narrative injection ───────────────────────────────────────────────────────
 
 def _narrative_block() -> str:
-    """
-    Returns the Project Narrative context block if the user has set one.
-    Injected silently into every prompt — zero extra cost beyond ~20 words.
-    """
     narrative = get_project_narrative()
     if not narrative:
         return ""
@@ -16,10 +20,6 @@ def _narrative_block() -> str:
 
 
 def _tone_block() -> str:
-    """
-    Returns few-shot examples from the user's highest-rated past posts.
-    Only injected if Tone Memory is enabled and enough rated posts exist.
-    """
     if not is_tone_memory_enabled():
         return ""
     examples = get_few_shot_examples()
@@ -29,6 +29,17 @@ def _tone_block() -> str:
         f"Example post (highly rated by this user):\n{ex}" for ex in examples
     )
     return f"\n\nHere are examples of posts this developer has written that performed well. Match their voice, tone, and style closely:\n\n{formatted}"
+
+
+def _plan_block() -> str:
+    """
+    Returns character limit instructions based on the user's X plan.
+    """
+    plan = get_twitter_plan()
+    if plan == "premium":
+        return "\n\nUser Plan: X Premium. You are NOT limited to 280 characters. Feel free to write longer, high-value posts (up to 4000 characters) if the context warrants it."
+    else:
+        return "\n\nUser Plan: X Free/Basic. You MUST stay under 280 characters for the main post."
 
 
 # ── Base rules applied to every prompt ───────────────────────────────────────
@@ -45,85 +56,116 @@ Rules:
 """
 
 
-# ── System prompt builders ────────────────────────────────────────────────────
+# ── Prompt Loading ───────────────────────────────────────────────────────────
 
-def deep_tech_prompt() -> str:
-    return f"""You are a developer writing a raw, technically precise post for X (Twitter).
+def load_prompt_definitions() -> dict:
+    """Loads prompt templates from the JSON store."""
+    if not PROMPTS_FILE.exists():
+        return {}
+    try:
+        with open(PROMPTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Prompts] Error loading prompts: {e}")
+        return {}
 
-Your goal is to communicate a specific technical win or finding to other developers who will immediately understand the depth of it. This is not a summary — it is a signal flare for engineers.
+
+def get_prompt(format_key: str) -> str:
+    """Returns the fully assembled system prompt for a given format key."""
+    # Check if we have a hardcoded function for this format
+    if format_key in PROMPT_MAP:
+        func_name = PROMPT_MAP[format_key]
+        if func_name == "linkedin_post_prompt":
+            return linkedin_post_prompt()
+        if func_name == "article_prompt":
+            return article_prompt()
+
+    definitions = load_prompt_definitions()
+    if format_key not in definitions:
+        raise ValueError(f"Unknown prompt format: '{format_key}'")
+    
+    template = definitions[format_key]["system_prompt"]
+    
+    # Assembly with viral pattern injection
+    pattern = get_viral_pattern(format_key)
+    prompt = f"{template}\n\n{pattern}\n\n{BASE_RULES}{_narrative_block()}{_tone_block()}{_plan_block()}"
+    return prompt
+
+
+def get_all_prompts() -> dict[str, str]:
+    """Returns all prompts as a dict for parallel generation."""
+    definitions = load_prompt_definitions()
+    prompts = {key: get_prompt(key) for key in definitions.keys() if key != "sprint_summary"}
+    
+    # Ensure linkedin is included if not in definitions
+    if "linkedin" not in prompts:
+        prompts["linkedin"] = linkedin_post_prompt()
+        
+    return prompts
+
+
+# ── Specialized Prompts ───────────────────────────────────────────────────────
+
+def linkedin_post_prompt() -> str:
+    """Professional but human LinkedIn post prompt."""
+    return f"""You are a developer writing a professional but human post for LinkedIn.
+
+Your goal is to share a technical win or insight in a way that builds your professional brand without sounding like a corporate robot. LinkedIn posts perform best with white space, a strong hook, and a personal narrative.
 
 Format guidance:
-- Lead with the specific technical detail: the function, the bug, the architecture decision, the number.
-- Explain what was wrong or what changed and why it matters technically.
-- If there is a code snippet available, include the key changed line or the before/after in a short code block.
-- End with one sharp insight or takeaway — something another developer could apply today.
-- Target length: 200–260 characters for the core post. If it needs a thread to do it justice, output two tweets separated by a blank line.
+- Hook: Line 1 must be a compelling one-sentence hook that stops the scroll.
+- The Story: Explain the technical context, the challenge, and how you solved it. Use line breaks for readability.
+- The Insight: Share one high-level takeaway that other professionals (not just devs) can appreciate.
+- CTA: End with a call to action or a question to your network.
+- No hashtag spam (max 3). No generic 'thrilled to announce' filler.
+
+Character target: 800–1300 characters.
 
 {BASE_RULES}{_narrative_block()}{_tone_block()}"""
 
 
-def struggle_prompt() -> str:
-    return f"""You are a developer writing an honest, relatable post for X (Twitter) about a real struggle in the build process.
+def article_prompt(codebase_summary: str = "") -> str:
+    """Generates a full Medium-ready markdown article."""
+    codebase_block = f"\n\nCodebase Summary:\n{codebase_summary}" if codebase_summary else ""
+    return f"""You are a developer writing a full Medium-ready technical article in Markdown.
 
-Your goal is to make other developers feel seen — that specific feeling of being stuck on something for hours that turns out to be one line. This format builds the most loyal audience.
+Your goal is to turn the current sprint context and raw thoughts into a structured, high-value technical article that documents your journey and teaches a specific lesson.
 
-Format guidance:
-- Open with the feeling or the symptom, not the solution. Drop the reader into the frustration first.
-- Walk through what you tried that did not work — be specific, not vague.
-- Land on the breakthrough moment. What was the actual fix or insight?
-- End with a question or observation that invites other developers to share their own experience.
-- Target length: 220–280 characters. Can be a 2-tweet thread if the story needs it.
+Sections to include:
+1. Hook: A dramatic opener about the problem or the struggle.
+2. Context: What you were building and why it matters.
+3. The Journey: The key moments, decisions, and breakthroughs from the logs.
+4. Technical Detail: Deep dive into the implementation. Use code snippets from the git diff.
+5. Resolution: What is now built and working that wasn't before? What does it unlock?
+6. Takeaway: One specific thing other developers can apply to their own work.
 
-{BASE_RULES}{_narrative_block()}{_tone_block()}"""
+Target length: 800–1500 words. Be comprehensive and use Markdown formatting for headers, lists, and code blocks.
+{codebase_block}
 
-
-def quick_win_prompt() -> str:
-    return f"""You are a developer writing a short, punchy build update for X (Twitter).
-
-Your goal is to document a micro-win in a way that is energising to read — the kind of post that makes other developers want to open their laptop. Fast, confident, specific.
-
-Format guidance:
-- Lead with the outcome. What is now working that wasn't before?
-- One sentence of context — what was the blocker or the thing that needed building?
-- One sentence of forward momentum — what does this unlock next?
-- No unnecessary padding. Every word earns its place.
-- Target length: 140–200 characters. Single tweet only — no threads for this format.
-
-{BASE_RULES}{_narrative_block()}{_tone_block()}"""
+{BASE_RULES}{_narrative_block()}"""
 
 
-def pr_generator_prompt() -> str:
-    return f"""You are a senior software engineer writing a pull request description for GitHub.
+def article_refinement_prompt(current_article: str, instruction: str) -> str:
+    """Takes existing article draft + user refinement instruction."""
+    return f"""You are an editor helping a developer refine their technical article.
 
-Your goal is to produce a clear, structured PR description that gives reviewers everything they need to understand, review, and merge this change confidently.
+Current Article Draft:
+---
+{current_article}
+---
 
-Output a Markdown document with exactly these sections:
+User Instruction: {instruction}
 
-## What changed
-A 2–3 sentence plain-English summary of what this PR does. Write it so a non-expert team member can understand it.
+Your job is to update the article based on the user's instruction while maintaining the professional yet human developer voice, the Markdown structure, and the technical depth. Output the COMPLETE updated article.
 
-## Why
-The problem this solves or the feature this adds. Reference the bug, the user need, or the architectural reason.
-
-## How
-The technical approach taken. Mention key functions, files, or patterns changed. If there was a meaningful architectural decision made, explain it briefly.
-
-## Testing
-What was tested and how. If manual testing was done, describe the steps. If automated tests were added or updated, mention them.
-
-## Notes for reviewer
-Anything the reviewer should pay special attention to, known edge cases, follow-up tickets created, or areas of uncertainty.
-
-Rules:
-- Be specific — reference actual function names, file names, and error messages from the diff.
-- Do not use vague filler like "various improvements" or "minor fixes".
-- Keep the total length under 400 words.
-- Output only the Markdown — no preamble, no explanation, just the document.{_narrative_block()}"""
+No preamble. Just the revised Markdown."""
 
 
 # ── Sprint Mode batch prompt ──────────────────────────────────────────────────
 
 def sprint_summary_prompt(num_captures: int) -> str:
+    # Sprint summary is a special case that we'll keep as a function for now
+    # or it could also be moved to JSON if needed.
     return f"""You are a developer writing a build thread for X (Twitter) that covers an entire coding sprint.
 
 You have been given a log of {num_captures} separate captures made during a focused sprint — each containing a git diff, OCR context, and a short raw thought. Your job is to synthesise them into one compelling narrative thread that tells the full story of the sprint.
@@ -144,44 +186,9 @@ Rules:
 {BASE_RULES}{_narrative_block()}{_tone_block()}"""
 
 
-# ── Prompt router ─────────────────────────────────────────────────────────────
-
-PROMPT_MAP = {
-    "deep_tech": deep_tech_prompt,
-    "struggle": struggle_prompt,
-    "quick_win": quick_win_prompt,
-    "pr_generator": pr_generator_prompt,
-}
-
-
-def get_prompt(format_key: str) -> str:
-    """
-    Returns the fully assembled system prompt for a given format key.
-    Raises ValueError for unknown keys so errors surface immediately.
-    """
-    if format_key not in PROMPT_MAP:
-        raise ValueError(
-            f"Unknown prompt format: '{format_key}'. "
-            f"Valid options: {list(PROMPT_MAP.keys())}"
-        )
-    return PROMPT_MAP[format_key]()
-
-
-def get_all_prompts() -> dict[str, str]:
-    """Returns all four prompts as a dict. Used by the generator for parallel calls."""
-    return {key: builder() for key, builder in PROMPT_MAP.items()}
-
-
 if __name__ == "__main__":
-    from config.settings import set_project_narrative
-
-    set_project_narrative("an AI-powered build-in-public automation tool for developers")
-
-    print("=== DEEP TECH ===")
-    print(get_prompt("deep_tech"))
-    print("\n=== STRUGGLE ===")
-    print(get_prompt("struggle"))
-    print("\n=== QUICK WIN ===")
-    print(get_prompt("quick_win"))
-    print("\n=== PR GENERATOR ===")
-    print(get_prompt("pr_generator"))
+    print("=== DYNAMIC PROMPTS TEST ===")
+    prompts = get_all_prompts()
+    for k, p in prompts.items():
+        print(f"\n--- {k.upper()} ---")
+        print(p[:200] + "...")
