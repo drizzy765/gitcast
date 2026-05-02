@@ -4,605 +4,472 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Context Engine — Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use standard CSS for production feel -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .sidebar-item-active { background-color: #1e293b; border-left: 4px solid #6366f1; color: #818cf8; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .prompt-card:hover { border-color: #6366f1; }
-        .tab-active { background-color: #6366f1; color: white; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        
+        :root {
+            --bg-dark: #0f172a;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --indigo-500: #6366f1;
+            --indigo-600: #4f46e5;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-800: #1e293b;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #f8fafc; 
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .logo-container { p-6; display: flex; align-items: center; gap: 12px; padding: 24px; }
+        .logo-box { width: 40px; height: 40px; bg-indigo-600; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--indigo-600); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+        .logo-text { font-weight: 700; font-size: 1.25rem; }
+        .logo-accent { color: #818cf8; }
+
+        nav { flex: 1; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { 
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; 
+            color: var(--slate-300); text-decoration: none; border: none; background: transparent; 
+            cursor: pointer; font-size: 0.95rem; text-align: left; transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .nav-item.active { background: var(--slate-800); color: #818cf8; border-left: 4px solid var(--indigo-500); }
+
+        /* Main */
+        main { flex: 1; background: #020617; overflow-y: auto; padding: 40px; }
+        .view { display: none; max-width: 1100px; margin: 0 auto; }
+        .view.active { display: block; }
+
+        header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        h2 { font-size: 2rem; font-weight: 700; margin: 0 0 4px 0; }
+        .subtitle { color: var(--slate-400); font-size: 0.95rem; margin: 0; }
+
+        /* Content Blocks */
+        .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; }
+        .card { background: var(--bg-glass); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 24px; overflow: hidden; }
+        .preview-box { border-radius: 12px; background: #000; aspect-ratio: 16/9; margin-bottom: 24px; display: flex; items-center; justify-content: center; overflow: hidden; }
+        .preview-box img { width: 100%; height: 100%; object-contain: p-4; }
+        
+        .code-block { background: #020617; border-radius: 12px; border: 1px solid #1e293b; padding: 16px; font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #94a3b8; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+
+        /* Draft Interface */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 10px; }
+        .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; border: none; background: transparent; color: var(--slate-400); cursor: pointer; }
+        .tab-btn.active { background: var(--indigo-500); color: white; }
+
+        textarea { width: 100%; background: transparent; border: none; color: #e2e8f0; font-size: 1.1rem; line-height: 1.6; resize: none; outline: none; height: 300px; }
+        
+        .chat-bar { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.4); border: 1px solid #1e293b; border-radius: 12px; padding: 8px 16px; margin-top: auto; }
+        .chat-input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.85rem; padding: 8px 0; }
+        .chat-send { background: transparent; border: none; color: var(--indigo-500); cursor: pointer; padding: 4px; }
+
+        .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 24px; }
+        .char-count { font-size: 0.75rem; color: var(--slate-400); }
+        .publish-btn { background: var(--indigo-600); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .publish-btn:hover { background: var(--indigo-500); transform: translateY(-1px); }
+
+        /* Article View Specific */
+        .article-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+        .article-btn { background: #1e293b; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+        .article-btn:hover { background: #334155; }
+        
+        /* Utility */
+        .hidden { display: none !important; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Auth Banner */
+        #auth-banner { position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; display: none; }
     </style>
 </head>
-<body class="flex min-h-screen overflow-hidden">
+<body>
 
-    <!-- Sidebar -->
-    <aside class="w-64 glass border-r border-slate-800 flex flex-col h-screen shrink-0">
-        <div class="p-6 flex items-center gap-3">
-            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i class="fas fa-brain text-white"></i>
-            </div>
-            <h1 class="font-bold text-xl tracking-tight">Context<span class="text-indigo-400">Engine</span></h1>
+    <div id="auth-banner">Missing Session Token</div>
+
+    <aside>
+        <div class="logo-container">
+            <div class="logo-box"><i class="fas fa-brain text-white"></i></div>
+            <div class="logo-text">Context<span class="logo-accent">Engine</span></div>
         </div>
         
-        <nav class="flex-1 px-4 py-6 space-y-2">
-            <button onclick="showView('draft')" id="nav-draft" class="sidebar-item-active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition">
-                <i class="fas fa-magic"></i> <span>Draft Room</span>
+        <nav>
+            <button onclick="showView('x-posts')" id="nav-x-posts" class="nav-item active">
+                <i class="fab fa-twitter w-5"></i> <span>X / Twitter</span>
             </button>
-            <button onclick="showView('history')" id="nav-history" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition">
-                <i class="fas fa-history"></i> <span>History</span>
+            <button onclick="showView('linkedin')" id="nav-linkedin" class="nav-item">
+                <i class="fab fa-linkedin w-5"></i> <span>LinkedIn</span>
             </button>
-            <button onclick="showView('prompts')" id="nav-prompts" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition">
-                <i class="fas fa-edit"></i> <span>Prompts</span>
+            <button onclick="showView('articles')" id="nav-articles" class="nav-item">
+                <i class="fas fa-file-alt w-5"></i> <span>Articles</span>
             </button>
-            <button onclick="showView('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition">
-                <i class="fas fa-cog"></i> <span>Settings</span>
+            <button onclick="showView('history')" id="nav-history" class="nav-item">
+                <i class="fas fa-history w-5"></i> <span>History</span>
+            </button>
+            <button onclick="showView('settings')" id="nav-settings" class="nav-item">
+                <i class="fas fa-cog w-5"></i> <span>Settings</span>
             </button>
         </nav>
-
-        <div class="p-6 border-t border-slate-800">
-            <div id="status-badge" class="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-green-400">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Engine Active
-            </div>
-        </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 h-screen overflow-y-auto bg-slate-950">
-        
-        <!-- View: Draft Room -->
-        <section id="view-draft" class="p-8 max-w-6xl mx-auto h-full flex flex-col">
-            <header class="mb-8 flex justify-between items-center">
+    <main>
+        <!-- X / Twitter View -->
+        <section id="view-x-posts" class="view active">
+            <header>
                 <div>
-                    <h2 class="text-3xl font-bold mb-1">Draft Room</h2>
-                    <p class="text-slate-400 text-sm">Refine and publish your latest capture.</p>
+                    <h2>X Post Drafts</h2>
+                    <p class="subtitle">Short, punchy technical updates.</p>
                 </div>
-                <div id="draft-status" class="text-xs font-mono text-slate-500 italic"></div>
             </header>
-
-            <!-- Loading State -->
-            <div id="draft-loading" class="flex-1 flex flex-col items-center justify-center space-y-4 hidden">
-                <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                <p class="text-slate-400 animate-pulse">Analyzing context...</p>
-            </div>
-
-            <!-- Empty State -->
-            <div id="draft-empty" class="flex-1 flex flex-col items-center justify-center space-y-6 hidden">
-                <div class="w-24 h-24 bg-slate-900 rounded-3xl flex items-center justify-center border border-slate-800">
-                    <i class="fas fa-ghost text-4xl text-slate-700"></i>
+            
+            <div class="grid">
+                <div class="flex-col">
+                    <div class="card">
+                        <div class="preview-box">
+                            <img id="x-preview-img" src="" alt="Capture Preview">
+                        </div>
+                        <div class="code-block" id="x-code-diff">Waiting for git diff...</div>
+                    </div>
                 </div>
-                <div class="text-center">
-                    <h3 class="text-xl font-bold mb-2">No Draft Found</h3>
-                    <p class="text-slate-400 max-w-sm mx-auto">Trigger a capture with <code class="bg-slate-800 px-2 py-1 rounded text-indigo-400">Ctrl+Shift+P</code> in your IDE to get started.</p>
-                </div>
-            </div>
-
-            <!-- Content Grid -->
-            <div id="draft-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 overflow-hidden">
                 
-                <!-- Left: Preview -->
-                <div class="flex flex-col space-y-6 overflow-hidden">
-                    <div class="glass rounded-2xl overflow-hidden shadow-2xl border-slate-700/50">
-                        <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Live Preview</span>
-                            <div class="flex gap-1">
-                                <div class="w-2 h-2 rounded-full bg-slate-800"></div>
-                                <div class="w-2 h-2 rounded-full bg-slate-800"></div>
-                                <div class="w-2 h-2 rounded-full bg-slate-800"></div>
-                            </div>
-                        </div>
-                        <div class="p-0 bg-slate-900 aspect-video relative flex items-center justify-center overflow-hidden">
-                            <img id="draft-image" src="" alt="Framed Capture" class="w-full h-full object-contain p-4">
-                        </div>
+                <div class="card flex-col">
+                    <div class="tabs" id="x-tabs">
+                        <!-- Injected -->
                     </div>
-
-                    <!-- Git Diff / Context -->
-                    <div class="flex-1 glass rounded-2xl p-6 overflow-hidden flex flex-col">
-                         <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                             <i class="fas fa-code"></i> Captured Changes
-                         </h4>
-                         <div class="flex-1 bg-slate-950/50 rounded-xl p-4 font-mono text-[11px] text-slate-400 overflow-y-auto border border-slate-800">
-                             <pre id="draft-diff">Waiting for git diff...</pre>
-                         </div>
+                    <textarea id="x-draft-text"></textarea>
+                    
+                    <div class="chat-bar">
+                        <input type="text" id="x-chat-input" class="chat-input" placeholder="Refine with AI...">
+                        <button onclick="refine('x')" class="chat-send"><i class="fas fa-paper-plane"></i></button>
                     </div>
-                </div>
-
-                <!-- Right: Chat & Control -->
-                <div class="flex flex-col space-y-6 overflow-hidden">
-                    <div class="glass rounded-2xl flex-1 flex flex-col overflow-hidden border-indigo-500/20">
-                        
-                        <!-- Tab Bar -->
-                        <div id="draft-tabs" class="flex p-2 gap-1 bg-slate-900/50 border-b border-slate-800 overflow-x-auto">
-                            <!-- Injected Tabs -->
-                        </div>
-
-                        <!-- Editor -->
-                        <div class="flex-1 flex flex-col p-6">
-                            <div class="flex-1 mb-6">
-                                <textarea id="draft-text" class="w-full h-full bg-transparent border-none resize-none focus:ring-0 text-lg text-slate-200 leading-relaxed font-medium" placeholder="AI is thinking..."></textarea>
-                            </div>
-
-                            <!-- Chatbox -->
-                            <div class="bg-slate-950/80 rounded-xl border border-slate-800 p-2 flex items-center gap-3">
-                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
-                                    <i class="fas fa-robot text-xs text-white"></i>
-                                </div>
-                                <input type="text" id="chat-input" class="bg-transparent flex-1 border-none focus:ring-0 text-sm py-2" placeholder="Talk to your draft... (e.g. 'Make it more aggressive')">
-                                <button onclick="sendChat()" class="w-8 h-8 rounded-lg hover:bg-slate-800 transition flex items-center justify-center">
-                                    <i class="fas fa-paper-plane text-indigo-400"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Footer Actions -->
-                        <div class="p-6 bg-slate-900/30 border-t border-slate-800 flex justify-between items-center">
-                            <div class="text-xs text-slate-500" id="char-count">0 / 280 chars</div>
-                            <button id="publish-btn" onclick="publishDraft()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-indigo-600/20 flex items-center gap-2">
-                                <i class="fab fa-twitter"></i> Publish to X
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- View: History -->
-        <section id="view-history" class="hidden p-8 max-w-4xl mx-auto">
-            <header class="mb-10">
-                <h2 class="text-3xl font-bold mb-2">Post History</h2>
-                <p class="text-slate-400">Your documented journey through code.</p>
-            </header>
-            <div id="history-list" class="space-y-6">
-                <!-- Items injected here -->
-            </div>
-        </section>
-
-        <!-- View: Prompts -->
-        <section id="view-prompts" class="hidden p-8 max-w-6xl mx-auto">
-            <header class="mb-10">
-                <h2 class="text-3xl font-bold mb-2">AI Prompts</h2>
-                <p class="text-slate-400">Customize how Context Engine writes your updates.</p>
-            </header>
-            <div id="prompts-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Prompt cards injected here -->
-            </div>
-        </section>
-
-        <!-- View: Settings -->
-        <section id="view-settings" class="hidden p-8 max-w-2xl mx-auto">
-            <header class="mb-10">
-                <h2 class="text-3xl font-bold mb-2">Settings</h2>
-                <p class="text-slate-400">Configure your X (Twitter) account and API keys.</p>
-            </header>
-
-            <div class="space-y-8">
-                <!-- X Plan Selection -->
-                <div class="glass rounded-2xl p-8">
-                    <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <i class="fab fa-twitter text-indigo-400"></i> X Subscription Plan
-                    </h3>
-                    <div class="grid grid-cols-3 gap-4">
-                        <button onclick="updatePlan('free')" id="plan-free" class="p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:border-indigo-500 transition text-center">
-                            <div class="font-bold">Free</div>
-                            <div class="text-[10px] text-slate-500">280 Chars</div>
-                        </button>
-                        <button onclick="updatePlan('basic')" id="plan-basic" class="p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:border-indigo-500 transition text-center">
-                            <div class="font-bold">Basic</div>
-                            <div class="text-[10px] text-slate-500">280 Chars</div>
-                        </button>
-                        <button onclick="updatePlan('premium')" id="plan-premium" class="p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:border-indigo-500 transition text-center">
-                            <div class="font-bold">Premium</div>
-                            <div class="text-[10px] text-slate-500">Long-form</div>
+                    
+                    <div class="footer">
+                        <div class="char-count" id="x-char-count">0 / 280</div>
+                        <button class="publish-btn" onclick="publish('x')">
+                            <i class="fab fa-twitter"></i> Publish
                         </button>
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- API Key Status -->
-                <div class="glass rounded-2xl p-8">
-                    <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <i class="fas fa-key text-indigo-400"></i> API Key Status
-                    </h3>
-                    <div id="keys-status-list" class="space-y-3">
-                        <!-- Key status injected here -->
+        <!-- LinkedIn View -->
+        <section id="view-linkedin" class="view">
+            <header>
+                <div>
+                    <h2>LinkedIn Draft</h2>
+                    <p class="subtitle">Professional narratives and stories.</p>
+                </div>
+            </header>
+            
+            <div class="grid">
+                <div class="flex-col">
+                    <div class="card">
+                        <div class="preview-box">
+                            <img id="li-preview-img" src="" alt="Capture Preview">
+                        </div>
+                        <div class="code-block" id="li-code-diff">Waiting for git diff...</div>
+                    </div>
+                </div>
+                
+                <div class="card flex-col">
+                    <textarea id="li-draft-text" placeholder="LinkedIn post will appear here..."></textarea>
+                    
+                    <div class="chat-bar">
+                        <input type="text" id="li-chat-input" class="chat-input" placeholder="Refine with AI...">
+                        <button onclick="refine('li')" class="chat-send"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    
+                    <div class="footer">
+                        <div class="char-count" id="li-char-count">0 chars</div>
+                        <button class="publish-btn" onclick="publish('li')">
+                            <i class="fas fa-copy"></i> Copy to Clipboard
+                        </button>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- Articles View -->
+        <section id="view-articles" class="view">
+            <header>
+                <div>
+                    <h2>Article Generator</h2>
+                    <p class="subtitle">Full-length technical blog posts.</p>
+                </div>
+            </header>
+            
+            <div class="article-actions">
+                <button onclick="generateArticle(false)" class="article-btn"><i class="fas fa-magic"></i> Generate from Logs</button>
+                <button onclick="generateArticle(true)" class="article-btn"><i class="fas fa-code"></i> Include Codebase Context</button>
+            </div>
+
+            <div class="card" style="min-height: 600px; display: flex; flex-direction: column;">
+                <textarea id="article-text" style="height: 100%;" placeholder="Generate an article to get started..."></textarea>
+                
+                <div class="chat-bar" style="margin-top: 24px;">
+                    <input type="text" id="article-chat-input" class="chat-input" placeholder="Refine article (e.g., 'make the intro more dramatic')...">
+                    <button onclick="refineArticle()" class="chat-send"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                
+                <div class="footer">
+                    <div></div>
+                    <button class="publish-btn" onclick="copyArticle()">
+                        <i class="fas fa-download"></i> Copy Markdown
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- History View -->
+        <section id="view-history" class="view">
+            <header>
+                <div>
+                    <h2>History</h2>
+                    <p class="subtitle">Your previous posts and articles.</p>
+                </div>
+            </header>
+            <div id="history-list" style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Injected -->
+            </div>
+        </section>
+
+        <!-- Settings View -->
+        <section id="view-settings" class="view">
+            <header>
+                <div>
+                    <h2>Settings</h2>
+                    <p class="subtitle">App configuration and auth.</p>
+                </div>
+            </header>
+            <div class="card" style="max-width: 600px;">
+                <p class="subtitle" style="margin-bottom: 24px;">To fix Unauthorized errors, enter the Session Token from your terminal:</p>
+                <input type="text" id="token-input" class="chat-input" style="background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 16px; width: 100%;" placeholder="Enter Token...">
+                <button onclick="saveToken()" class="publish-btn" style="width: 100%; justify-content: center;">Save Token</button>
+            </div>
+        </section>
     </main>
 
-    <!-- Modal: Prompt Editor -->
-    <div id="prompt-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-        <div class="glass w-full max-w-2xl rounded-2xl p-8">
-            <h3 class="text-2xl font-bold mb-6" id="modal-title">Edit Prompt</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Display Label</label>
-                    <input type="text" id="edit-label" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Description</label>
-                    <input type="text" id="edit-desc" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">System Prompt</label>
-                    <textarea id="edit-system" rows="12" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"></textarea>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button onclick="closeModal()" class="px-6 py-2 rounded-lg text-slate-400 hover:text-white transition">Cancel</button>
-                <button onclick="savePrompt()" class="px-6 py-2 bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-500 transition">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Initial Thought -->
-    <div id="thought-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-        <div class="glass w-full max-w-lg rounded-2xl p-8 text-center">
-            <div class="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-comment-dots text-indigo-400 text-2xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold mb-2">What's on your mind?</h3>
-            <p class="text-slate-400 mb-8 text-sm">I've captured your context. Tell me what you're building so I can write a better post for you.</p>
-            <textarea id="initial-thought-input" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-200 mb-6" placeholder="e.g. Finally squashed that recursive dependency bug..."></textarea>
-            <div class="flex gap-4">
-                <button onclick="skipThought()" class="flex-1 px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-800 transition font-semibold">Skip</button>
-                <button onclick="submitInitialThought()" class="flex-1 px-6 py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20">Generate</button>
-            </div>
-        </div>
-    </div>
-
     <script>
+        let sessionToken = localStorage.getItem('session_token') || '';
         let currentDraft = null;
-        let selectedFormat = 'deep_tech';
-        let historyData = [];
-        let promptData = {};
-        let editingKey = null;
+        let selectedXFormat = 'deep_tech';
 
-        async function init() {
-            await fetchDraft();
-            await fetchStats();
-            await fetchHistory();
-            await fetchPrompts();
-            await fetchSettings();
-        }
-
-        // --- DRAFT ROOM LOGIC ---
-
-        function openThoughtModal() {
-            document.getElementById('thought-modal').classList.remove('hidden');
-            document.getElementById('initial-thought-input').focus();
-        }
-
-        function skipThought() {
-            document.getElementById('thought-modal').classList.add('hidden');
-            currentDraft.initial_thought_prompted = true;
-        }
-
-        async function submitInitialThought() {
-            const input = document.getElementById('initial-thought-input');
-            const thought = input.value.trim();
-            if (!thought) {
-                skipThought();
-                return;
-            }
-
-            const btn = document.querySelector('button[onclick="submitInitialThought()"]');
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
-            btn.disabled = true;
-
-            try {
-                // We use the chat endpoint to "refine" the empty draft with the first thought
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `Here is my thought for this post: ${thought}. Please regenerate the variations based on this context.`,
-                        format_key: selectedFormat 
-                    })
-                });
-
-                if (res.ok) {
-                    // For simplicity in V1, we refresh the whole draft to get all variations updated
-                    // In Step 4, we'll make this more surgical.
-                    await fetchDraft(); 
-                    document.getElementById('thought-modal').classList.add('hidden');
-                }
-            } catch (e) {
-                alert('Failed to update context');
-            } finally {
-                btn.innerHTML = 'Generate';
-                btn.disabled = false;
-            }
-        }
-
-        async function fetchDraft() {
-            const loading = document.getElementById('draft-loading');
-            const empty = document.getElementById('draft-empty');
-            const content = document.getElementById('draft-content');
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            loading.classList.remove('hidden');
-            empty.classList.add('hidden');
-            content.classList.add('hidden');
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.getElementById(`nav-${viewId}`).classList.add('active');
+            
+            if (viewId === 'history') fetchHistory();
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            if (!sessionToken) {
+                document.getElementById('auth-banner').style.display = 'block';
+                showView('settings');
+                return null;
+            }
+            
+            options.headers = {
+                ...options.headers,
+                'X-Session-Token': sessionToken
+            };
 
             try {
-                const res = await fetch('/api/draft');
-                const data = await res.json();
-                
-                if (data.status === 'empty' || !data.payload) {
-                    loading.classList.add('hidden');
-                    empty.classList.remove('hidden');
-                } else {
+                const res = await fetch(endpoint, options);
+                if (res.status === 401) {
+                    document.getElementById('auth-banner').style.display = 'block';
+                    showView('settings');
+                    return null;
+                }
+                document.getElementById('auth-banner').style.display = 'none';
+                return await res.json();
+            } catch (e) {
+                console.error("Fetch error:", e);
+                return null;
+            }
+        }
+
+        function saveToken() {
+            const token = document.getElementById('token-input').value.trim();
+            if (token) {
+                sessionToken = token;
+                localStorage.setItem('session_token', token);
+                document.getElementById('auth-banner').style.display = 'none';
+                pollDraft(); // Start polling after token is saved
+            }
+        }
+
+        async function pollDraft() {
+            const data = await apiFetch('/api/draft');
+            if (data && data.payload) {
+                // Only update if timestamp changed or we had no draft
+                if (!currentDraft || data.timestamp !== currentDraft.timestamp) {
                     currentDraft = data;
                     renderDraft();
-                    loading.classList.add('hidden');
-                    content.classList.remove('hidden');
                 }
-            } catch (e) {
-                loading.classList.add('hidden');
-                empty.classList.remove('hidden');
             }
+            setTimeout(pollDraft, 3000); // Poll every 3 seconds
         }
 
         function renderDraft() {
             const payload = currentDraft.payload;
             const vars = currentDraft.variations;
 
-            // Render Screenshot - Fix path for Windows and storage mount
+            // Image handling
             let imgPath = payload.screenshot_path;
             if (imgPath.includes('storage')) {
                 imgPath = imgPath.split('storage')[1].replace(/\\/g, '/');
-                document.getElementById('draft-image').src = `/storage${imgPath}`;
-            } else {
-                document.getElementById('draft-image').src = `/${payload.screenshot_path}`;
-            }
-            
-            // Check if we need to prompt for the first thought
-            if (!payload.raw_thought && !currentDraft.initial_thought_prompted) {
-                openThoughtModal();
+                document.getElementById('x-preview-img').src = `/storage${imgPath}`;
+                document.getElementById('li-preview-img').src = `/storage${imgPath}`;
             }
 
-            // Render Diff
-            document.getElementById('draft-diff').innerText = payload.git_diff || 'No code changes detected in this capture.';
+            // Diff handling
+            const diff = payload.git_diff || 'No code changes detected.';
+            document.getElementById('x-code-diff').innerText = diff;
+            document.getElementById('li-code-diff').innerText = diff;
 
-            // Render Tabs
-            const tabs = document.getElementById('draft-tabs');
-            tabs.innerHTML = Object.keys(vars).map(key => `
-                <button onclick="switchDraftTab('${key}')" class="px-4 py-2 rounded-lg text-xs font-bold uppercase transition ${selectedFormat === key ? 'tab-active' : 'text-slate-500 hover:bg-slate-800'}">
+            // X Tabs
+            const xTabs = document.getElementById('x-tabs');
+            xTabs.innerHTML = Object.keys(vars).filter(k => k !== 'linkedin' && k !== 'article').map(key => `
+                <button onclick="switchXTab('${key}')" class="tab-btn ${selectedXFormat === key ? 'active' : ''}">
                     ${key.replace('_', ' ')}
                 </button>
             `).join('');
 
-            // Render Active Text
-            const textarea = document.getElementById('draft-text');
-            textarea.value = vars[selectedFormat] || '';
-            updateCharCount();
+            // X Draft
+            document.getElementById('x-draft-text').value = vars[selectedXFormat] || '';
+            document.getElementById('x-char-count').innerText = `${(vars[selectedXFormat] || '').length} / 280`;
+
+            // LinkedIn Draft
+            document.getElementById('li-draft-text').value = vars['linkedin'] || '';
+            document.getElementById('li-char-count').innerText = `${(vars['linkedin'] || '').length} chars`;
         }
 
-        function switchDraftTab(key) {
-            selectedFormat = key;
+        function switchXTab(key) {
+            selectedXFormat = key;
             renderDraft();
         }
 
-        function updateCharCount() {
-            const text = document.getElementById('draft-text').value;
-            document.getElementById('char-count').innerText = `${text.length} / 280 chars`;
-        }
+        async function refine(type) {
+            const inputId = type === 'x' ? 'x-chat-input' : 'li-chat-input';
+            const formatKey = type === 'x' ? selectedXFormat : 'linkedin';
+            const message = document.getElementById(inputId).value.trim();
+            
+            if (!message) return;
 
-        document.getElementById('draft-text').addEventListener('input', updateCharCount);
+            const data = await apiFetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, format_key: formatKey })
+            });
 
-        async function sendChat() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message || !currentDraft) return;
-
-            const chatBtn = document.querySelector('button[onclick="sendChat()"]');
-            const originalIcon = chatBtn.innerHTML;
-            chatBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
-            input.disabled = true;
-
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        format_key: selectedFormat
-                    })
-                });
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    // Update local state and UI
-                    currentDraft.variations[selectedFormat] = data.new_text;
-                    document.getElementById('draft-text').value = data.new_text;
-                    updateCharCount();
-                    input.value = '';
-                } else {
-                    alert('AI refinement failed');
-                }
-            } catch (e) {
-                alert('Connection error');
-            } finally {
-                input.disabled = false;
-                chatBtn.innerHTML = originalIcon;
-                input.focus();
+            if (data && data.success) {
+                currentDraft.variations[formatKey] = data.new_text;
+                renderDraft();
+                document.getElementById(inputId).value = '';
             }
         }
 
-        async function publishDraft() {
-            const btn = document.getElementById('publish-btn');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Publishing...';
+        async function generateArticle(includeCodebase) {
+            const btn = event.target;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Generating...';
             btn.disabled = true;
 
-            // Mock publishing
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Published!';
-                btn.classList.replace('bg-indigo-600', 'bg-green-600');
-                setTimeout(() => {
-                    btn.innerHTML = originalHtml;
-                    btn.classList.replace('bg-green-600', 'bg-indigo-600');
-                    btn.disabled = false;
-                }, 3000);
-            }, 2000);
+            const data = await apiFetch('/api/article/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ include_codebase: includeCodebase })
+            });
+
+            if (data && data.success) {
+                document.getElementById('article-text').value = data.article;
+            }
+            
+            btn.innerHTML = original;
+            btn.disabled = false;
         }
 
-        // --- GLOBAL UI & DATA ---
-
-        function showView(view) {
-            ['draft', 'history', 'prompts', 'settings'].forEach(v => {
-                document.getElementById(`view-${v}`).classList.add('hidden');
-                const navBtn = document.getElementById(`nav-${v}`);
-                if (navBtn) navBtn.classList.remove('sidebar-item-active');
-            });
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-            const activeNav = document.getElementById(`nav-${view}`);
-            if (activeNav) activeNav.classList.add('sidebar-item-active');
+        async function refineArticle() {
+            const instruction = document.getElementById('article-chat-input').value.trim();
+            const current_article = document.getElementById('article-text').value;
             
-            if (view === 'draft') fetchDraft();
-            if (view === 'history') fetchHistory();
+            if (!instruction || !current_article) return;
+
+            const data = await apiFetch('/api/article/refine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_article, instruction })
+            });
+
+            if (data && data.success) {
+                document.getElementById('article-text').value = data.article;
+                document.getElementById('article-chat-input').value = '';
+            }
         }
 
         async function fetchHistory() {
-            try {
-                const res = await fetch('/api/history');
-                const data = await res.json();
-                historyData = data.history.reverse();
-                renderHistory();
-            } catch (e) {}
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = historyData.map(item => `
-                <div class="glass rounded-xl p-6 flex gap-6">
-                    <div class="w-48 h-32 bg-slate-950 rounded-lg overflow-hidden shrink-0 border border-slate-800">
-                        <img src="/${item.screenshot_path}" alt="Capture" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <span class="bg-indigo-900/40 text-indigo-300 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded">${item.format_key}</span>
-                                <p class="text-xs text-slate-500 mt-1">${new Date(item.timestamp).toLocaleString()}</p>
-                            </div>
+            const data = await apiFetch('/api/history');
+            if (data && data.history) {
+                const list = document.getElementById('history-list');
+                list.innerHTML = data.history.reverse().map(item => `
+                    <div class="card" style="display: flex; gap: 20px; align-items: flex-start;">
+                        <div style="width: 120px; height: 80px; background: black; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                             <img src="/${item.screenshot_path}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
-                        <p class="text-slate-200 line-clamp-3 text-sm">${item.post_text}</p>
+                        <div>
+                            <div style="margin-bottom: 8px;">
+                                <span style="background: var(--indigo-600); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${item.format_key}</span>
+                                <span style="color: var(--slate-400); font-size: 12px; margin-left: 8px;">${item.timestamp}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 14px; color: var(--slate-300);">${item.post_text}</p>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
 
-        async function fetchPrompts() {
-            try {
-                const res = await fetch('/api/prompts');
-                promptData = await res.json();
-                renderPrompts();
-            } catch (e) {}
+        function publish(type) {
+            const textId = type === 'x' ? 'x-draft-text' : 'li-draft-text';
+            const text = document.getElementById(textId).value;
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard!');
         }
 
-        function renderPrompts() {
-            const list = document.getElementById('prompts-list');
-            list.innerHTML = Object.entries(promptData).map(([key, p]) => `
-                <div class="glass rounded-xl p-6 prompt-card border border-transparent transition cursor-pointer" onclick="openModal('${key}')">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-bold text-lg">${p.label}</h4>
-                        <i class="fas fa-cog text-slate-500"></i>
-                    </div>
-                    <p class="text-sm text-slate-400 mb-6">${p.description}</p>
-                    <div class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">System Prompt Loaded</div>
-                </div>
-            `).join('');
+        function copyArticle() {
+            const text = document.getElementById('article-text').value;
+            navigator.clipboard.writeText(text);
+            alert('Article Markdown copied to clipboard!');
         }
 
-        function openModal(key) {
-            editingKey = key;
-            const p = promptData[key];
-            document.getElementById('modal-title').innerText = `Edit ${p.label}`;
-            document.getElementById('edit-label').value = p.label;
-            document.getElementById('edit-desc').value = p.description;
-            document.getElementById('edit-system').value = p.system_prompt;
-            document.getElementById('prompt-modal').classList.remove('hidden');
+        // Init
+        if (sessionToken) {
+            document.getElementById('token-input').value = sessionToken;
+            pollDraft();
+        } else {
+            showView('settings');
         }
-
-        function closeModal() {
-            document.getElementById('prompt-modal').classList.add('hidden');
-        }
-
-        async function savePrompt() {
-            const payload = {
-                format_key: editingKey,
-                label: document.getElementById('edit-label').value,
-                description: document.getElementById('edit-desc').value,
-                system_prompt: document.getElementById('edit-system').value
-            };
-            try {
-                const res = await fetch('/api/prompts', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    await fetchPrompts();
-                    closeModal();
-                }
-            } catch (e) { alert('Failed to save prompt'); }
-        }
-
-        async function fetchSettings() {
-            try {
-                const planRes = await fetch('/api/settings/plan');
-                const planData = await planRes.json();
-                highlightPlan(planData.plan);
-
-                const keysRes = await fetch('/api/settings/keys');
-                const keysData = await keysRes.json();
-                renderKeysStatus(keysData);
-            } catch (e) {}
-        }
-
-        function highlightPlan(plan) {
-            ['free', 'basic', 'premium'].forEach(p => {
-                document.getElementById(`plan-${p}`).classList.remove('border-indigo-500', 'bg-indigo-900/20');
-            });
-            document.getElementById(`plan-${plan}`).classList.add('border-indigo-500', 'bg-indigo-900/20');
-        }
-
-        async function updatePlan(plan) {
-            try {
-                await fetch('/api/settings/plan', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan })
-                });
-                highlightPlan(plan);
-            } catch (e) {}
-        }
-
-        function renderKeysStatus(keys) {
-            const list = document.getElementById('keys-status-list');
-            list.innerHTML = Object.entries(keys).map(([key, present]) => `
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-800">
-                    <span class="text-sm font-mono text-slate-400">${key}</span>
-                    <span class="${present ? 'text-green-400' : 'text-red-400'} text-[10px] font-bold uppercase tracking-widest">
-                        ${present ? '<i class="fas fa-check-circle mr-1"></i> Active' : '<i class="fas fa-times-circle mr-1"></i> Missing'}
-                    </span>
-                </div>
-            `).join('');
-        }
-
-        async function fetchStats() {
-            // Stats could be derived from history locally
-        }
-
-        init();
     </script>
 </body>
 </html>
