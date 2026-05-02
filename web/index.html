@@ -463,6 +463,39 @@
             alert('Article Markdown copied to clipboard!');
         }
 
+        async function triggerCapture() {
+            const overlay = document.getElementById('countdown-overlay');
+            const number = document.getElementById('countdown-number');
+            overlay.classList.remove('hidden');
+            
+            let count = 5;
+            number.innerText = count;
+            
+            const timer = setInterval(async () => {
+                count--;
+                number.innerText = count;
+                
+                if (count <= 0) {
+                    clearInterval(timer);
+                    number.innerText = "📸";
+                    
+                    // Trigger backend capture with 0 delay (since we already waited)
+                    const data = await apiFetch('/api/capture/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ delay: 0 })
+                    });
+                    
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        if (data && data.success) {
+                            // Poll will pick up the new draft
+                        }
+                    }, 1000);
+                }
+            }, 1000);
+        }
+
         // Init
         if (sessionToken) {
             document.getElementById('token-input').value = sessionToken;

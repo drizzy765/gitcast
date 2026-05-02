@@ -39,7 +39,7 @@ def run_tray(trigger_callback):
     image = create_image()
     menu = pystray.Menu(
         item('Dashboard', open_dashboard),
-        item('Trigger Capture (Ctrl+Shift+P)', trigger_action),
+        item('Trigger Capture (Ctrl+Alt+S)', trigger_action),
         item('Quit', on_quit)
     )
 

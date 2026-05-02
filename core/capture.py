@@ -9,13 +9,20 @@ from .framing import add_programming_frame
 
 # ── Screenshot capture ────────────────────────────────────────────────────────
 
-def capture_active_window() -> dict:
+def capture_active_window(delay: int = 5) -> dict:
     """
     Takes a screenshot of the entire screen and saves it to storage/data/screenshots.
     Returns a dict with the image path and dimensions.
     """
-    # Small delay to allow UI to settle (e.g. hide hotkey-triggered popups)
-    time.sleep(0.5)
+    if delay > 0:
+        print(f"[Capture] Starting in {delay}s... (Switch to the window you want to capture)")
+        for i in range(delay, 0, -1):
+            print(f"  {i}...")
+            # Terminal bell (ASCII 7)
+            import sys
+            sys.stdout.write('\a')
+            sys.stdout.flush()
+            time.sleep(1)
 
     screenshot_dir = STORAGE_DIR / "screenshots"
     screenshot_dir.mkdir(parents=True, exist_ok=True)
@@ -156,9 +163,9 @@ def detect_working_directory() -> str:
     return str(Path.home())
 
 
-def run_capture() -> dict:
+def run_capture(delay: int = 5) -> dict:
     working_dir = detect_working_directory()
-    screenshot = capture_active_window()
+    screenshot = capture_active_window(delay=delay)
     
     # Apply programming frame if capture succeeded
     if screenshot.get("success") and screenshot.get("path"):

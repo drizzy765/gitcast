@@ -91,6 +91,10 @@ class CliTriggerRequest(BaseModel):
     thought: str
 
 
+class CaptureTriggerRequest(BaseModel):
+    delay: Optional[int] = 5
+
+
 class ArticleGenerateRequest(BaseModel):
     include_codebase: Optional[bool] = False
     repo_path: Optional[str] = "."
@@ -248,6 +252,46 @@ async def cli_trigger(request: CliTriggerRequest):
             json.dump(draft_data, f, indent=4)
             
         return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/capture/trigger", dependencies=[Depends(verify_token)])
+async def ui_trigger_capture(request: CaptureTriggerRequest):
+    """Triggers a capture workflow from the UI."""
+    from core.capture import run_capture
+    from core.ocr import run_ocr
+    from api.payload import build_payload
+    from ai.generator import generate_posts
+    
+    try:
+        # Use provided delay (0 if UI handled countdown)
+        capture = run_capture(delay=request.delay)
+        ocr = run_ocr(capture["screenshot"]["path"])
+        
+        payload = build_payload(
+            raw_thought="",
+            ocr_result=ocr,
+            capture_result=capture,
+        )
+        
+        # force Groq
+        payload["use_vision_fallback"] = False
+        payload["screenshot_b64"] = None
+        
+        variations = await generate_posts(payload)
+        
+        # Save to CURRENT_DRAFT
+        draft_data = {
+            "payload": payload,
+            "variations": variations,
+            "timestamp": payload.get("timestamp", ""),
+            "status": "ready"
+        }
+        with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
+            json.dump(draft_data, f, indent=4)
+            
+        return {"success": True, "timestamp": draft_data["timestamp"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
