@@ -10,61 +10,66 @@ def build_payload(
     ocr_result: dict,
     capture_result: dict,
     format_keys: list = None,
+    multi_screenshots: list = None,
 ) -> dict:
     """
     Assembles the full payload from all captured context.
-    This is the single dict that gets passed to the AI generator.
-
-    Args:
-        raw_thought:    The user's unformatted text from the popup.
-        ocr_result:     Output from core/ocr.py run_ocr().
-        capture_result: Output from core/capture.py run_capture().
-        format_keys:    Which post formats to generate. Defaults to all four.
+    Supports single or multi-screenshot sessions.
     """
     if format_keys is None:
         format_keys = ["deep_tech", "struggle", "quick_win", "pr_generator"]
 
-    screenshot_path = capture_result["screenshot"]["path"]
-    git_diff = capture_result["git_diff"]
     narrative = get_project_narrative()
+    git_diff = capture_result.get("git_diff", {"diff": "", "success": False})
+    
+    # Handle single or multi-shot
+    if multi_screenshots:
+        screenshots = multi_screenshots
+        primary_shot = screenshots[0]
+    else:
+        # Normalize single shot to a list of one
+        primary_shot = capture_result["screenshot"]
+        screenshots = [{
+            "path": primary_shot["path"],
+            "purpose": "general",
+            "ocr_text": ocr_result.get("text") or ocr_result.get("raw_text", ""),
+            "confidence": ocr_result.get("confidence", 0.0),
+            "timestamp": primary_shot.get("timestamp", ""),
+            "index": 1
+        }]
 
-    # decide whether to use OCR text or vision fallback
-    use_vision = ocr_result.get("use_vision_fallback", False)
-    ocr_text = ocr_result.get("text", "")
+    # Decide vision fallback based on primary shot or all shots
+    # For now, we'll use OCR if any shot is reliable, but usually it's per-shot.
+    # LLM will see OCR text for each shot.
+    use_vision = ocr_result.get("use_vision_fallback", False) if not multi_screenshots else False
 
-    # encode screenshot as base64 if vision fallback is needed
+    # encode primary screenshot as base64 for vision fallback
     screenshot_b64 = None
-    if use_vision and screenshot_path:
-        screenshot_b64 = _encode_image(screenshot_path)
+    if use_vision and primary_shot.get("path"):
+        screenshot_b64 = _encode_image(primary_shot["path"])
 
-    # build the user message content that goes into every prompt
+    # build the structured user message
     user_message = _build_user_message(
         raw_thought=raw_thought,
-        ocr_text=ocr_text,
+        screenshots=screenshots,
         git_diff=git_diff,
         narrative=narrative,
         use_vision=use_vision,
     )
 
     return {
-        # core content
         "raw_thought": raw_thought.strip(),
-        "ocr_text": ocr_text,
+        "screenshots": screenshots,
         "git_diff": git_diff.get("diff", ""),
         "git_diff_available": git_diff.get("success", False) and bool(git_diff.get("diff")),
         "narrative": narrative,
-
-        # AI routing
         "use_vision_fallback": use_vision,
         "screenshot_b64": screenshot_b64,
-        "screenshot_path": screenshot_path,
+        "screenshot_path": primary_shot.get("path", ""),
         "user_message": user_message,
         "format_keys": format_keys,
-
-        # metadata
-        "ocr_confidence": ocr_result.get("confidence", 0.0),
+        "timestamp": primary_shot.get("timestamp", ""),
         "working_dir": capture_result.get("working_dir", ""),
-        "timestamp": capture_result["screenshot"].get("timestamp", ""),
     }
 
 
@@ -72,38 +77,41 @@ def build_payload(
 
 def _build_user_message(
     raw_thought: str,
-    ocr_text: str,
+    screenshots: list[dict],
     git_diff: dict,
     narrative: str,
     use_vision: bool,
 ) -> str:
     """
-    Builds the user-turn message that gets sent to the LLM alongside
-    the system prompt. Structures all context clearly so the model
-    knows exactly what to work with.
+    Builds the user-turn message that gets sent to the LLM.
+    Structures multiple screenshots with their purpose tags.
     """
     parts = []
-
     parts.append("Here is the context for this build update:\n")
 
-    # developer's raw thought — always present
-    parts.append(f"## Developer's raw thought\n{raw_thought.strip()}")
+    # developer's raw thought
+    if raw_thought.strip():
+        parts.append(f"## Developer's raw thought\n{raw_thought.strip()}")
 
-    # OCR text from screenshot (if reliable)
-    if ocr_text and not use_vision:
-        parts.append(f"## Visible screen content (OCR)\n{ocr_text.strip()}")
-    elif use_vision:
-        parts.append("## Visible screen content\n[Screenshot attached — OCR confidence too low, use the image directly]")
+    # Screenshots with Purpose Tags and OCR
+    parts.append("## Screen context")
+    for s in screenshots:
+        idx = s.get("index", 1)
+        purpose = s.get("purpose", "general")
+        parts.append(f"### Screenshot {idx} ({purpose})")
+        
+        ocr = s.get("ocr_text", "").strip()
+        if ocr:
+            parts.append(f"Visible text:\n{ocr}")
+        else:
+            parts.append("[No text detected or OCR failed]")
 
-    # git diff (if available)
+    # git diff
     diff_text = git_diff.get("diff", "") if isinstance(git_diff, dict) else ""
     if diff_text:
         parts.append(f"## Git diff (recent code changes)\n```\n{diff_text.strip()}\n```")
-    else:
-        reason = git_diff.get("reason", "unknown") if isinstance(git_diff, dict) else "unknown"
-        parts.append(f"## Git diff\n[Not available — reason: {reason}]")
 
-    # project narrative reminder (if set)
+    # project narrative
     if narrative:
         parts.append(f"## Project context\n{narrative}")
 

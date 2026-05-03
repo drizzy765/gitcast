@@ -9,6 +9,6 @@ tweepy
 mss
 pytesseract
 httpx
-config
-storageo
 cryptography
+rich
+keyboard

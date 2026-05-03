@@ -40,74 +40,18 @@ _is_processing = False
 def on_trigger():
     global _is_processing
     if _is_processing:
-        print("[Main] Hotkey ignored — already processing a capture.")
         return
     
     _is_processing = True
-    print("[Main] Hotkey fired — capturing code instantly...")
+    print("[Main] Hotkey fired — starting interactive session...")
     
     try:
-        # 0.5s buffer to allow hotkey release/OS graphics to clear
-        capture = run_capture(delay=0.5)
-        ocr = run_ocr(capture["screenshot"]["path"])
-
-        if is_sprint_mode():
-            log_sprint_capture(
-                git_diff=capture["git_diff"].get("diff", ""),
-                ocr_text=ocr.get("text", ""),
-                raw_thought="",
-                timestamp=capture["screenshot"]["timestamp"],
-            )
-            print("[Main] Sprint Mode — capture logged silently.")
-            _is_processing = False
-            return
-
-        # V3 Workflow: Capture context and open dashboard
-        print("[Main] Context captured — opening dashboard for refinement...")
-        
-        payload = build_payload(
-            raw_thought="", # No popup, user adds thought in web chat
-            ocr_result=ocr,
-            capture_result=capture,
-        )
-
-        # force Groq until Gemini key is added
-        payload["use_vision_fallback"] = False
-        payload["screenshot_b64"] = None
-
-        import asyncio
-        from ai.generator import generate_posts
-
-        def generate_and_save():
-            try:
-                print("[Main] Generating initial post variations...")
-                variations = asyncio.run(generate_posts(payload))
-                
-                # Save to CURRENT_DRAFT for Phase 2
-                draft_data = {
-                    "payload": payload,
-                    "variations": variations,
-                    "timestamp": payload.get("timestamp", ""),
-                    "status": "ready"
-                }
-                with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
-                    json.dump(draft_data, f, indent=4)
-                
-                print(f"[Main] Variations ready — stored in {CURRENT_DRAFT.name}")
-                
-            except Exception as e:
-                print(f"[Main] Error in generation: {e}")
-            finally:
-                global _is_processing
-                _is_processing = False
-
-        threading.Thread(target=generate_and_save, daemon=True).start()
-        
-        # Open the dashboard
-        webbrowser.open("http://127.0.0.1:8000")
-    
+        from core.screenshot_session import ScreenshotSession
+        session = ScreenshotSession()
+        session.run()
     except Exception as e:
-        print(f"[Main] Error during capture: {e}")
+        print(f"[Main] Error during session: {e}")
+    finally:
         _is_processing = False
 
 

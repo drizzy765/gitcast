@@ -4,8 +4,18 @@ import webbrowser
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: ce \"your thought here\"")
+        print("Usage:")
+        print("  ce \"your thought here\"  -> Quick single capture")
+        print("  ce capture            -> Start interactive multi-shot session")
         sys.exit(1)
+
+    command = sys.argv[1]
+
+    if command == "capture":
+        from core.screenshot_session import ScreenshotSession
+        session = ScreenshotSession()
+        session.run()
+        return
 
     thought = " ".join(sys.argv[1:])
     print(f"[CE] Initializing capture with thought: '{thought}'")

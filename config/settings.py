@@ -23,7 +23,24 @@ STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+# ── AI Provider Routing ───────────────────────────────────────────────────────
+
+# Maps format_key -> preferred provider alias
+# Providers: 'groq', 'deepseek', 'moonshot', 'gemini'
+AI_ROUTING_MAP = {
+    "article": "moonshot",    # Better for long context
+    "linkedin": "deepseek",   # Good reasoning
+    "deep_tech": "deepseek",
+    "shitpost": "groq",       # Fast
+    "sprint_summary": "moonshot",
+    "default": "groq"
+}
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY", "")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET", "")
 TWITTER_ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN", "")
@@ -123,7 +140,11 @@ def set_twitter_plan(plan: str) -> None:
 def validate_api_keys() -> dict:
     return {
         "groq": bool(GROQ_API_KEY),
+        "deepseek": bool(DEEPSEEK_API_KEY),
+        "moonshot": bool(MOONSHOT_API_KEY),
         "gemini": bool(GEMINI_API_KEY),
+        "cerebras": bool(CEREBRAS_API_KEY),
+        "openrouter": bool(OPENROUTER_API_KEY),
         "twitter_api_key": bool(TWITTER_API_KEY),
         "twitter_api_secret": bool(TWITTER_API_SECRET),
         "twitter_access_token": bool(TWITTER_ACCESS_TOKEN),

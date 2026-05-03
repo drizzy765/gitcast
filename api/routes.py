@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
-from ai.generator import generate_posts, generate_sprint_summary, _groq_call
+from ai.generator import generate_posts, generate_sprint_summary, _ai_call
 from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, article_refinement_prompt
 from ai.formatter import split_into_thread
 from ai.viral_patterns import get_all_patterns
@@ -10,7 +10,14 @@ from api.auth import verify_token
 from storage.logger import load_posts
 from storage.tone_memory import save_rating
 from core.codebase_reader import summarise_for_prompt
-from config.settings import get_twitter_plan, set_twitter_plan, validate_api_keys, CURRENT_DRAFT, SPRINT_LOG
+from config.settings import (
+    get_twitter_plan, 
+    set_twitter_plan, 
+    validate_api_keys, 
+    CURRENT_DRAFT, 
+    SPRINT_LOG,
+    AI_ROUTING_MAP
+)
 import json
 import os
 
@@ -109,7 +116,23 @@ class ThreadSplitRequest(BaseModel):
     post_text: str
 
 
+class PublishRequest(BaseModel):
+    post_text: str
+    screenshot_path: Optional[str] = None
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@router.post("/publish", dependencies=[Depends(verify_token)])
+async def publish(request: PublishRequest):
+    """Publishes a post to X (Twitter)."""
+    from publisher.twitter import publish_post
+    try:
+        result = publish_post(request.post_text, request.screenshot_path)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Publishing failed: {e}")
+
 
 @router.post("/generate", response_model=GenerateResponse, dependencies=[Depends(verify_token)])
 async def generate(request: GenerateRequest):
@@ -202,9 +225,11 @@ async def chat_refine(request: ChatRequest):
     )
 
     try:
-        new_text = await _groq_call(
-            system_prompt=refinement_system_prompt,
-            user_message=refinement_user_message
+        # Use routing for the specific format_key
+        new_text = await _ai_call(
+            request.format_key,
+            refinement_system_prompt,
+            refinement_user_message
         )
         
         # Update and save
@@ -350,6 +375,19 @@ def update_plan(update: PlanUpdate):
     return {"success": True}
 
 
+@router.get("/settings", dependencies=[Depends(verify_token)])
+def get_all_settings():
+    from config import settings
+    return settings.load_settings()
+
+
+@router.post("/settings/sprint/toggle", dependencies=[Depends(verify_token)])
+def sprint_toggle():
+    from config import settings
+    new_state = settings.toggle_sprint_mode()
+    return {"success": True, "sprint_mode": new_state}
+
+
 @router.get("/settings/keys", dependencies=[Depends(verify_token)])
 def get_keys_status():
     return validate_api_keys()
@@ -388,7 +426,7 @@ async def generate_article(request: ArticleGenerateRequest):
     )
 
     try:
-        article = await _groq_call(system_prompt=sys_prompt, user_message=user_msg)
+        article = await _ai_call("article", sys_prompt, user_msg)
         return {"success": True, "article": article}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Article generation failed: {e}")
@@ -399,7 +437,7 @@ async def refine_article(request: ArticleRefineRequest):
     """Refines an article draft based on user instructions."""
     sys_prompt = article_refinement_prompt(request.current_article, request.instruction)
     try:
-        article = await _groq_call(system_prompt=sys_prompt, user_message="Refine the article.")
+        article = await _ai_call("article", sys_prompt, "Refine the article.")
         return {"success": True, "article": article}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Article refinement failed: {e}")
