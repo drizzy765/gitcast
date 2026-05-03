@@ -83,6 +83,8 @@ def get_git_diff(cwd: str = None) -> dict:
             cwd=target_dir,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=5,
         )
 
@@ -103,6 +105,8 @@ def get_git_diff(cwd: str = None) -> dict:
                 cwd=target_dir,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=5,
             )
             diff_text = staged.stdout.strip()
@@ -158,6 +162,8 @@ def detect_working_directory() -> str:
                 cwd=str(candidate),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=3,
             )
             if result.returncode == 0:
