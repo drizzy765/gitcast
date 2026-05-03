@@ -4,5 +4,6 @@
   "tone_memory_enabled": true,
   "ocr_confidence_threshold": 60,
   "post_char_limit": 280,
+  "twitter_plan": "free",
   "onboarding_complete": true
 }

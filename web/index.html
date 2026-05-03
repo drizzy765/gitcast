@@ -955,8 +955,9 @@
         async function refreshData() {
             const settings = await api('/api/settings');
             if (settings) {
-                document.getElementById('sidebar-narrative').innerText = settings.project_narrative || "No narrative defined.";
-                document.getElementById('settings-narrative').value = settings.project_narrative || "";
+                const narrative = settings.project_narrative || "";
+                document.getElementById('sidebar-narrative').innerText = narrative || "No narrative defined.";
+                document.getElementById('settings-narrative').value = narrative;
                 if (settings.sprint_mode) document.getElementById('sprint-toggle').classList.add('sprint-active');
             }
             
@@ -978,10 +979,16 @@
             if (currentDraft && currentDraft.timestamp === draft.timestamp && currentDraft.status === draft.status) return;
             
             currentDraft = draft;
+            
+            // Render screenshots immediately regardless of AI status
+            renderScreenshots();
+            updatePreviews();
+
             if (draft.status === 'ready') {
                 renderDraft();
             } else if (draft.status === 'generating') {
                 document.getElementById('post-editor').value = "AI is generating your post variations...";
+                addChatMessage("I'm analyzing your screenshots now... give me a moment.", 'ai');
             }
         }
 
@@ -990,7 +997,7 @@
             document.getElementById('post-editor').value = text;
             updateCharCounter();
             updatePreviews();
-            renderScreenshots();
+            // renderScreenshots() is now called in handleNewDraft
         }
 
         function renderScreenshots() {
@@ -1002,13 +1009,18 @@
                 return;
             }
 
-            carousel.innerHTML = shots.map((s, i) => `
-                <div class="thumb" onclick="expandShot('${s.path}')">
-                    <img src="${s.path.replace('storage/', '/storage/')}">
-                    <div class="thumb-tag">${s.purpose}</div>
-                    <div class="thumb-remove" onclick="removeShot(event, ${i})">×</div>
-                </div>
-            `).join('');
+            carousel.innerHTML = shots.map((s, i) => {
+                let imgUrl = s.path;
+                if (!imgUrl.startsWith('/')) imgUrl = '/' + imgUrl;
+                console.log("Rendering screenshot:", imgUrl);
+                return `
+                    <div class="thumb" onclick="expandShot('${imgUrl}')">
+                        <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Error+Loading'">
+                        <div class="thumb-tag">${s.purpose}</div>
+                        <div class="thumb-remove" onclick="removeShot(event, ${i})">×</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // --- Actions ---
@@ -1125,9 +1137,17 @@
             document.getElementById('mock-li-text').innerText = text;
 
             const shots = currentDraft?.payload?.screenshots || [];
-            const imgHtml = shots.length > 0 ? `<img src="${shots[0].path.replace('storage/', '/storage/')}">` : '';
-            document.getElementById('mock-x-img').innerHTML = imgHtml;
-            document.getElementById('mock-li-img').innerHTML = imgHtml;
+            if (shots.length > 0) {
+                let imgUrl = shots[0].path;
+                if (!imgUrl.startsWith('/')) imgUrl = '/' + imgUrl;
+                
+                const imgHtml = `<img src="${imgUrl}">`;
+                document.getElementById('mock-x-img').innerHTML = imgHtml;
+                document.getElementById('mock-li-img').innerHTML = imgHtml;
+            } else {
+                document.getElementById('mock-x-img').innerHTML = '';
+                document.getElementById('mock-li-img').innerHTML = '';
+            }
         }
 
         function switchMainView(view) {
@@ -1185,19 +1205,26 @@
         }
 
         async function saveSettings() {
-            const narrative = document.getElementById('settings-narrative').value;
-            const token = document.getElementById('settings-token').value;
+            const narrative = document.getElementById('settings-narrative').value.trim();
+            const token = document.getElementById('settings-token').value.trim();
             
-            sessionToken = token;
-            localStorage.setItem('session_token', token);
-            
-            // Note: We don't have a direct PUT /api/settings in the original backend, 
-            // but we might want to add it. For now let's assume it works or we use existing endpoints.
-            // Based on api/routes.py, there isn't a direct settings update endpoint for narrative.
-            // Let's assume the user will implement it or it exists.
-            
-            showToast("Settings saved locally");
-            refreshData();
+            if (token) {
+                sessionToken = token;
+                localStorage.setItem('session_token', token);
+                
+                // Update narrative on backend
+                await api('/api/settings', 'POST', { project_narrative: narrative });
+                
+                showToast("Settings saved and authorized");
+                
+                // Immediately sync data
+                await refreshData();
+                
+                // Switch back to draft view
+                switchMainView('draft');
+            } else {
+                showToast("Please enter a valid session token", "error");
+            }
         }
 
         function applySuggestion(text) {

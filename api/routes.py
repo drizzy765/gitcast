@@ -116,12 +116,24 @@ class ThreadSplitRequest(BaseModel):
     post_text: str
 
 
+class SettingsUpdate(BaseModel):
+    project_narrative: str
+
+
 class PublishRequest(BaseModel):
     post_text: str
     screenshot_path: Optional[str] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@router.post("/settings", dependencies=[Depends(verify_token)])
+def update_settings(update: SettingsUpdate):
+    """Updates global project settings."""
+    from config.settings import set_project_narrative
+    set_project_narrative(update.project_narrative)
+    return {"success": True}
+
 
 @router.post("/publish", dependencies=[Depends(verify_token)])
 async def publish(request: PublishRequest):

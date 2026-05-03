@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 from config.settings import STORAGE_DIR
+BASE_DIR = STORAGE_DIR.parent.parent
 from .framing import add_programming_frame
 
 
@@ -56,9 +57,12 @@ def capture_active_window(delay: float = 5.0) -> dict:
         img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
         img.save(str(filepath))
 
+    # Return relative path for web/API consistency
+    relative_path = str(filepath.relative_to(BASE_DIR)).replace("\\", "/")
+
     return {
         "success": True,
-        "path": str(filepath),
+        "path": relative_path,
         "width": screenshot.width,
         "height": screenshot.height,
         "timestamp": timestamp,
