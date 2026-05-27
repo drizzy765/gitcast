@@ -57,8 +57,12 @@ def build_payload(
         use_vision=use_vision,
     )
 
+    # joined OCR text for legacy/summary access
+    all_ocr = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")])
+
     return {
         "raw_thought": raw_thought.strip(),
+        "ocr_text": all_ocr,
         "screenshots": screenshots,
         "git_diff": git_diff.get("diff", ""),
         "git_diff_available": git_diff.get("success", False) and bool(git_diff.get("diff")),

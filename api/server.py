@@ -33,7 +33,17 @@ app.include_router(router, prefix="/api")
 
 # Serve Frontend
 @app.get("/")
-async def read_index():
+async def read_landing():
+    return FileResponse(BASE_DIR / "web" / "landing.html")
+
+
+@app.get("/landing")
+async def read_landing_alias():
+    return FileResponse(BASE_DIR / "web" / "landing.html")
+
+
+@app.get("/app")
+async def read_app():
     return FileResponse(BASE_DIR / "web" / "index.html")
 
 

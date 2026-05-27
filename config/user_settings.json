@@ -1,6 +1,6 @@
 {
-  "project_narrative": "an AI-powered build-in-public automation tool for developers",
-  "sprint_mode": false,
+  "project_narrative": "",
+  "sprint_mode": true,
   "tone_memory_enabled": true,
   "ocr_confidence_threshold": 60,
   "post_char_limit": 280,

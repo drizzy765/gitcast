@@ -71,16 +71,30 @@ async def generate_posts(payload: dict) -> dict[str, str]:
     output = {}
     for format_key, system_prompt in selected_prompts.items():
         print(f"[Generator] Thinking about: {format_key}...")
+        
+        active_user_message = user_message
+        if format_key == "pr_generator":
+            # Strip Screen Context (Tesseract OCR dump) for PR Descriptions
+            if "## Screen context" in active_user_message:
+                parts = active_user_message.split("## Screen context")
+                prefix = parts[0].strip()
+                suffix = parts[1].strip()
+                if "## " in suffix:
+                    next_idx = suffix.find("## ")
+                    active_user_message = prefix + "\n\n" + suffix[next_idx:].strip()
+                else:
+                    active_user_message = prefix
+        
         try:
-            if use_vision and screenshots:
+            if use_vision and screenshots and format_key != "pr_generator":
                 result = await _gemini_vision_call(
                     system_prompt=system_prompt,
-                    user_message=user_message,
+                    user_message=active_user_message,
                     screenshots=screenshots,
                 )
             else:
                 # Automatic task-based routing with fallback
-                result = await _ai_call(format_key, system_prompt, user_message)
+                result = await _ai_call(format_key, system_prompt, active_user_message)
 
             output[format_key] = result
             print(f"[Generator] Variation '{format_key}' ready.")
@@ -223,8 +237,11 @@ async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set in .env")
 
-    url = f"{GEMINI_URL}?key={GEMINI_API_KEY}"
-    headers = {"Content-Type": "application/json"}
+    url = GEMINI_URL
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY
+    }
 
     body = {
         "contents": [

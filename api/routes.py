@@ -77,6 +77,14 @@ class PromptUpdate(BaseModel):
     system_prompt: str
 
 
+class PromptDelete(BaseModel):
+    format_key: str
+
+
+class RecommendRequest(BaseModel):
+    filename: str
+
+
 class PlanUpdate(BaseModel):
     plan: str
 
@@ -125,7 +133,34 @@ class PublishRequest(BaseModel):
     screenshot_path: Optional[str] = None
 
 
+class WaitlistRequest(BaseModel):
+    email: str
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+import re
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+@router.post("/waitlist")
+def add_to_waitlist(request: WaitlistRequest):
+    """Appends an email to the waitlist file."""
+    email = request.email.strip()
+    if not EMAIL_REGEX.match(email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    from config.settings import STORAGE_DIR
+    waitlist_dir = STORAGE_DIR / "data"
+    waitlist_dir.mkdir(parents=True, exist_ok=True)
+    waitlist_file = waitlist_dir / "waitlist.txt"
+    
+    try:
+        with open(waitlist_file, "a", encoding="utf-8") as f:
+            f.write(email + "\n")
+        return {"success": True, "message": "you're on the list"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to append to waitlist: {e}")
+
 
 @router.post("/settings", dependencies=[Depends(verify_token)])
 def update_settings(update: SettingsUpdate):
@@ -144,6 +179,91 @@ async def publish(request: PublishRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Publishing failed: {e}")
+
+
+@router.delete("/screenshot/{filename}", dependencies=[Depends(verify_token)])
+def delete_screenshot(filename: str):
+    """Securely deletes a screenshot from disk."""
+    from core.security import delete_capture
+    from config.settings import STORAGE_DIR
+    path = STORAGE_DIR / "screenshots" / filename
+    delete_capture(str(path))
+    return {"success": True}
+
+
+@router.get("/screenshot/{filename}/framed", dependencies=[Depends(verify_token)])
+async def get_framed_screenshot(filename: str):
+    """Applies a macOS-style frame to a screenshot and returns it."""
+    from PIL import Image, ImageDraw, ImageFilter
+    from config.settings import STORAGE_DIR
+    from fastapi.responses import Response
+    import io
+
+    path = STORAGE_DIR / "screenshots" / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+
+    try:
+        img = Image.open(path).convert("RGBA")
+        
+        padding = 60
+        bar_height = 36
+        corner_radius = 12
+        
+        # Outer bg color #1a1a1a
+        bg_color = (26, 26, 26, 255)
+        
+        # Window canvas
+        window_w = img.width
+        window_h = img.height + bar_height
+        
+        # New background
+        bg_w = window_w + (padding * 2)
+        bg_h = window_h + (padding * 2)
+        bg = Image.new('RGBA', (bg_w, bg_h), bg_color)
+        
+        # Create shadow
+        shadow_padding = 20
+        shadow = Image.new('RGBA', (window_w + shadow_padding*2, window_h + shadow_padding*2), (0,0,0,0))
+        shadow_draw = ImageDraw.Draw(shadow)
+        shadow_draw.rounded_rectangle(
+            [shadow_padding, shadow_padding, shadow_padding + window_w, shadow_padding + window_h], 
+            radius=corner_radius, 
+            fill=(0, 0, 0, 100)
+        )
+        shadow = shadow.filter(ImageFilter.GaussianBlur(15))
+        
+        # Paste shadow
+        bg.paste(shadow, (padding - shadow_padding, padding - shadow_padding), shadow)
+        
+        # Create window with rounded corners
+        window = Image.new('RGBA', (window_w, window_h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(window)
+        draw.rounded_rectangle([0, 0, window_w, window_h], radius=corner_radius, fill=(255, 255, 255, 255))
+        
+        # Title bar background (light gray)
+        draw.rounded_rectangle([0, 0, window_w, bar_height], radius=corner_radius, fill=(240, 240, 240, 255))
+        # Fill the bottom of the title bar to square the corners that meet the content
+        draw.rectangle([0, bar_height//2, window_w, bar_height], fill=(240, 240, 240, 255))
+
+        # Draw dots
+        dot_radius = 6
+        dot_y = bar_height // 2
+        draw.ellipse([20-dot_radius, dot_y-dot_radius, 20+dot_radius, dot_y+dot_radius], fill=(255, 95, 87, 255)) # Red
+        draw.ellipse([42-dot_radius, dot_y-dot_radius, 42+dot_radius, dot_y+dot_radius], fill=(254, 188, 46, 255)) # Yellow
+        draw.ellipse([64-dot_radius, dot_y-dot_radius, 64+dot_radius, dot_y+dot_radius], fill=(40, 200, 64, 255)) # Green
+        
+        # Paste screenshot content
+        window.paste(img, (0, bar_height), img)
+        
+        # Final paste window on bg
+        bg.paste(window, (padding, padding), window)
+        
+        img_byte_arr = io.BytesIO()
+        bg.convert("RGB").save(img_byte_arr, format='PNG')
+        return Response(content=img_byte_arr.getvalue(), media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Framing failed: {e}")
 
 
 @router.post("/generate", response_model=GenerateResponse, dependencies=[Depends(verify_token)])
@@ -333,6 +453,77 @@ async def ui_trigger_capture(request: CaptureTriggerRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/screenshots", dependencies=[Depends(verify_token)])
+def list_screenshots():
+    """Lists all screenshots available in the storage directory."""
+    from config.settings import STORAGE_DIR
+    path = STORAGE_DIR / "screenshots"
+    if not path.exists():
+        return {"screenshots": []}
+    
+    files = []
+    for f in os.listdir(path):
+        if f.endswith(".png") or f.endswith(".jpg"):
+            files.append({
+                "filename": f,
+                "path": f"storage/data/screenshots/{f}",
+                "timestamp": os.path.getmtime(path / f)
+            })
+    
+    # Sort by newest first
+    files.sort(key=lambda x: x["timestamp"], reverse=True)
+    return {"screenshots": files}
+
+
+@router.post("/screenshot/recommend", dependencies=[Depends(verify_token)])
+async def recommend_screenshot(request: RecommendRequest):
+    """Uses AI to recommend where to post a specific screenshot."""
+    from config.settings import STORAGE_DIR
+    path = STORAGE_DIR / "screenshots" / request.filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+
+    # Simple approach: use the filename or associated OCR if we can find it
+    system_prompt = (
+        "You are a social media strategist for developers. "
+        "Analyze the provided context and recommend which platform (X, LinkedIn, or a Technical Article) "
+        "this screenshot is best suited for and WHY. "
+        "Keep it brief: 2-3 sentences max."
+    )
+    
+    # Try to find associated OCR from current draft if it matches
+    ocr_context = "A screenshot of code or a development tool."
+    if CURRENT_DRAFT.exists():
+        with open(CURRENT_DRAFT, "r") as f:
+            draft = json.load(f)
+            for s in draft.get("payload", {}).get("screenshots", []):
+                if s["path"].endswith(request.filename):
+                    ocr_context = f"OCR Context: {s.get('ocr_text', 'No OCR available')}"
+                    break
+
+    try:
+        recommendation = await _ai_call("deep_tech", system_prompt, f"Context: {ocr_context}")
+        return {"success": True, "recommendation": recommendation}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Recommendation failed: {e}")
+
+
+@router.delete("/prompts/{format_key}", dependencies=[Depends(verify_token)])
+def delete_prompt(format_key: str):
+    """Deletes a prompt definition."""
+    definitions = load_prompt_definitions()
+    if format_key in definitions:
+        del definitions[format_key]
+        try:
+            with open(PROMPTS_FILE, "w", encoding="utf-8") as f:
+                json.dump(definitions, f, indent=4)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+
+
 @router.get("/prompts", dependencies=[Depends(verify_token)])
 def get_prompts():
     """Returns all customizable prompt definitions."""
@@ -431,9 +622,9 @@ async def generate_article(request: ArticleGenerateRequest):
             sprint_context = f.read()
 
     user_msg = (
-        f"Raw Thoughts: {draft['payload']['user_message']}\n\n"
-        f"OCR Context: {draft['payload']['ocr_text']}\n\n"
-        f"Git Diff: {draft['payload']['git_diff']}\n\n"
+        f"Raw Thoughts: {draft['payload'].get('user_message', '')}\n\n"
+        f"OCR Context: {draft['payload'].get('ocr_text', '')}\n\n"
+        f"Git Diff: {draft['payload'].get('git_diff', '')}\n\n"
         f"Sprint Context: {sprint_context}"
     )
 

@@ -3,26 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Context Engine | Developer Workspace</title>
+    <title>CONTEXT_ENGINE | TERMINAL_WORKSPACE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-muted: rgba(99, 102, 241, 0.1);
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --bg: #0f0f0f;
-            --surface: #1a1a1a;
-            --surface-elevated: #242424;
-            --border: #2a2a2a;
-            --text-primary: #f0f0f0;
-            --text-secondary: #888888;
-            --radius-std: 8px;
-            --radius-lg: 12px;
-            --transition: 200ms ease;
+            /* Brutalist Monospace Design System */
+            --bg-root: #0a0a0a;        /* near black */
+            --bg-surface: #111111;     /* card/panel bg */
+            --bg-elevated: #1a1a1a;    /* inputs, active states */
+            --border: #2a2a2a;         /* default border */
+            --border-bright: #444444;  /* hover/active border */
+            --text-primary: #e4e4e4;   /* main text */
+            --text-secondary: #666666; /* labels, hints */
+            --text-dim: #333333;       /* very subtle */
+            --accent-green: #00ff88;   /* primary accent — terminal green */
+            --accent-amber: #ffb800;   /* warning, char limits */
+            --accent-red: #ff4444;     /* errors, reject */
+            --accent-blue: #4488ff;    /* links, secondary actions */
+            --accent-purple: #8866ff;  /* AI responses only */
+
+            /* Strict Monospace Sizing */
+            --text-xs: 11px;
+            --text-sm: 13px;
+            --text-base: 14px;
+            --text-lg: 16px;
+            --text-xl: 20px;
+            --text-2xl: 28px;
         }
 
         * {
@@ -30,221 +38,299 @@
             margin: 0;
             padding: 0;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-root);
             color: var(--text-primary);
             height: 100vh;
             display: flex;
+            flex-direction: column;
             overflow: hidden;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeIn 0.5s ease forwards;
+            font-size: var(--text-base);
+            line-height: 1.5;
         }
 
-        @keyframes fadeIn {
-            to { opacity: 1; transform: translateY(0); }
+        textarea, input {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- Fullscreen Boot Overlay --- */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-root);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            padding: 32px;
+            box-sizing: border-box;
+            color: var(--accent-green);
+            line-height: 1.6;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .boot-screen.hidden {
+            display: none !important;
+        }
+        .boot-log-container {
+            max-width: 800px;
+            white-space: pre-wrap;
+            font-size: var(--text-sm);
+        }
+
+        /* --- Toast System Redesigned as Brutalist Banners --- */
+        .toast-brutalist {
+            position: fixed;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 480px;
+            max-width: calc(100% - 32px);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+        .toast-brutalist.hidden {
+            display: none !important;
+        }
+        .toast-brutalist.success .toast-title { color: var(--accent-green); }
+        .toast-brutalist.success .toast-body { border-color: var(--accent-green); color: var(--accent-green); }
+        .toast-brutalist.error .toast-title { color: var(--accent-red); }
+        .toast-brutalist.error .toast-body { border-color: var(--accent-red); color: var(--accent-red); }
+        .toast-brutalist.info .toast-title { color: var(--accent-blue); }
+        .toast-brutalist.info .toast-body { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .toast-header {
+            display: flex;
+            align-items: center;
+            font-size: var(--text-xs);
+            height: 18px;
+            user-select: none;
+            margin-bottom: -1px;
+        }
+        .toast-title { padding-right: 4px; white-space: nowrap; font-weight: bold; }
+        .toast-line { flex: 1; border-bottom: 1px solid var(--border); height: 9px; }
+        .toast-limit { padding-left: 4px; white-space: nowrap; }
+        .toast-body {
+            background: var(--bg-surface);
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+            font-size: var(--text-sm);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        /* --- Main Workspace Layout --- */
+        .app-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 24px);
         }
 
         /* --- Sidebar (Left) --- */
-        aside {
-            width: 240px;
-            background: var(--surface);
+        aside.sidebar {
+            width: 220px;
+            background: var(--bg-surface);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
             z-index: 50;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
-        .sidebar-header {
-            padding: 24px;
+        .sidebar-logo-container {
+            padding: 16px;
             display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-box {
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: 800;
-            color: white;
-            font-size: 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
         }
-
-        .logo-text {
-            font-weight: 700;
-            font-size: 16px;
-            letter-spacing: -0.02em;
-        }
-
-        .version-badge {
-            font-size: 10px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            padding: 1px 4px;
-            border-radius: 4px;
-            margin-left: 4px;
+        .logo-ascii {
+            font-size: 11px;
+            line-height: 1.2;
+            color: var(--accent-green);
+            white-space: pre;
+            user-select: none;
         }
 
         .nav-group {
-            flex: 1;
-            padding: 12px;
+            padding: 16px 0;
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: var(--radius-std);
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
+            font-size: var(--text-sm);
             background: transparent;
+            border: none;
+            color: var(--text-secondary);
             text-align: left;
+            padding: 8px 16px;
+            width: 100%;
+            cursor: pointer;
+            outline: none;
+            border-left: 2px solid transparent;
+            transition: color 0.1s, border-color 0.1s;
         }
-
         .nav-item:hover {
-            background: var(--surface-elevated);
             color: var(--text-primary);
         }
-
         .nav-item.active {
-            background: var(--primary-muted);
-            color: var(--primary);
+            border-left: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            font-weight: bold;
         }
 
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border);
+        .sidebar-narrative-container {
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 8px;
         }
-
-        .narrative-display {
-            font-size: 12px;
+        .sidebar-section-label {
+            font-size: var(--text-xs);
             color: var(--text-secondary);
-            line-height: 1.5;
-            background: var(--bg);
-            padding: 12px;
-            border-radius: var(--radius-std);
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .narrative-box {
+            background: var(--bg-surface);
             border: 1px solid var(--border);
-        }
-
-        .sprint-mode-card {
-            background: var(--surface-elevated);
-            border-radius: var(--radius-std);
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 8px;
             cursor: pointer;
-        }
-
-        .sprint-indicator {
+            min-height: 52px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+        }
+        .narrative-content {
+            font-size: var(--text-xs);
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+            color: var(--accent-green);
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .sidebar-sprint-container {
+            padding: 0 16px 16px 16px;
+        }
+        .sprint-mode-btn {
+            font-size: var(--text-xs);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            transition: border-color 0.1s, color 0.1s;
+        }
+        .sprint-mode-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .sprint-active-text {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .sidebar-providers-container {
+            padding: 16px;
+            margin-top: auto;
+            border-top: 1px solid var(--border);
+            background: var(--bg-surface);
+        }
+        .provider-list {
+            display: flex;
+            flex-direction: column;
             gap: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            margin-top: 8px;
         }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--text-secondary);
-            border-radius: 50%;
-        }
-
-        .sprint-active .pulse-dot {
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .provider-status {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
         .provider-item {
             display: flex;
             align-items: center;
-            gap: 6px;
+            font-size: var(--text-xs);
+        }
+        .provider-dot {
+            margin-right: 8px;
+            color: var(--text-dim);
+            transition: color 0.2s;
+        }
+        .provider-dot.online {
+            color: var(--accent-green);
+        }
+        .provider-name {
+            flex: 1;
+            color: var(--text-primary);
+        }
+        .provider-status {
+            color: var(--text-secondary);
         }
 
-        .status-light {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .status-light.online { background: var(--success); }
-
-        /* --- Main Content (Middle) --- */
-        main {
+        /* --- Main Content Section --- */
+        main.main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             position: relative;
+            background: var(--bg-root);
         }
 
         .main-header {
-            height: 64px;
-            padding: 0 32px;
+            height: 48px;
+            padding: 0 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: var(--bg-root);
+            flex-shrink: 0;
         }
-
         .tabs {
             display: flex;
-            gap: 32px;
+            gap: 16px;
             height: 100%;
         }
-
         .tab {
             height: 100%;
             display: flex;
             align-items: center;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: var(--text-sm);
+            font-weight: 500;
             color: var(--text-secondary);
             cursor: pointer;
             position: relative;
-            transition: var(--transition);
+            transition: color 0.1s;
+            user-select: none;
         }
-
-        .tab:hover { color: var(--text-primary); }
-        .tab.active { color: var(--primary); }
+        .tab:hover {
+            color: var(--text-primary);
+        }
+        .tab.active {
+            color: var(--accent-green);
+        }
         .tab.active::after {
             content: '';
             position: absolute;
@@ -252,997 +338,1632 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: var(--primary);
+            background: var(--accent-green);
         }
 
-        .editor-container {
+        .content-area {
             flex: 1;
-            overflow-y: auto;
-            padding: 32px;
             display: flex;
-            flex-direction: column;
-            gap: 24px;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
+            overflow: hidden;
         }
 
-        .active-editor-area {
+        /* --- Custom Responsive ASCII Box Panels --- */
+        .ascii-box {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .ascii-box-header {
+            display: flex;
+            align-items: center;
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            height: 20px;
+            user-select: none;
+        }
+        .ascii-box-title {
+            padding-right: 4px;
+            white-space: nowrap;
+        }
+        .ascii-box-line {
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+            height: 10px;
+            margin: 0 4px;
+        }
+        .ascii-box-limit {
+            padding-left: 4px;
+            white-space: nowrap;
+        }
+        .ascii-box-body {
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
+            padding: 16px;
             position: relative;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
         }
 
-        #post-editor {
+        /* --- Post Editor Workspace --- */
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 16px;
+            overflow-y: auto;
             width: 100%;
+        }
+
+        .editor-inner-footer {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 8px;
+        }
+        .undo-btn {
+            font-size: var(--text-xs);
+            color: var(--accent-purple);
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+            user-select: none;
+        }
+        .undo-btn:hover {
+            color: var(--accent-green);
+        }
+
+        /* --- Screenshot Strip --- */
+        .screenshot-strip {
+            display: flex;
+            gap: 12px;
+        }
+        .shot-card {
+            width: 150px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .shot-card.accepted {
+            border-color: var(--accent-green);
+        }
+        .shot-card.rejected {
+            opacity: 0.4;
+        }
+        .shot-card-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            font-size: var(--text-xs);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .shot-card-tag {
+            font-weight: bold;
+        }
+        .shot-preview {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            border-bottom: 1px solid var(--border);
+        }
+        .shot-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .shot-controls-brutalist {
+            display: flex;
+        }
+        .shot-btn-brutalist {
             flex: 1;
             background: transparent;
             border: none;
-            color: var(--text-primary);
-            font-size: 18px;
-            line-height: 1.6;
-            resize: none;
-            outline: none;
-            font-family: inherit;
-        }
-
-        .editor-footer {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-top: 16px;
-            gap: 12px;
-        }
-
-        .char-counter {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .char-counter svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-
-        .char-counter circle {
-            fill: none;
-            stroke-width: 3;
-            stroke-linecap: round;
-        }
-
-        .char-counter .bg { stroke: var(--border); }
-        .char-counter .progress {
-            stroke: var(--primary);
-            transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;
-        }
-
-        .char-count-text {
-            position: absolute;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-secondary);
-        }
-
-        /* --- Carousel --- */
-        .carousel-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .carousel-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .carousel {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-
-        .carousel::-webkit-scrollbar { height: 4px; }
-        .carousel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-        .thumb {
-            width: 120px;
-            aspect-ratio: 16/9;
-            background: #000;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            position: relative;
-            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: var(--text-xs);
+            padding: 6px 0;
             cursor: pointer;
-            overflow: hidden;
-            transition: var(--transition);
+            color: var(--text-primary);
+            text-align: center;
+            outline: none;
+        }
+        .shot-btn-brutalist.btn-accept {
+            color: var(--accent-green);
+            border-right: 1px solid var(--border);
+        }
+        .shot-btn-brutalist.btn-reject {
+            color: var(--accent-red);
+        }
+        .shot-btn-brutalist.btn-download {
+            color: var(--accent-blue);
+            width: 100%;
+        }
+        .shot-btn-brutalist:hover {
+            background: var(--bg-elevated);
+        }
+        .shot-status-label-brutalist {
+            padding: 6px;
+            font-size: var(--text-xs);
+            text-align: center;
+            color: var(--accent-green);
+            font-weight: bold;
         }
 
-        .thumb:hover { border-color: var(--primary); transform: scale(1.05); }
-        .thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .thumb-tag {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 8px;
-            font-weight: 800;
-            padding: 2px 4px;
-            border-radius: 3px;
-            text-transform: uppercase;
+        .capture-card {
+            cursor: pointer;
+            border: 1px dashed var(--border);
+            transition: border-color 0.1s;
         }
-        .thumb-remove {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 16px;
-            height: 16px;
-            background: var(--error);
-            color: white;
-            border-radius: 50%;
+        .capture-card:hover {
+            border-color: var(--accent-green);
+        }
+        .capture-card:hover .capture-plus-sign,
+        .capture-card:hover .capture-label {
+            color: var(--accent-green);
+        }
+        .capture-card-inner {
+            flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            opacity: 0;
-            transition: var(--transition);
+            padding: 12px 0;
+            color: var(--text-secondary);
         }
-        .thumb:hover .thumb-remove { opacity: 1; }
+        .capture-plus-sign {
+            font-size: var(--text-xl);
+            font-weight: 300;
+        }
+        .capture-label {
+            font-size: var(--text-xs);
+            font-weight: bold;
+            margin-top: 2px;
+        }
 
-        /* --- Chatbox --- */
-        .chat-section {
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            padding: 24px 32px;
+        /* --- Article Options Strip --- */
+        #article-options {
+            margin-top: 8px;
+        }
+
+        /* --- AI Command Bar --- */
+        .command-section {
+            background: var(--bg-root);
+            padding: 16px 24px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 8px;
+            flex-shrink: 0;
         }
-
-        .chat-history {
-            max-height: 200px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-right: 8px;
-        }
-
-        .chat-message {
-            padding: 10px 14px;
-            border-radius: var(--radius-std);
-            font-size: 14px;
-            max-width: 85%;
-            line-height: 1.5;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-user {
-            align-self: flex-end;
-            background: var(--primary);
-            color: white;
-        }
-
-        .message-ai {
-            align-self: flex-start;
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .chat-suggestions {
+        .chip-container {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-
-        .suggestion-chip {
-            padding: 6px 12px;
-            background: var(--surface-elevated);
+        .chip {
+            padding: 4px 10px;
+            background: transparent;
             border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
+            font-size: var(--text-xs);
             color: var(--text-secondary);
             cursor: pointer;
-            transition: var(--transition);
+            transition: border-color 0.1s, color 0.1s;
+            user-select: none;
+        }
+        .chip:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
         }
 
-        .suggestion-chip:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: var(--primary-muted);
-        }
-
-        .chat-input-bar {
-            background: var(--surface-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-std);
-            padding: 4px 4px 4px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .chat-input-bar input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            font-size: 14px;
-            padding: 10px 0;
-        }
-
-        .send-btn {
-            width: 36px;
-            height: 36px;
-            background: var(--primary);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-
-        .send-btn:hover { background: #4f46e5; }
-
-        /* --- Right Panel --- */
-        .right-panel {
-            width: 340px;
-            background: var(--bg);
+        /* --- Right Preview Panel --- */
+        .preview-panel {
+            width: 280px;
+            background: var(--bg-root);
             border-left: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             padding: 24px;
-            gap: 24px;
+            gap: 16px;
             overflow-y: auto;
+            flex-shrink: 0;
         }
 
-        .panel-title {
-            font-size: 12px;
-            font-weight: 800;
+        .x-mockup-terminal, .li-mockup-terminal, .pr-preview-terminal, .article-controls-terminal {
+            font-size: var(--text-sm);
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+        .mockup-header-line {
+            font-size: var(--text-xs);
             color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
-
-        /* Phone Mockup */
-        .preview-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .mockup-body-text {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            margin-bottom: 12px;
         }
-
-        .x-mockup {
-            background: white;
-            border-radius: 24px;
-            padding: 16px;
-            color: black;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 100%;
+        .mockup-image {
+            width: 100%;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 12px;
+            display: none;
         }
-
-        .x-header { display: flex; gap: 10px; margin-bottom: 12px; }
-        .x-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e1e8ed; }
-        .x-name { font-weight: 700; font-size: 15px; }
-        .x-handle { color: #536471; font-weight: 400; font-size: 14px; }
-        .x-body { font-size: 15px; line-height: 1.3; margin-bottom: 12px; white-space: pre-wrap; }
-        .x-image { width: 100%; border-radius: 12px; border: 1px solid #eff3f4; overflow: hidden; margin-bottom: 12px; }
-        .x-image img { width: 100%; display: block; }
-        .x-footer { display: flex; justify-content: space-between; color: #536471; font-size: 13px; padding-top: 4px; border-top: 1px solid #eff3f4; }
-
-        .li-mockup {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            color: rgba(0,0,0,0.9);
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        .mockup-image.active {
+            display: block;
         }
-        .li-header { display: flex; gap: 8px; margin-bottom: 10px; }
-        .li-avatar { width: 48px; height: 48px; background: #e1e8ed; }
-        .li-name { font-weight: 600; font-size: 14px; }
-        .li-headline { font-size: 12px; color: rgba(0,0,0,0.6); }
-        .li-body { font-size: 14px; line-height: 1.4; margin-bottom: 8px; }
-        .li-see-more { color: rgba(0,0,0,0.6); font-weight: 600; cursor: pointer; }
-
-        .publish-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .mockup-image img {
+            width: 100%;
+            display: block;
         }
-
-        .btn {
-            padding: 14px;
-            border-radius: var(--radius-std);
-            font-weight: 700;
-            font-size: 14px;
+        .mockup-footer-stats {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            border-top: 1px dashed var(--border);
+            padding-top: 8px;
+            margin-top: 12px;
+        }
+        .li-see-more {
+            color: var(--accent-blue);
+            font-weight: bold;
             cursor: pointer;
-            transition: var(--transition);
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            display: block;
+            margin-bottom: 12px;
         }
 
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
-        .btn-secondary { background: var(--surface-elevated); color: var(--text-primary); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: var(--surface); }
+        /* PR Preview Styles */
+        .pr-preview-terminal h1 {
+            font-size: var(--text-lg);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: var(--accent-blue);
+        }
+        .pr-preview-terminal h2 {
+            font-size: var(--text-base);
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 2px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            color: var(--accent-green);
+        }
+        .pr-preview-terminal code {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 1px 4px;
+            font-size: var(--text-sm);
+        }
 
-        .rating-widget {
+        /* Article Structure TOC Styles */
+        .toc-title {
+            font-weight: bold;
+            color: var(--accent-green);
+            margin-bottom: 12px;
+            font-size: var(--text-xs);
+        }
+        .toc-list {
+            list-style: none;
             display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-left: 0;
+        }
+        .toc-item {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding-left: 8px;
+            border-left: 2px solid var(--border);
+            transition: color 0.1s, border-color 0.1s;
+        }
+        .toc-item:hover {
+            color: var(--accent-green);
+            border-left-color: var(--accent-green);
+        }
+        .toc-h3 {
+            margin-left: 12px;
+        }
+        .article-stats-box {
+            margin-top: 16px;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+        .stats-label {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        /* --- Brutalist Monospace Buttons --- */
+        .btn-brutalist {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: var(--text-sm);
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: border-color 0.1s, color 0.1s;
+            outline: none;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 16px;
-            background: var(--surface);
-            border-radius: var(--radius-std);
+            user-select: none;
+        }
+        .btn-brutalist:hover {
+            border-color: var(--accent-green) !important;
+            color: var(--accent-green) !important;
+            background: transparent !important;
+        }
+        .btn-primary-brutalist {
+            background: var(--accent-green);
+            color: var(--bg-root);
+            border-color: var(--accent-green);
+            font-weight: bold;
+        }
+        .btn-primary-brutalist:hover {
+            background: transparent !important;
+            color: var(--accent-green) !important;
+            border-color: var(--accent-green) !important;
+        }
+
+        /* --- Settings & Dynamic Subviews CSS --- */
+        .prompt-card {
             border: 1px solid var(--border);
+            background: var(--bg-surface);
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .prompt-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .prompt-input-group label {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .prompt-field {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 10px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: var(--text-sm);
+            outline: none;
+            caret-color: var(--accent-green);
+            width: 100%;
+        }
+        .prompt-field:focus {
+            border-color: var(--accent-green);
+        }
+        .prompt-area {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.5;
         }
 
-        .star {
-            font-size: 20px;
-            color: var(--border);
-            cursor: pointer;
-            transition: var(--transition);
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .gallery-card {
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            display: flex;
+            flex-direction: column;
+        }
+        .gallery-img-box {
+            width: 100%;
+            height: 130px;
+            background: #000;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .gallery-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .gallery-info {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .gallery-meta {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+        }
+        .gallery-recommendation {
+            font-size: var(--text-xs);
+            color: var(--accent-purple);
+            border: 1px solid var(--accent-purple);
+            padding: 6px;
+            margin-bottom: 4px;
         }
 
-        .star.active { color: var(--warning); }
-
-        /* Utility */
-        .hidden { display: none !important; }
-        .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-elevated) 50%, var(--surface) 75%); background-size: 200% 100%; animation: skeleton 1.5s infinite; }
-        @keyframes skeleton { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-
-        #toast {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            background: var(--surface-elevated);
-            color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius-std);
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* --- Vim-Style Fixed Bottom Status Bar --- */
+        .vim-status-bar {
+            height: 24px;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: var(--text-xs);
+            font-weight: 500;
+            user-select: none;
+            flex-shrink: 0;
+            color: var(--text-primary);
+        }
+        .status-left {
             display: flex;
             align-items: center;
             gap: 12px;
-            z-index: 1000;
-            transform: translateX(120%);
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #toast.show { transform: translateX(0); }
+        .status-mode {
+            color: var(--bg-root);
+            background: var(--accent-green);
+            font-weight: bold;
+            padding: 0 6px;
+        }
+        .status-channel {
+            color: var(--accent-blue);
+        }
+        .status-provider {
+            color: var(--text-secondary);
+        }
+        .status-center {
+            color: var(--accent-purple);
+            font-weight: bold;
+        }
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-today {
+            color: var(--text-secondary);
+        }
+        .status-streak {
+            color: var(--accent-amber);
+            font-weight: bold;
+        }
 
-        /* Responsive */
-        @media (max-width: 1100px) {
-            .right-panel { display: none; }
-        }
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-            .nav-group { flex-direction: row; overflow-x: auto; padding: 8px; }
-            .sidebar-footer, .sidebar-header { display: none; }
-            .editor-container { padding: 16px; }
-        }
+        /* Utility helper */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="toast">
-        <span id="toast-msg">Post published successfully!</span>
+    <!-- Terminal Boot Sequence Overlay -->
+    <div id="boot-overlay" class="boot-screen">
+        <div id="boot-log" class="boot-log-container"></div>
     </div>
 
-    <!-- Sidebar (Left) -->
-    <aside>
-        <div class="sidebar-header">
-            <div class="logo-box">C</div>
-            <div class="logo-text">Context Engine <span class="version-badge">v3.0</span></div>
+    <!-- Brutalist Banner Toast Banners -->
+    <div id="toast" class="toast-brutalist hidden">
+        <div class="toast-header">
+            <span class="toast-title" id="toast-title">┌─ SUCCESS</span>
+            <span class="toast-line"></span>
+            <span class="toast-limit">─┐</span>
         </div>
-
-        <nav class="nav-group">
-            <button class="nav-item active" onclick="switchMainView('draft')">
-                <span>Draft Room</span>
-            </button>
-            <button class="nav-item" onclick="switchMainView('article')">
-                <span>Article Mode</span>
-            </button>
-            <button class="nav-item" onclick="switchMainView('history')">
-                <span>History</span>
-            </button>
-            <button class="nav-item" onclick="switchMainView('settings')">
-                <span>Settings</span>
-            </button>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="panel-title">Narrative</div>
-            <div class="narrative-display" id="sidebar-narrative">No narrative defined. Click settings to update.</div>
-
-            <div class="sprint-mode-card" id="sprint-toggle" onclick="toggleSprint()">
-                <div class="sprint-indicator">
-                    <div class="pulse-dot"></div>
-                    <span>Sprint Mode</span>
-                </div>
-                <div class="toggle-switch"></div>
-            </div>
-
-            <div class="provider-status">
-                <div class="provider-item"><div class="status-light online" id="light-groq"></div> Groq</div>
-                <div class="provider-item"><div class="status-light online" id="light-deepseek"></div> DeepSeek</div>
-                <div class="provider-item"><div class="status-light online" id="light-gemini"></div> Gemini</div>
-                <div class="provider-item"><div class="status-light online" id="light-kimi"></div> Kimi</div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Workspace (Middle) -->
-    <main>
-        <header class="main-header">
-            <div class="tabs" id="format-tabs">
-                <div class="tab active" data-format="deep_tech">X Post</div>
-                <div class="tab" data-format="linkedin">LinkedIn</div>
-                <div class="tab" data-format="pr_generator">PR Description</div>
-                <div class="tab" data-format="quick_win">Quick Win</div>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;" onclick="triggerNewCapture()">
-                    New Capture (Ctrl+Shift+P)
-                </button>
-            </div>
-        </header>
-
-        <div class="editor-container" id="view-draft">
-            <div class="active-editor-area">
-                <textarea id="post-editor" placeholder="Start typing or use the chat below to generate content..."></textarea>
-                <div class="editor-footer">
-                    <div class="char-counter">
-                        <svg viewBox="0 0 36 36">
-                            <circle class="bg" cx="18" cy="18" r="16"></circle>
-                            <circle class="progress" cx="18" cy="18" r="16" stroke-dasharray="0 100" id="char-ring"></circle>
-                        </svg>
-                        <span class="char-count-text" id="char-val">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-section">
-                <div class="carousel-title">Context Screenshots</div>
-                <div class="carousel" id="shot-carousel">
-                    <!-- Skeleton placeholder -->
-                    <div class="thumb skeleton"></div>
-                    <div class="thumb skeleton"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Article View -->
-        <div class="editor-container hidden" id="view-article">
-            <div class="active-editor-area" style="min-height: 500px;">
-                <textarea id="article-editor" style="font-size: 16px;" placeholder="Full article markdown will appear here..."></textarea>
-            </div>
-            <button class="btn btn-primary" onclick="generateArticle()">Generate Full Article</button>
-        </div>
-
-        <!-- History View -->
-        <div class="editor-container hidden" id="view-history">
-            <div class="panel-title" style="margin-bottom: 20px;">Published History</div>
-            <div id="history-grid" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
-                <!-- History items -->
-            </div>
-        </div>
-
-        <!-- Settings View -->
-        <div class="editor-container hidden" id="view-settings">
-            <div class="panel-title" style="margin-bottom: 20px;">Settings</div>
-            <div class="active-editor-area" style="min-height: auto; gap: 20px;">
-                <div class="input-group">
-                    <label style="display:block; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Project Narrative</label>
-                    <textarea id="settings-narrative" style="min-height: 100px; font-size: 14px; background: var(--bg); padding: 12px; border: 1px solid var(--border); border-radius: 8px;" placeholder="Describe what you are building..."></textarea>
-                </div>
-                <div class="input-group">
-                    <label style="display:block; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Session Token</label>
-                    <input type="password" id="settings-token" style="width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; outline: none;">
-                </div>
-                <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
-            </div>
-        </div>
-
-        <section class="chat-section">
-            <div class="chat-history" id="chat-flow">
-                <div class="chat-message message-ai">
-                    Hello! I've analyzed your coding session. Ready to turn those screenshots into a viral post?
-                </div>
-            </div>
-            <div class="chat-suggestions" id="chat-chips">
-                <div class="suggestion-chip" onclick="applySuggestion('Make it shorter')">Make it shorter</div>
-                <div class="suggestion-chip" onclick="applySuggestion('More technical')">More technical</div>
-                <div class="suggestion-chip" onclick="applySuggestion('Add a hook')">Add a hook</div>
-                <div class="suggestion-chip" onclick="applySuggestion('LinkedIn format')">LinkedIn format</div>
-                <div class="suggestion-chip" onclick="applySuggestion('Make it viral')">Make it viral</div>
-            </div>
-            <div class="chat-input-bar">
-                <input type="text" id="chat-input" placeholder="Ask AI to refine this post... (Ctrl+Enter)">
-                <button class="send-btn" onclick="sendChatMessage()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
-            </div>
-        </section>
-    </main>
-
-    <!-- Right Panel -->
-    <div class="right-panel">
-        <div class="panel-title">Live Preview</div>
-        <div class="preview-container">
-            <!-- X Mockup -->
-            <div id="preview-x" class="x-mockup">
-                <div class="x-header">
-                    <div class="x-avatar"></div>
-                    <div>
-                        <div class="x-name">Developer</div>
-                        <div class="x-handle">@buildinginpublic</div>
-                    </div>
-                </div>
-                <div class="x-body" id="mock-x-text">Loading preview...</div>
-                <div class="x-image" id="mock-x-img"></div>
-                <div class="x-footer">
-                    <span>💬 0</span>
-                    <span>🔁 0</span>
-                    <span>❤️ 0</span>
-                    <span>📊 0</span>
-                </div>
-            </div>
-
-            <!-- LinkedIn Mockup (Hidden by default) -->
-            <div id="preview-linkedin" class="li-mockup hidden">
-                <div class="li-header">
-                    <div class="li-avatar"></div>
-                    <div>
-                        <div class="li-name">Developer Name</div>
-                        <div class="li-headline">Software Engineer | Building in Public</div>
-                        <div style="font-size: 11px; color: rgba(0,0,0,0.6);">Just now • 🌐</div>
-                    </div>
-                </div>
-                <div class="li-body">
-                    <span id="mock-li-text">Loading preview...</span>
-                    <span class="li-see-more">...see more</span>
-                </div>
-                <div class="x-image" id="mock-li-img"></div>
-                <div style="padding: 10px 0; border-top: 1px solid #eee; display: flex; gap: 16px; font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.6);">
-                    <span>👍 Like</span>
-                    <span>💬 Comment</span>
-                    <span>🔁 Repost</span>
-                    <span>🚀 Send</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="publish-controls">
-            <div class="panel-title">Actions</div>
-            <button class="btn btn-primary" id="publish-btn" onclick="publishPost()">
-                <span>Publish to X</span>
-            </button>
-            <button class="btn btn-secondary" onclick="copyToClipboard()">
-                <span>Copy to Clipboard</span>
-            </button>
-        </div>
-
-        <div id="rating-container" class="hidden">
-            <div class="panel-title">Rate this output</div>
-            <div class="rating-widget">
-                <span class="star" data-val="1">★</span>
-                <span class="star" data-val="2">★</span>
-                <span class="star" data-val="3">★</span>
-                <span class="star" data-val="4">★</span>
-                <span class="star" data-val="5">★</span>
-            </div>
+        <div class="toast-body" id="toast-body">
+            [OK] Published successfully!
         </div>
     </div>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation (Left) -->
+        <aside class="sidebar">
+            <div class="sidebar-logo-container">
+                <div class="logo-ascii">┌─────────────────────┐
+│ > CONTEXT_ENGINE    │
+│   v3.0 [BETA]       │
+└─────────────────────┘</div>
+            </div>
+            
+            <nav class="nav-group">
+                <button class="nav-item active" id="nav-draft" onclick="setView('draft')">[DRAFT_ROOM]</button>
+                <button class="nav-item" id="nav-article" onclick="setView('article')">[ARTICLE_MODE]</button>
+                <button class="nav-item" id="nav-gallery" onclick="setView('gallery')">[GALLERY]</button>
+                <button class="nav-item" id="nav-prompts" onclick="setView('prompts')">[PROMPTS]</button>
+                <button class="nav-item" id="nav-history" onclick="setView('history')">[HISTORY]</button>
+                <button class="nav-item" id="nav-settings" onclick="setView('settings')">[SETTINGS]</button>
+            </nav>
+
+            <div class="sidebar-narrative-container">
+                <div class="sidebar-section-label">NARRATIVE</div>
+                <div class="narrative-box" onclick="setView('settings')">
+                    <div class="narrative-content">> <span id="side-narrative">// define your mission</span><span class="cursor-blink">▋</span></div>
+                </div>
+            </div>
+
+            <div class="sidebar-sprint-container">
+                <div class="sprint-mode-btn" onclick="toggleSprint()">
+                    SPRINT_MODE <span id="side-sprint-status">[OFF]</span>
+                </div>
+            </div>
+
+            <div class="sidebar-providers-container">
+                <div class="sidebar-section-label">PROVIDERS:</div>
+                <div class="provider-list">
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-groq">●</span>
+                        <span class="provider-name">GROQ</span>
+                        <span class="provider-status" id="status-groq">[ACTIVE]</span>
+                    </div>
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-deepseek">●</span>
+                        <span class="provider-name">DEEPSEEK</span>
+                        <span class="provider-status" id="status-deepseek">[ACTIVE]</span>
+                    </div>
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-gemini">●</span>
+                        <span class="provider-name">GEMINI</span>
+                        <span class="provider-status" id="status-gemini">[ACTIVE]</span>
+                    </div>
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-kimi">●</span>
+                        <span class="provider-name">KIMI</span>
+                        <span class="provider-status" id="status-kimi">[ACTIVE]</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace (Center & Right) -->
+        <main class="main-content" id="main-container">
+            <header class="main-header">
+                <div class="tabs" id="tab-bar">
+                    <div class="tab active" data-tab="deep_tech">[X_POST]</div>
+                    <div class="tab" data-tab="linkedin">[LINKEDIN]</div>
+                    <div class="tab" data-tab="pr_generator">[PR_DESC]</div>
+                    <div class="tab" data-tab="quick_win">[QUICK_WIN]</div>
+                </div>
+                <button class="btn-brutalist" onclick="triggerCapture()">[NEW_CAPTURE]</button>
+            </header>
+
+            <div class="content-area">
+                <!-- Left Main Input Section -->
+                <section class="editor-section" id="editor-view">
+                    <div class="ascii-box" style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ DRAFT</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit" id="char-count">[0/280]─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="flex: 1; display: flex; flex-direction: column; padding: 12px;">
+                            <textarea id="main-editor" placeholder="Generating post content...▋" style="flex: 1; width: 100%; height: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
+                            <div class="editor-inner-footer">
+                                <span class="undo-btn" id="undo-btn" onclick="undoRefinement()">← [UNDO_LAST_CHANGE]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article Action Options Strip -->
+                    <div id="article-options" class="hidden">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <button class="btn-brutalist btn-primary-brutalist" onclick="generateArticle()">[GENERATE_ARTICLE]</button>
+                            <button class="btn-brutalist" onclick="exportArticle()">[EXPORT_MD]</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hidden subviews loaded dynamically in Javascript -->
+                <section class="editor-section hidden" id="settings-view"></section>
+                <section class="editor-section hidden" id="history-view"></section>
+                <section class="editor-section hidden" id="gallery-view"></section>
+                <section class="editor-section hidden" id="prompts-view"></section>
+
+                <!-- Right Side Preview Column -->
+                <aside class="preview-panel" id="preview-panel">
+                    <div class="ascii-box" style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title" id="preview-title">┌─ PREVIEW</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; gap: 16px;">
+                            <div id="mockup-container">
+                                <!-- X Post Terminal Mockup -->
+                                <div id="m-x" class="x-mockup-terminal">
+                                    <div class="mockup-header-line">@handle · just now</div>
+                                    <div class="mockup-body-text" id="m-x-text"></div>
+                                    <div class="mockup-image" id="m-x-img"></div>
+                                    <div class="mockup-footer-stats">[♥ 0] [↺ 0] [✦ 0] [↗ 0]</div>
+                                </div>
+
+                                <!-- LinkedIn Terminal Mockup -->
+                                <div id="m-li" class="li-mockup-terminal hidden">
+                                    <div class="mockup-header-line">DEVELOPER NAME · software engineer | building in public</div>
+                                    <div class="mockup-body-text truncated" id="m-li-text"></div>
+                                    <span class="li-see-more">...see more</span>
+                                    <div class="mockup-footer-stats">[👍 LIKE] [💬 COMMENT] [🔁 REPOST]</div>
+                                </div>
+
+                                <!-- Github PR Preview Mockup -->
+                                <div id="m-pr" class="pr-preview-terminal hidden">
+                                    <div id="m-pr-content"></div>
+                                </div>
+
+                                <!-- Article TOC Preview Mockup -->
+                                <div id="m-article" class="article-controls-terminal hidden">
+                                    <div class="toc-title">TABLE_OF_CONTENTS</div>
+                                    <div class="toc-list" id="article-toc"></div>
+                                    <div class="article-stats-box">
+                                        <div class="stats-label">STATS:</div>
+                                        <div id="article-stats">0 words | 0 min read</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column Actions Panel -->
+                    <div class="ascii-box" id="action-stack" style="margin-top: 8px;">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ ACTIONS</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn-brutalist btn-primary-brutalist" id="primary-action-btn" onclick="handlePrimaryAction()">[PUBLISH_TO_X ↗]</button>
+                            <button class="btn-brutalist" onclick="copyContent()">[COPY_TO_CLIPBOARD]</button>
+                            <div id="pr-copy-section" class="hidden" style="display: flex; flex-direction: column; width: 100%;">
+                                <button class="btn-brutalist" onclick="copyPRWithImages()" style="width: 100%;">[COPY_WITH_IMAGES]</button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- AI Commands Input Strip -->
+            <section class="command-section" id="command-area">
+                <div class="chip-container" id="chip-row">
+                    <!-- Chips go here dynamically based on channel -->
+                </div>
+                <div class="ascii-box">
+                    <div class="ascii-box-header">
+                        <span class="ascii-box-title">┌─ AI_REFINE</span>
+                        <span class="ascii-box-line"></span>
+                        <span class="ascii-box-limit">─┐</span>
+                    </div>
+                    <div class="ascii-box-body" style="padding: 4px 8px; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: var(--accent-green); font-size: var(--text-lg); user-select: none;">></span>
+                        <input type="text" id="cmd-input" placeholder="Refine this post... (e.g. 'Make it viral')▋" style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary); font-size: var(--text-sm); height: 32px; caret-color: var(--accent-green);">
+                        <button class="btn-brutalist" style="padding: 4px 12px; font-size: var(--text-xs); font-weight: bold;" onclick="submitRefinement()">[SEND ↵]</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Vim-Style Bottom Status Bar -->
+    <footer class="vim-status-bar">
+        <div class="status-left">
+            <span class="status-mode" id="status-bar-view">[DRAFT_ROOM]</span>
+            <span class="status-channel" id="status-bar-tab">[X_POST]</span>
+            <span class="status-provider" id="status-bar-providers">[NO_AI]</span>
+        </div>
+        <div class="status-center" id="status-bar-ai">
+            <!-- Active AI responses generating spinners go here -->
+        </div>
+        <div class="status-right">
+            <span class="status-today" id="status-bar-posts-today">[0 POSTS TODAY]</span>
+            <span class="status-streak" id="status-bar-streak">[STREAK: 0]</span>
+        </div>
+    </footer>
 
     <script>
         // --- State Management ---
-        let currentDraft = null;
-        let activeFormat = 'deep_tech';
-        let sessionToken = localStorage.getItem('session_token') || '';
-        let charLimit = 280;
-        let isGenerating = false;
+        const state = {
+            view: 'draft', // draft, article, history, settings, gallery, prompts
+            tab: 'deep_tech',
+            token: localStorage.getItem('session_token') || '',
+            draft: null,
+            tabs: {
+                deep_tech: { text: '', undo: [], shots: [] },
+                linkedin: { text: '', undo: [], shots: [] },
+                pr_generator: { text: '', undo: [], shots: [] },
+                quick_win: { text: '', undo: [], shots: [] }
+            },
+            article: { text: '', undo: [], includeCodebase: false },
+            settings: { narrative: '', sprint: false }
+        };
 
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', () => {
-            if (sessionToken) {
-                document.getElementById('settings-token').value = sessionToken;
-                refreshData();
-            } else {
-                switchMainView('settings');
+        const CHIPS = {
+            deep_tech: ["Make it viral", "Add a hook", "Turn into thread", "More punchy", "Rage bait", "Deep tech version"],
+            quick_win: ["Punchier", "Add emoji", "More confident", "Shorter", "Add a number"],
+            linkedin: ["Corporate tone", "Make it viral", "Add statistics", "Thought leadership", "Shorter hook", "Add emojis"],
+            pr_generator: ["More technical", "Add test details", "Simplify language", "Add risk notes", "Add screenshots section"],
+            article: ["Expand intro", "Add code examples", "Make it conversational", "Add conclusion", "Add TL/DR", "More opinionated"]
+        };
+
+        // Custom ASCII Loading spinner characters
+        const SPINNER_CHARS = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        let spinnerInterval = null;
+
+        // --- Terminal Boot Sequence ---
+        const BOOT_LINES = [
+            "> CONTEXT_ENGINE v3.0",
+            "> loading modules...",
+            "> [OK] capture engine",
+            "> [OK] ai providers",
+            "> [OK] publisher",
+            "> [OK] storage",
+            "> ready. press ctrl+shift+p to begin."
+        ];
+
+        function runBootSequence() {
+            const overlay = document.getElementById('boot-overlay');
+            const log = document.getElementById('boot-log');
+            if (!overlay || !log) return;
+
+            let lineIndex = 0;
+            
+            function addLine() {
+                if (lineIndex < BOOT_LINES.length) {
+                    log.innerHTML += BOOT_LINES[lineIndex] + "\n";
+                    lineIndex++;
+                    setTimeout(addLine, 180);
+                } else {
+                    setTimeout(() => {
+                        overlay.style.transition = 'opacity 0.4s ease';
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.classList.add('hidden');
+                        }, 400);
+                    }, 500);
+                }
             }
 
-            setupEventListeners();
-            startPolling();
-        });
+            const bypass = () => {
+                overlay.classList.add('hidden');
+                window.removeEventListener('keydown', keyBypass);
+            };
 
-        function setupEventListeners() {
-            // Tab switching
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    activeFormat = tab.dataset.format;
-                    charLimit = activeFormat === 'deep_tech' ? 280 : 3000;
-                    updatePreviews();
-                    
-                    // Show appropriate mockup
-                    if (activeFormat === 'linkedin') {
-                        document.getElementById('preview-x').classList.add('hidden');
-                        document.getElementById('preview-linkedin').classList.remove('hidden');
-                    } else {
-                        document.getElementById('preview-x').classList.remove('hidden');
-                        document.getElementById('preview-linkedin').classList.add('hidden');
-                    }
-                });
-            });
-
-            // Editor sync
-            const editor = document.getElementById('post-editor');
-            editor.addEventListener('input', () => {
-                updateCharCounter();
-                updatePreviews();
-            });
-
-            // Chat Enter key
-            document.getElementById('chat-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && e.ctrlKey) sendChatMessage();
-            });
-
-            // Rating stars
-            document.querySelectorAll('.star').forEach(star => {
-                star.addEventListener('click', () => {
-                    const val = parseInt(star.dataset.val);
-                    submitRating(val);
-                });
-            });
-        }
-
-        // --- API Helpers ---
-        async function api(endpoint, method = 'GET', body = null) {
-            const options = {
-                method,
-                headers: {
-                    'X-Session-Token': sessionToken,
-                    'Content-Type': 'application/json'
+            const keyBypass = (e) => {
+                if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'P') {
+                    e.preventDefault();
+                    bypass();
                 }
             };
-            if (body) options.body = JSON.stringify(body);
 
-            try {
-                const res = await fetch(endpoint, options);
-                if (res.status === 401) {
-                    showToast("Session token invalid or expired", "error");
-                    return null;
+            overlay.onclick = bypass;
+            window.addEventListener('keydown', keyBypass);
+
+            addLine();
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            runBootSequence();
+            if (!state.token) { 
+                setView('settings'); 
+            } else { 
+                init(); 
+            }
+            setupListeners();
+        });
+
+        async function init() {
+            await syncSettings();
+            await fetchDraft();
+            render();
+            updateVimStats();
+            startPolling();
+        }
+
+        function setupListeners() {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.onclick = () => {
+                    state.tab = t.dataset.tab;
+                    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+                    t.classList.add('active');
+                    render();
+                };
+            });
+
+            document.getElementById('cmd-input').onkeypress = (e) => {
+                if (e.key === 'Enter') submitRefinement();
+            };
+
+            document.getElementById('main-editor').oninput = (e) => {
+                const text = e.target.value;
+                if (state.view === 'article') {
+                    state.article.text = text;
+                } else {
+                    state.tabs[state.tab].text = text;
                 }
-                return await res.json();
-            } catch (e) {
-                console.error("API Error:", e);
+                updatePreview();
+            };
+        }
+
+        // --- API Calls ---
+        async function api(path, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: { 'X-Session-Token': state.token, 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const res = await fetch(path, options);
+                if (res.status === 401) { 
+                    showToast("Session expired", "error"); 
+                    return null; 
+                }
+                return res.json();
+            } catch(e) {
+                console.error("API Call Failed:", e);
                 return null;
             }
         }
 
-        async function refreshData() {
-            const settings = await api('/api/settings');
-            if (settings) {
-                const narrative = settings.project_narrative || "";
-                document.getElementById('sidebar-narrative').innerText = narrative || "No narrative defined.";
-                document.getElementById('settings-narrative').value = narrative;
-                if (settings.sprint_mode) document.getElementById('sprint-toggle').classList.add('sprint-active');
+        async function syncSettings() {
+            const data = await api('/api/settings');
+            if (data) {
+                state.settings.narrative = data.project_narrative;
+                state.settings.sprint = data.sprint_mode;
+                document.getElementById('side-narrative').innerText = data.project_narrative || "No narrative defined.";
+                updateSprintUI(data.sprint_mode);
             }
-            
             const keys = await api('/api/settings/keys');
             if (keys) {
-                for (const [provider, status] of Object.entries(keys)) {
-                    const light = document.getElementById(`light-${provider}`);
-                    if (light) light.className = status ? 'status-light online' : 'status-light';
-                }
+                const onlineProviders = [];
+                ['groq', 'deepseek', 'gemini', 'kimi'].forEach(k => {
+                    const el = document.getElementById(`l-${k}`);
+                    const lbl = document.getElementById(`status-${k}`);
+                    const active = !!keys[k];
+                    
+                    if (el) el.classList.toggle('online', active);
+                    if (lbl) {
+                        lbl.innerText = active ? '[ACTIVE]' : '[MISSING]';
+                        lbl.style.color = active ? 'var(--accent-green)' : 'var(--text-secondary)';
+                    }
+                    if (active) {
+                        onlineProviders.push(k.toUpperCase());
+                    }
+                });
+                document.getElementById('status-bar-providers').innerText = onlineProviders.length > 0 ? `[${onlineProviders.join('/')}]` : '[NO_AI]';
             }
+        }
 
+        async function fetchDraft() {
             const draft = await api('/api/draft');
-            if (draft && draft.status !== 'empty') {
-                handleNewDraft(draft);
+            if (draft && draft.status === 'ready') {
+                state.draft = draft;
+                Object.keys(state.tabs).forEach(k => {
+                    if (!state.tabs[k].text) state.tabs[k].text = draft.variations[k] || '';
+                    state.tabs[k].shots = draft.payload.screenshots.map(s => ({...s, status: 'pending'}));
+                });
             }
         }
 
-        function handleNewDraft(draft) {
-            if (currentDraft && currentDraft.timestamp === draft.timestamp && currentDraft.status === draft.status) return;
+        // --- Status Bar Spinner Hooks ---
+        function startAISpinner() {
+            const el = document.getElementById('status-bar-ai');
+            if (!el) return;
+            let idx = 0;
+            clearInterval(spinnerInterval);
             
-            currentDraft = draft;
+            el.innerHTML = `[AI: GENERATING... <span class="spinner-char">⠋</span> ▋]`;
+            el.style.color = 'var(--accent-purple)';
             
-            // Render screenshots immediately regardless of AI status
+            spinnerInterval = setInterval(() => {
+                const spinEl = el.querySelector('.spinner-char');
+                if (spinEl) {
+                    idx = (idx + 1) % SPINNER_CHARS.length;
+                    spinEl.innerText = SPINNER_CHARS[idx];
+                }
+            }, 80);
+        }
+
+        function stopAISpinner() {
+            clearInterval(spinnerInterval);
+            const el = document.getElementById('status-bar-ai');
+            if (el) el.innerHTML = '';
+        }
+
+        // --- Rendering Core View ---
+        function render() {
+            const isArticle = state.view === 'article';
+            document.getElementById('main-container').classList.toggle('article-mode', isArticle);
+            document.getElementById('tab-bar').classList.toggle('hidden', isArticle);
+            document.getElementById('article-options').classList.toggle('hidden', !isArticle);
+            document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history');
+
+            // Bottom status bar updates
+            const viewMap = {
+                draft: '[DRAFT_ROOM]',
+                article: '[ARTICLE_MODE]',
+                history: '[HISTORY]',
+                settings: '[SETTINGS]',
+                gallery: '[GALLERY]',
+                prompts: '[PROMPTS]'
+            };
+            const tabMap = {
+                deep_tech: '[X_POST]',
+                linkedin: '[LINKEDIN]',
+                pr_generator: '[PR_DESC]',
+                quick_win: '[QUICK_WIN]'
+            };
+            document.getElementById('status-bar-view').innerText = viewMap[state.view] || `[${state.view.toUpperCase()}]`;
+            document.getElementById('status-bar-tab').innerText = tabMap[state.tab] || `[${state.tab.toUpperCase()}]`;
+
+            if (state.view !== 'draft' && state.view !== 'article') return;
+
+            // Editor Content
+            const editor = document.getElementById('main-editor');
+            const currentObj = isArticle ? state.article : state.tabs[state.tab];
+            editor.value = currentObj.text;
+            
+            // Undo Btn
+            document.getElementById('undo-btn').style.display = currentObj.undo.length > 0 ? 'block' : 'none';
+
+            // Chips: Format dynamically in bracket underscores uppercase
+            const chipRow = document.getElementById('chip-row');
+            const activeKey = isArticle ? 'article' : state.tab;
+            chipRow.innerHTML = (CHIPS[activeKey] || []).map(c => {
+                const formatted = `[${c.toUpperCase().replace(/\s+/g, '_')}]`;
+                return `<div class="chip" onclick="applyChip('${c}')">${formatted}</div>`;
+            }).join('');
+
+            // Screenshots - Handled exclusively in GALLERY now
             renderScreenshots();
-            updatePreviews();
-
-            if (draft.status === 'ready') {
-                renderDraft();
-            } else if (draft.status === 'generating') {
-                document.getElementById('post-editor').value = "AI is generating your post variations...";
-                addChatMessage("I'm analyzing your screenshots now... give me a moment.", 'ai');
-            }
-        }
-
-        function renderDraft() {
-            const text = currentDraft.variations[activeFormat] || "";
-            document.getElementById('post-editor').value = text;
-            updateCharCounter();
-            updatePreviews();
-            // renderScreenshots() is now called in handleNewDraft
+            
+            // Preview
+            updatePreview();
         }
 
         function renderScreenshots() {
-            const carousel = document.getElementById('shot-carousel');
-            const shots = currentDraft.payload.screenshots || [];
-            
-            if (shots.length === 0) {
-                carousel.innerHTML = '<div style="color:var(--text-secondary); font-size:12px;">No screenshots in this session.</div>';
+            // no-op: Draft Room is now strictly for post text content. Screenshots are in GALLERY.
+        }
+
+        function updatePreview() {
+            if (state.view !== 'draft' && state.view !== 'article') return;
+
+            const text = (state.view === 'article' ? state.article.text : state.tabs[state.tab].text) || '';
+            const previewTitle = document.getElementById('preview-title');
+            const primaryBtn = document.getElementById('primary-action-btn');
+
+            // Reset Subviews
+            ['m-x', 'm-li', 'm-pr', 'm-article'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('pr-copy-section').classList.add('hidden');
+
+            if (state.view === 'article') {
+                previewTitle.innerText = "┌─ ARTICLE_STRUCTURE";
+                document.getElementById('m-article').classList.remove('hidden');
+                primaryBtn.classList.add('hidden');
+                renderArticleStats(text);
                 return;
             }
 
-            carousel.innerHTML = shots.map((s, i) => {
-                let imgUrl = s.path;
-                if (!imgUrl.startsWith('/')) imgUrl = '/' + imgUrl;
-                console.log("Rendering screenshot:", imgUrl);
-                return `
-                    <div class="thumb" onclick="expandShot('${imgUrl}')">
-                        <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Error+Loading'">
-                        <div class="thumb-tag">${s.purpose}</div>
-                        <div class="thumb-remove" onclick="removeShot(event, ${i})">×</div>
-                    </div>
-                `;
+            primaryBtn.classList.remove('hidden');
+            if (state.tab === 'deep_tech' || state.tab === 'quick_win') {
+                previewTitle.innerText = "┌─ X_PREVIEW";
+                document.getElementById('m-x').classList.remove('hidden');
+                document.getElementById('m-x-text').innerText = text;
+                
+                // Primary green button styling
+                primaryBtn.className = "btn-brutalist btn-primary-brutalist";
+                primaryBtn.innerText = "[PUBLISH_TO_X ↗]";
+                
+                const accepted = state.tabs[state.tab].shots.find(s => s.status === 'accepted');
+                const imgBox = document.getElementById('m-x-img');
+                if (accepted) {
+                    imgBox.innerHTML = `<img src="/${accepted.path}">`;
+                    imgBox.classList.add('active');
+                } else {
+                    imgBox.classList.remove('active');
+                }
+            } else if (state.tab === 'linkedin') {
+                previewTitle.innerText = "┌─ LI_PREVIEW";
+                document.getElementById('m-li').classList.remove('hidden');
+                document.getElementById('m-li-text').innerText = text;
+                
+                // Bordered button styling
+                primaryBtn.className = "btn-brutalist";
+                primaryBtn.innerText = "[COPY_FOR_LINKEDIN ↗]";
+            } else if (state.tab === 'pr_generator') {
+                previewTitle.innerText = "┌─ PR_PREVIEW";
+                document.getElementById('m-pr').classList.remove('hidden');
+                document.getElementById('m-pr-content').innerHTML = parseMarkdown(text);
+                
+                primaryBtn.className = "btn-brutalist";
+                primaryBtn.innerText = "[COPY_MARKDOWN ↗]";
+                document.getElementById('pr-copy-section').classList.remove('hidden');
+            }
+
+            // Custom Brutalist dynamic char limits warn color logic
+            const limit = (state.tab === 'deep_tech' || state.tab === 'quick_win') ? 280 : 3000;
+            const current = text.length;
+            const el = document.getElementById('char-count');
+            if (el) {
+                el.innerText = `[${current}/${limit}]─┐`;
+                
+                const pct = current / limit;
+                if (pct >= 1.0) {
+                    el.style.color = 'var(--accent-red)';
+                } else if (pct >= 0.8) {
+                    el.style.color = 'var(--accent-amber)';
+                } else {
+                    el.style.color = 'var(--text-secondary)';
+                }
+            }
+        }
+
+        function renderArticleStats(text) {
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const mins = Math.ceil(words / 200);
+            document.getElementById('article-stats').innerText = `${words} words | ${mins} min read`;
+
+            const toc = document.getElementById('article-toc');
+            const headers = text.match(/^##?\s+.+$/gm) || [];
+            toc.innerHTML = headers.map(h => {
+                const level = h.startsWith('##') ? 'h3' : 'h2';
+                const title = h.replace(/^##?\s+/, '');
+                return `<li class="toc-item toc-${level}">${title}</li>`;
             }).join('');
         }
 
-        // --- Actions ---
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message || isGenerating) return;
+        // --- Logic Handlers ---
+        async function submitRefinement(manualText) {
+            const input = document.getElementById('cmd-input');
+            const msg = manualText || input.value.trim();
+            if (!msg) return;
 
-            addChatMessage(message, 'user');
-            input.value = '';
-            isGenerating = true;
+            const target = state.view === 'article' ? state.article : state.tabs[state.tab];
+            target.undo.push(target.text);
+            
+            input.value = "AI thinking...";
+            input.disabled = true;
 
-            const res = await api('/api/chat', 'POST', { message, format_key: activeFormat });
-            isGenerating = false;
+            // Trigger visual AI responses
+            startAISpinner();
+
+            const res = await api('/api/chat', 'POST', { message: msg, format_key: state.tab });
+            
+            stopAISpinner();
+            input.value = "";
+            input.disabled = false;
 
             if (res && res.success) {
-                typewriterEffect(res.new_text);
-                currentDraft.variations[activeFormat] = res.new_text;
-            } else {
-                addChatMessage("Sorry, I encountered an error refining the post.", 'ai');
+                target.text = res.new_text;
+                render();
             }
         }
 
-        function addChatMessage(text, sender) {
-            const flow = document.getElementById('chat-flow');
-            const msg = document.createElement('div');
-            msg.className = `chat-message message-${sender}`;
-            msg.innerText = text;
-            flow.appendChild(msg);
-            flow.scrollTop = flow.scrollHeight;
+        function undoRefinement() {
+            const target = state.view === 'article' ? state.article : state.tabs[state.tab];
+            if (target.undo.length > 0) {
+                target.text = target.undo.pop();
+                render();
+            }
         }
 
-        function typewriterEffect(text) {
-            const flow = document.getElementById('chat-flow');
-            const msg = document.createElement('div');
-            msg.className = `chat-message message-ai`;
-            flow.appendChild(msg);
-            
-            let i = 0;
-            const editor = document.getElementById('post-editor');
-            editor.value = ""; // Clear for new content
+        function applyChip(text) {
+            submitRefinement(text);
+        }
 
-            const interval = setInterval(() => {
-                if (i < text.length) {
-                    msg.innerText += text[i];
-                    editor.value += text[i];
-                    i++;
-                    flow.scrollTop = flow.scrollHeight;
-                    updateCharCounter();
-                    updatePreviews();
-                } else {
-                    clearInterval(interval);
+        function updateShotStatus(idx, status) {
+            state.tabs[state.tab].shots[idx].status = status;
+            render();
+        }
+
+        async function deleteScreenshot(idx) {
+            const shot = state.tabs[state.tab].shots[idx];
+            const filename = shot.path.split('/').pop();
+            await api(`/api/screenshot/${filename}`, 'DELETE');
+            state.tabs[state.tab].shots.splice(idx, 1);
+            render();
+        }
+
+        async function downloadFramed(filename) {
+            window.open(`/api/screenshot/${filename}/framed`, '_blank');
+        }
+
+        async function triggerCapture() {
+            showToast("Capture starting in 5s...", "info");
+            await api('/api/capture/trigger', 'POST', { delay: 5 });
+            setTimeout(fetchDraft, 6000);
+        }
+
+        async function handlePrimaryAction() {
+            const text = state.tabs[state.tab].text;
+            if (state.tab === 'deep_tech' || state.tab === 'quick_win') {
+                const shot = state.tabs[state.tab].shots.find(s => s.status === 'accepted');
+                const res = await api('/api/publish', 'POST', { post_text: text, screenshot_path: shot ? shot.path : null });
+                if (res && (res.success || res.fallback)) {
+                    showToast("Published successfully!", "success");
+                    updateVimStats(); // Real-time stats reload!
                 }
-            }, 20);
+            } else {
+                copyContent();
+            }
         }
 
-        async function publishPost() {
-            const btn = document.getElementById('publish-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>Publishing...</span>';
+        function copyContent() {
+            const text = state.view === 'article' ? state.article.text : state.tabs[state.tab].text;
+            navigator.clipboard.writeText(text);
+            showToast("Copied to clipboard!", "success");
+        }
+
+        function copyPRWithImages() {
+            let text = state.tabs.pr_generator.text;
+            const accepted = state.tabs.pr_generator.shots.filter(s => s.status === 'accepted');
+            if (accepted.length > 0) {
+                text += "\n\n## Visuals\n" + accepted.map(s => `![Screenshot](/${s.path})`).join('\n');
+            }
+            navigator.clipboard.writeText(text);
+            showToast("Copied Markdown with image references!", "success");
+        }
+
+        async function generateArticle() {
+            const btn = event.target;
+            btn.innerText = "[GENERATING...]";
             btn.disabled = true;
-
-            const post_text = document.getElementById('post-editor').value;
-            const screenshot_path = currentDraft?.payload?.screenshots?.[0]?.path;
-
-            const res = await api('/api/publish', 'POST', { post_text, screenshot_path });
             
-            btn.innerHTML = originalText;
+            startAISpinner();
+            const res = await api('/api/article/generate', 'POST', { include_codebase: state.article.includeCodebase });
+            stopAISpinner();
+            
+            btn.innerText = "[GENERATE_ARTICLE]";
             btn.disabled = false;
-
-            if (res && (res.success || res.fallback)) {
-                showToast(res.fallback ? "Redirected to browser for publishing" : "Published successfully!");
-                document.getElementById('rating-container').classList.remove('hidden');
-            } else {
-                showToast("Failed to publish post", "error");
+            
+            if (res && res.article) {
+                state.article.text = res.article;
+                render();
             }
         }
 
-        async function submitRating(val) {
-            const post_text = document.getElementById('post-editor').value;
-            await api('/api/rate', 'POST', { 
-                post_text, 
-                format_key: activeFormat, 
-                rating: val,
-                timestamp: currentDraft?.timestamp
-            });
+        function setView(v) {
+            state.view = v;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navBtn = document.getElementById(`nav-${v}`);
+            if (navBtn) navBtn.classList.add('active');
             
-            document.querySelectorAll('.star').forEach((s, i) => {
-                s.classList.toggle('active', i < val);
-            });
-            showToast("Thank you for your feedback!");
-            setTimeout(() => document.getElementById('rating-container').classList.add('hidden'), 2000);
+            // Toggle Section Panels
+            document.getElementById('editor-view').classList.toggle('hidden', v !== 'draft' && v !== 'article');
+            document.getElementById('settings-view').classList.toggle('hidden', v !== 'settings');
+            document.getElementById('history-view').classList.toggle('hidden', v !== 'history');
+            document.getElementById('gallery-view').classList.toggle('hidden', v !== 'gallery');
+            document.getElementById('prompts-view').classList.toggle('hidden', v !== 'prompts');
+            document.getElementById('preview-panel').classList.toggle('hidden', v === 'settings' || v === 'history' || v === 'gallery' || v === 'prompts');
+
+            if (v === 'history') loadHistory();
+            if (v === 'settings') renderSettings();
+            if (v === 'gallery') loadGallery();
+            if (v === 'prompts') loadPrompts();
+            render();
         }
 
-        // --- UI Utils ---
-        function updateCharCounter() {
-            const text = document.getElementById('post-editor').value;
-            const count = text.length;
-            document.getElementById('char-val').innerText = count;
-
-            const ring = document.getElementById('char-ring');
-            const pct = Math.min((count / charLimit) * 100, 100);
-            const offset = 100 - pct;
-            ring.setAttribute('stroke-dasharray', `${pct} 100`);
-            
-            if (pct >= 100) ring.style.stroke = 'var(--error)';
-            else if (pct >= 80) ring.style.stroke = 'var(--warning)';
-            else ring.style.stroke = 'var(--primary)';
-        }
-
-        function updatePreviews() {
-            const text = document.getElementById('post-editor').value;
-            document.getElementById('mock-x-text').innerText = text;
-            document.getElementById('mock-li-text').innerText = text;
-
-            const shots = currentDraft?.payload?.screenshots || [];
-            if (shots.length > 0) {
-                let imgUrl = shots[0].path;
-                if (!imgUrl.startsWith('/')) imgUrl = '/' + imgUrl;
-                
-                const imgHtml = `<img src="${imgUrl}">`;
-                document.getElementById('mock-x-img').innerHTML = imgHtml;
-                document.getElementById('mock-li-img').innerHTML = imgHtml;
-            } else {
-                document.getElementById('mock-x-img').innerHTML = '';
-                document.getElementById('mock-li-img').innerHTML = '';
-            }
-        }
-
-        function switchMainView(view) {
-            document.querySelectorAll('.editor-container').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => {
-                if (i.innerText.toLowerCase().includes(view)) i.classList.add('active');
-            });
-
-            if (view === 'history') loadHistory();
-        }
-
-        async function loadHistory() {
-            const res = await api('/api/history');
-            const grid = document.getElementById('history-grid');
-            if (res && res.history) {
-                grid.innerHTML = res.history.reverse().map(item => `
-                    <div class="active-editor-area" style="min-height: auto; cursor: pointer;" onclick="reuseHistory('${item.post_text}')">
-                        <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                            <span class="version-badge">${item.format_key}</span>
-                            <span style="font-size: 10px; color: var(--text-secondary);">${item.timestamp}</span>
+        // --- Screenshot Gallery Subview Rendering ---
+        async function loadGallery() {
+            const data = await api('/api/screenshots');
+            const view = document.getElementById('gallery-view');
+            if (data && data.screenshots) {
+                view.innerHTML = `
+                    <div class="ascii-box">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ SCREENSHOT_GALLERY</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
                         </div>
-                        <div style="font-size: 14px; line-height: 1.5;">${item.post_text.substring(0, 150)}...</div>
+                        <div class="ascii-box-body" style="padding: 16px;">
+                            <div class="gallery-grid">
+                                ${data.screenshots.map(s => `
+                                    <div class="gallery-card" id="card-${s.filename}">
+                                        <div class="gallery-img-box">
+                                            <img src="/${s.path}">
+                                        </div>
+                                        <div class="gallery-info">
+                                            <div class="gallery-meta">${new Date(s.timestamp * 1000).toLocaleString()}</div>
+                                            <div id="recommendation-${s.filename.replace(/\./g, '_')}" class="gallery-recommendation hidden"></div>
+                                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                                <button class="btn-brutalist" style="font-size:var(--text-xs);" onclick="recommendScreenshot('${s.filename}')">[AI_RECOMMEND_PLATFORM]</button>
+                                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                                    <button class="btn-brutalist btn-primary-brutalist" style="font-size:var(--text-xs); padding:4px;" onclick="downloadFramed('${s.filename}')">[DOWNLOAD_FRAMED]</button>
+                                                    <button class="btn-brutalist" style="font-size:var(--text-xs); border-color:var(--accent-red); color:var(--accent-red); padding:4px;" onclick="deleteGalleryScreenshot('${s.filename}')">[DELETE]</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
-                `).join('');
+                `;
             }
         }
 
-        function showToast(msg, type = "success") {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-msg');
-            msgEl.innerText = msg;
-            toast.style.borderLeftColor = type === "error" ? 'var(--error)' : 'var(--primary)';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        async function recommendScreenshot(filename) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "[THINKING...]";
+            btn.disabled = true;
+            
+            startAISpinner();
+            const res = await api('/api/screenshot/recommend', 'POST', { filename });
+            stopAISpinner();
+            
+            btn.innerText = originalText;
+            btn.disabled = false;
+            
+            if (res && res.success) {
+                const recBox = document.getElementById(`recommendation-${filename.replace(/\./g, '_')}`);
+                recBox.innerText = res.recommendation;
+                recBox.classList.remove('hidden');
+            }
+        }
+
+        async function deleteGalleryScreenshot(filename) {
+            if (!confirm("Are you sure?")) return;
+            await api(`/api/screenshot/${filename}`, 'DELETE');
+            loadGallery();
+        }
+
+        // --- Prompt Management Subview Rendering ---
+        async function loadPrompts() {
+            const data = await api('/api/prompts');
+            const view = document.getElementById('prompts-view');
+            if (data) {
+                view.innerHTML = `
+                    <div class="ascii-box">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ PROMPT_MANAGEMENT</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="padding: 16px; display:flex; flex-direction:column; gap:16px;">
+                            <div>
+                                <button class="btn-brutalist btn-primary-brutalist" onclick="renderPromptEditor()">[+ CREATE_NEW_PROMPT]</button>
+                            </div>
+                            <div id="prompts-list">
+                                ${Object.entries(data).map(([key, p]) => `
+                                    <div class="prompt-card">
+                                        <div class="prompt-header">
+                                            <h3 style="color:var(--accent-green); font-size:var(--text-base); margin:0;">[${p.label.toUpperCase()}]</h3>
+                                            <span class="badge badge-tag" style="border:1px solid var(--accent-blue); color:var(--accent-blue); font-size:var(--text-xs); padding:2px 6px;">[${key.toUpperCase()}]</span>
+                                        </div>
+                                        <div style="font-size:var(--text-sm); color:var(--text-secondary);">${p.description}</div>
+                                        <div style="display:flex; gap:12px; justify-content:flex-end;">
+                                            <button class="btn-brutalist" style="font-size:var(--text-xs); padding:4px 10px;" onclick="renderPromptEditor('${key}')">[EDIT]</button>
+                                            <button class="btn-brutalist" style="font-size:var(--text-xs); padding:4px 10px; border-color:var(--accent-red); color:var(--accent-red);" onclick="deletePrompt('${key}')">[DELETE]</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function renderPromptEditor(key = null) {
+            const view = document.getElementById('prompts-view');
+            let p = { label: '', description: '', system_prompt: '' };
+            if (key) {
+                const data = await api('/api/prompts');
+                p = data[key];
+            }
+
+            view.innerHTML = `
+                <div class="ascii-box">
+                    <div class="ascii-box-header">
+                        <span class="ascii-box-title">┌─ ${key ? 'EDIT_PROMPT' : 'CREATE_NEW_PROMPT'}</span>
+                        <span class="ascii-box-line"></span>
+                        <span class="ascii-box-limit">─┐</span>
+                    </div>
+                    <div class="ascii-box-body prompt-card" style="margin-bottom:0; display:flex; flex-direction:column; gap:12px;">
+                        <div class="prompt-input-group">
+                            <label>FORMAT_KEY (IDENTIFIER)</label>
+                            <input type="text" id="p-key" class="prompt-field" value="${key || ''}" ${key ? 'disabled' : ''} placeholder="e.g. daily_update▋">
+                        </div>
+                        <div class="prompt-input-group">
+                            <label>LABEL (DISPLAY_NAME)</label>
+                            <input type="text" id="p-label" class="prompt-field" value="${p.label}" placeholder="e.g. Daily Update▋">
+                        </div>
+                        <div class="prompt-input-group">
+                            <label>DESCRIPTION</label>
+                            <input type="text" id="p-desc" class="prompt-field" value="${p.description}" placeholder="A short description of what this prompt does▋">
+                        </div>
+                        <div class="prompt-input-group">
+                            <label>SYSTEM_PROMPT (THE_ACTUAL_AI_INSTRUCTIONS)</label>
+                            <textarea id="p-system" class="prompt-field prompt-area" placeholder="You are a social media manager...▋">${p.system_prompt}</textarea>
+                        </div>
+                        <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:12px;">
+                            <button class="btn-brutalist" onclick="loadPrompts()">[CANCEL]</button>
+                            <button class="btn-brutalist btn-primary-brutalist" onclick="savePrompt()">${key ? '[UPDATE_PROMPT]' : '[CREATE_PROMPT]'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function savePrompt() {
+            const format_key = document.getElementById('p-key').value.trim();
+            const label = document.getElementById('p-label').value.trim();
+            const description = document.getElementById('p-desc').value.trim();
+            const system_prompt = document.getElementById('p-system').value.trim();
+
+            if (!format_key || !label || !system_prompt) {
+                showToast("Key, Label, and System Prompt are required", "error");
+                return;
+            }
+
+            const res = await api('/api/prompts', 'PUT', { format_key, label, description, system_prompt });
+            if (res && res.success) {
+                showToast("Prompt saved!", "success");
+                loadPrompts();
+            }
+        }
+
+        async function deletePrompt(key) {
+            if (!confirm(`Are you sure you want to delete '${key}'?`)) return;
+            const res = await api(`/api/prompts/${key}`, 'DELETE');
+            if (res && res.success) {
+                showToast("Prompt deleted", "success");
+                loadPrompts();
+            }
+        }
+
+        // --- Settings & Session Subview Rendering ---
+        function renderSettings() {
+            const view = document.getElementById('settings-view');
+            view.innerHTML = `
+                <div class="ascii-box">
+                    <div class="ascii-box-header">
+                        <span class="ascii-box-title">┌─ SETTINGS_AND_SESSION</span>
+                        <span class="ascii-box-line"></span>
+                        <span class="ascii-box-limit">─┐</span>
+                    </div>
+                    <div class="ascii-box-body settings-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="prompt-input-group">
+                            <label>SESSION_TOKEN</label>
+                            <div style="display:flex; gap:12px;">
+                                <input type="text" id="token-input" value="${state.token}" placeholder="Paste session token from terminal...▋" 
+                                    class="prompt-field" style="flex:1;">
+                                <button class="btn-brutalist btn-primary-brutalist" style="padding:0 24px;" onclick="saveToken()">[SAVE_TOKEN]</button>
+                            </div>
+                            <p style="font-size:var(--text-xs); color:var(--text-secondary); line-height:1.4; margin-top:4px;">
+                                The session token is generated each time the server starts. <br>
+                                Look for <strong>[Auth] Session Token: ...</strong> in your terminal output.
+                            </p>
+                        </div>
+
+                        <div class="prompt-input-group" style="border-top: 1px dashed var(--border); padding-top: 16px;">
+                            <label>PROJECT_NARRATIVE</label>
+                            <p style="font-size:var(--text-xs); color:var(--text-secondary); margin-bottom: 8px;">This context is sent to the AI to help it understand what you're building.</p>
+                            <textarea id="narrative-input" class="prompt-field prompt-area" style="min-height:150px;">${state.settings.narrative}</textarea>
+                            <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+                                <button class="btn-brutalist" onclick="saveNarrative()">[UPDATE_NARRATIVE]</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveToken() {
+            const val = document.getElementById('token-input').value.trim();
+            if (!val) {
+                showToast("Please enter a token", "error");
+                return;
+            }
+            state.token = val;
+            localStorage.setItem('session_token', val);
+            showToast("Token saved! Re-syncing...", "info");
+            
+            const data = await api('/api/settings');
+            if (data) {
+                await init();
+                setView('draft');
+            }
+        }
+
+        async function saveNarrative() {
+            const val = document.getElementById('narrative-input').value.trim();
+            const res = await api('/api/settings', 'POST', { project_narrative: val });
+            if (res && res.success) {
+                state.settings.narrative = val;
+                document.getElementById('side-narrative').innerText = val || "No narrative defined.";
+                showToast("Narrative updated!", "success");
+            }
+        }
+
+        // --- History Subview Rendering ---
+        async function loadHistory() {
+            const data = await api('/api/history');
+            const view = document.getElementById('history-view');
+            if (data && data.history) {
+                view.innerHTML = `
+                    <div class="ascii-box">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ PUBLISHED_POSTS</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="display:grid; gap:16px; max-height: 600px; overflow-y: auto; padding: 16px;">
+                            ${data.history.slice().reverse().map(h => `
+                                <div class="prompt-card" style="margin-bottom:0; cursor:pointer;" onclick="reuseHistory('${h.post_text.replace(/'/g, "\\'")}')">
+                                    <div class="prompt-header">
+                                        <span class="badge badge-tag" style="border:1px solid var(--accent-blue); color:var(--accent-blue); font-size:var(--text-xs); padding:2px 6px;">[${h.format_key.toUpperCase()}]</span>
+                                        <span style="font-size:var(--text-xs); color:var(--text-secondary);">${h.timestamp}</span>
+                                    </div>
+                                    <div style="font-size:var(--text-sm); white-space:pre-wrap; word-break:break-word;">${h.post_text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function reuseHistory(text) {
+            state.tabs[state.tab].text = text;
+            setView('draft');
+        }
+
+        // --- Interactive Vim Stats Calculation (Streaks / Count today) ---
+        async function updateVimStats() {
+            try {
+                const data = await api('/api/history');
+                let postsToday = 0;
+                let streak = 0;
+                if (data && data.history) {
+                    const todayStr = new Date().toDateString();
+                    postsToday = data.history.filter(h => {
+                        const d = new Date(h.timestamp);
+                        return d.toDateString() === todayStr;
+                    }).length;
+
+                    // Group posts by unique publication dates
+                    const dates = Array.from(new Set(data.history.map(h => new Date(h.timestamp).toDateString())));
+                    const sortedDates = dates.map(d => new Date(d)).sort((a,b) => b - a);
+                    let currentStreak = 0;
+                    let checkDate = new Date();
+                    checkDate.setHours(0,0,0,0);
+                    
+                    let hasPostedToday = sortedDates.some(d => d.toDateString() === checkDate.toDateString());
+                    
+                    let yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    let hasPostedYesterday = sortedDates.some(d => d.toDateString() === yesterday.toDateString());
+
+                    if (hasPostedToday || hasPostedYesterday) {
+                        let tempDate = hasPostedToday ? checkDate : yesterday;
+                        while (true) {
+                            const match = sortedDates.some(d => d.toDateString() === tempDate.toDateString());
+                            if (match) {
+                                currentStreak++;
+                                // Decrease tempDate by exactly 1 day
+                                tempDate = new Date(tempDate.getTime() - 24 * 60 * 60 * 1000);
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    streak = currentStreak;
+                }
+                document.getElementById('status-bar-posts-today').innerText = `[${postsToday} POSTS TODAY]`;
+                document.getElementById('status-bar-streak').innerText = `[STREAK: ${streak}]`;
+            } catch (e) {
+                console.error("Failed to load streak stats", e);
+            }
+        }
+
+        // --- Sprint Toggle State ---
+        async function toggleSprint() {
+            const res = await api('/api/settings/sprint/toggle', 'POST');
+            if (res) {
+                state.settings.sprint = res.sprint_mode;
+                updateSprintUI(res.sprint_mode);
+                showToast(`Sprint mode ${res.sprint_mode ? 'ON' : 'OFF'}`, "info");
+            }
+        }
+
+        function updateSprintUI(isActive) {
+            const el = document.getElementById('side-sprint-status');
+            if (el) {
+                if (isActive) {
+                    el.innerText = '[ON]';
+                    el.className = 'sprint-active-text';
+                } else {
+                    el.innerText = '[OFF]';
+                    el.className = '';
+                }
+            }
+        }
+
+        // --- Advanced Dynamic Toast system ---
+        let toastTimeout = null;
+        function showToast(msg, type = null) {
+            const t = document.getElementById('toast');
+            const title = document.getElementById('toast-title');
+            const body = document.getElementById('toast-body');
+            if (!t || !title || !body) return;
+
+            clearTimeout(toastTimeout);
+            
+            // Deduce type if null
+            if (!type) {
+                const lower = msg.toLowerCase();
+                if (lower.includes('error') || lower.includes('failed') || lower.includes('require') || lower.includes('expired')) {
+                    type = 'error';
+                } else if (lower.includes('starting') || lower.includes('sprint') || lower.includes('syncing')) {
+                    type = 'info';
+                } else {
+                    type = 'success';
+                }
+            }
+
+            t.className = 'toast-brutalist';
+            t.classList.add(type);
+            
+            if (type === 'success') {
+                title.innerText = '┌─ SUCCESS';
+                body.innerText = `[OK] ${msg}`;
+            } else if (type === 'error') {
+                title.innerText = '┌─ ERROR';
+                body.innerText = `[!!] ${msg}`;
+            } else {
+                title.innerText = '┌─ INFO';
+                body.innerText = `[*] ${msg}`;
+            }
+            
+            t.classList.remove('hidden');
+            t.style.opacity = '1';
+            
+            toastTimeout = setTimeout(() => {
+                t.style.opacity = '0';
+                setTimeout(() => t.classList.add('hidden'), 300);
+            }, 4000);
         }
 
         function startPolling() {
             setInterval(async () => {
-                if (sessionToken) {
+                if (state.token && state.view === 'draft') {
                     const draft = await api('/api/draft');
-                    if (draft && draft.status !== 'empty') handleNewDraft(draft);
+                    if (draft && draft.timestamp !== state.draft?.timestamp) {
+                        state.draft = draft;
+                        fetchDraft();
+                    }
                 }
-            }, 5000);
+            }, 8000);
         }
 
-        async function toggleSprint() {
-            const res = await api('/api/settings/sprint/toggle', 'POST');
-            if (res) {
-                document.getElementById('sprint-toggle').classList.toggle('sprint-active', res.sprint_mode);
-                showToast(`Sprint mode ${res.sprint_mode ? 'activated' : 'deactivated'}`);
-            }
-        }
-
-        async function saveSettings() {
-            const narrative = document.getElementById('settings-narrative').value.trim();
-            const token = document.getElementById('settings-token').value.trim();
-            
-            if (token) {
-                sessionToken = token;
-                localStorage.setItem('session_token', token);
-                
-                // Update narrative on backend
-                await api('/api/settings', 'POST', { project_narrative: narrative });
-                
-                showToast("Settings saved and authorized");
-                
-                // Immediately sync data
-                await refreshData();
-                
-                // Switch back to draft view
-                switchMainView('draft');
-            } else {
-                showToast("Please enter a valid session token", "error");
-            }
-        }
-
-        function applySuggestion(text) {
-            document.getElementById('chat-input').value = text;
-            sendChatMessage();
-        }
-
-        function copyToClipboard() {
-            const text = document.getElementById('post-editor').value;
-            navigator.clipboard.writeText(text);
-            showToast("Copied to clipboard!");
-        }
-
-        async function triggerNewCapture() {
-            const res = await api('/api/capture/trigger', 'POST', { delay: 5 });
-            if (res && res.success) {
-                showToast("Capture triggered! Get ready...");
-            }
+        function parseMarkdown(md) {
+            return md
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
         }
     </script>
 </body>
