@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 from config.settings import STORAGE_DIR
+from core.log_stream import stream_log
 BASE_DIR = STORAGE_DIR.parent.parent
 from .framing import add_programming_frame
 
@@ -21,7 +22,7 @@ def capture_active_window(delay: float = 5.0) -> dict:
             time.sleep(delay)
         else:
             # Full countdown delay
-            print(f"[Capture] Starting in {int(delay)}s... (Switch to the window you want to capture)")
+            stream_log("Capture", "INFO", f"starting in {int(delay)}s; switch to target window")
             for i in range(int(delay), 0, -1):
                 print(f"  {i}...")
                 # Terminal bell (ASCII 7)
@@ -59,6 +60,7 @@ def capture_active_window(delay: float = 5.0) -> dict:
 
     # Return relative path for web/API consistency
     relative_path = str(filepath.relative_to(BASE_DIR)).replace("\\", "/")
+    stream_log("Capture", "OK", f"screenshot saved: {relative_path}")
 
     return {
         "success": True,
@@ -191,7 +193,7 @@ def run_capture(delay: float = 5.0) -> dict:
             screenshot["raw_path"] = screenshot["path"]
             screenshot["path"] = framed_path
         except Exception as e:
-            print(f"[Capture] Framing failed: {e}")
+            stream_log("Capture", "WARN", f"framing failed: {e}")
             screenshot["framed_path"] = ""
 
     git_diff = get_git_diff(working_dir)

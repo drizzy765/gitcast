@@ -1,6 +1,9 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
+from dotenv import dotenv_values, load_dotenv, set_key, unset_key
 from ai.generator import generate_posts, generate_sprint_summary, _ai_call
 from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, article_refinement_prompt
 from ai.formatter import split_into_thread
@@ -11,13 +14,17 @@ from storage.logger import load_posts
 from storage.tone_memory import save_rating
 from core.codebase_reader import summarise_for_prompt
 from config.settings import (
-    get_twitter_plan, 
-    set_twitter_plan, 
-    validate_api_keys, 
-    CURRENT_DRAFT, 
+    get_twitter_plan,
+    set_twitter_plan,
+    validate_api_keys,
+    CURRENT_DRAFT,
     SPRINT_LOG,
-    AI_ROUTING_MAP
+    AI_ROUTING_MAP,
+    API_KEY_ENV_MAP,
+    BASE_DIR,
+    reload_api_keys,
 )
+from core.log_stream import get_logs_after, get_latest_log_id, stream_log
 import json
 import os
 
@@ -97,6 +104,15 @@ class KeysUpdate(BaseModel):
     twitter_bearer_token: Optional[str] = None
 
 
+class ProviderKeyUpdate(BaseModel):
+    provider: str
+    key: str
+
+
+class ProviderKeyRemove(BaseModel):
+    provider: str
+
+
 class ChatRequest(BaseModel):
     message: str
     format_key: str
@@ -141,6 +157,145 @@ class WaitlistRequest(BaseModel):
 
 import re
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+KEY_GUIDE = {
+    "groq": {
+        "name": "Groq",
+        "url": "https://console.groq.com",
+        "free_tier": "12k TPM free",
+        "best_for": "quick_win, struggle, linkedin",
+        "required": True,
+    },
+    "deepseek": {
+        "name": "DeepSeek",
+        "url": "https://platform.deepseek.com",
+        "free_tier": "$5 credit on signup",
+        "best_for": "deep_tech, pr_generator",
+        "required": False,
+    },
+    "gemini": {
+        "name": "Gemini",
+        "url": "https://aistudio.google.com",
+        "free_tier": "1M tokens/day",
+        "best_for": "vision fallback, low OCR screenshots",
+        "required": False,
+    },
+    "kimi": {
+        "name": "Kimi",
+        "url": "https://platform.moonshot.ai",
+        "free_tier": "free trial credits",
+        "best_for": "article, sprint_summary",
+        "required": False,
+    },
+    "cerebras": {
+        "name": "Cerebras",
+        "url": "https://cloud.cerebras.ai",
+        "free_tier": "free inference tier",
+        "best_for": "fallback generation",
+        "required": False,
+    },
+    "openrouter": {
+        "name": "OpenRouter",
+        "url": "https://openrouter.ai",
+        "free_tier": "free models available",
+        "best_for": "fallback generation",
+        "required": False,
+    },
+}
+
+
+def _env_path():
+    path = BASE_DIR / ".env"
+    path.touch(exist_ok=True)
+    return path
+
+
+def _normalize_provider(provider: str) -> str:
+    normalized = provider.strip().lower()
+    if normalized not in API_KEY_ENV_MAP:
+        raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
+    return normalized
+
+
+def _reload_key_runtime() -> None:
+    load_dotenv(_env_path(), override=True)
+    reload_api_keys()
+    try:
+        from ai.generator import refresh_provider_keys
+        refresh_provider_keys()
+    except Exception as e:
+        stream_log("Keys", "WARN", f"provider runtime refresh failed: {e}")
+
+
+@router.get("/keys/status", dependencies=[Depends(verify_token)])
+def get_ai_keys_status():
+    values = dotenv_values(_env_path())
+    return {
+        provider: bool((values.get(env_name) or "").strip())
+        for provider, env_name in API_KEY_ENV_MAP.items()
+    }
+
+
+@router.post("/keys/update", dependencies=[Depends(verify_token)])
+def update_ai_key(request: ProviderKeyUpdate):
+    provider = _normalize_provider(request.provider)
+    key = request.key.strip()
+    if not key:
+        return {"success": False, "error": "API key cannot be empty"}
+
+    env_name = API_KEY_ENV_MAP[provider]
+    try:
+        set_key(str(_env_path()), env_name, key)
+        os.environ[env_name] = key
+        _reload_key_runtime()
+        stream_log("Keys", "OK", f"{provider} key updated")
+        return {"success": True, "provider": provider}
+    except Exception as e:
+        stream_log("Keys", "ERROR", f"{provider} key update failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.delete("/keys/remove", dependencies=[Depends(verify_token)])
+def remove_ai_key(request: ProviderKeyRemove):
+    provider = _normalize_provider(request.provider)
+    env_name = API_KEY_ENV_MAP[provider]
+    try:
+        unset_key(str(_env_path()), env_name)
+        os.environ.pop(env_name, None)
+        _reload_key_runtime()
+        stream_log("Keys", "OK", f"{provider} key removed")
+        return {"success": True}
+    except Exception as e:
+        stream_log("Keys", "ERROR", f"{provider} key removal failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/keys/guide", dependencies=[Depends(verify_token)])
+def get_keys_guide():
+    return KEY_GUIDE
+
+
+@router.get("/logs/stream")
+async def stream_logs():
+    async def event_generator():
+        last_id = max(0, get_latest_log_id() - 50)
+        while True:
+            entries = get_logs_after(last_id)
+            for entry in entries:
+                last_id = max(last_id, entry["id"])
+                payload = {key: value for key, value in entry.items() if key != "id"}
+                yield f"data: {json.dumps(payload)}\n\n"
+            await asyncio.sleep(1)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
+
 
 @router.post("/waitlist")
 def add_to_waitlist(request: WaitlistRequest):
@@ -202,6 +357,10 @@ async def get_framed_screenshot(filename: str):
     path = STORAGE_DIR / "screenshots" / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Screenshot not found")
+
+    if filename.endswith("_framed.png"):
+        from fastapi.responses import FileResponse
+        return FileResponse(path, media_type="image/png", filename=filename)
 
     try:
         img = Image.open(path).convert("RGBA")

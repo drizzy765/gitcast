@@ -22,12 +22,41 @@ load_dotenv(BASE_DIR / ".env")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+API_KEY_ENV_MAP = {
+    "groq": "GROQ_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",
+    "gemini": "GEMINI_API_KEY",
+    "kimi": "MOONSHOT_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
+}
+
+GROQ_API_KEY = ""
+DEEPSEEK_API_KEY = ""
+MOONSHOT_API_KEY = ""
+GEMINI_API_KEY = ""
+CEREBRAS_API_KEY = ""
+OPENROUTER_API_KEY = ""
+
+
+def reload_api_keys() -> None:
+    global GROQ_API_KEY
+    global DEEPSEEK_API_KEY
+    global MOONSHOT_API_KEY
+    global GEMINI_API_KEY
+    global CEREBRAS_API_KEY
+    global OPENROUTER_API_KEY
+
+    load_dotenv(BASE_DIR / ".env", override=True)
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+    MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+
+reload_api_keys()
 
 # ── AI Provider Routing ───────────────────────────────────────────────────────
 
@@ -141,7 +170,7 @@ def validate_api_keys() -> dict:
     return {
         "groq": bool(GROQ_API_KEY),
         "deepseek": bool(DEEPSEEK_API_KEY),
-        "moonshot": bool(MOONSHOT_API_KEY),
+        "kimi": bool(MOONSHOT_API_KEY),
         "gemini": bool(GEMINI_API_KEY),
         "cerebras": bool(CEREBRAS_API_KEY),
         "openrouter": bool(OPENROUTER_API_KEY),
@@ -153,5 +182,12 @@ def validate_api_keys() -> dict:
     }
 
 
-def missing_api_keys() -> list[str]:
+def missing_api_keys() -> list:
     return [key for key, present in validate_api_keys().items() if not present]
+
+
+def ai_provider_key_status() -> dict:
+    return {
+        provider: bool(os.getenv(env_name, "").strip())
+        for provider, env_name in API_KEY_ENV_MAP.items()
+    }

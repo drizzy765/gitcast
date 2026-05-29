@@ -153,19 +153,24 @@
         .sidebar-logo-container {
             padding: 16px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-surface);
             overflow: hidden;
         }
-        .logo-ascii {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 4px;
-            line-height: 1.12;
+        .brand-mark {
+            font-size: var(--text-base);
+            line-height: 1.1;
             color: var(--accent-green);
-            white-space: pre;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .brand-subtitle {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
             user-select: none;
-            margin: 0;
         }
 
         .nav-group {
@@ -807,6 +812,172 @@
             margin-bottom: 4px;
         }
 
+        .api-key-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .api-key-row {
+            border: 1px solid var(--border);
+            background: var(--bg-root);
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 160px 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+        .api-key-name {
+            color: var(--text-primary);
+            font-weight: bold;
+            font-size: var(--text-sm);
+        }
+        .api-key-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        .api-key-status {
+            font-size: var(--text-xs);
+            font-weight: bold;
+        }
+        .api-key-status.active {
+            color: var(--accent-green);
+        }
+        .api-key-status.missing {
+            color: var(--text-secondary);
+        }
+        .api-key-preview,
+        .api-key-link {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .api-key-link {
+            color: var(--accent-blue);
+        }
+        .api-key-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .api-key-form {
+            border: 1px solid var(--border);
+            background: var(--bg-root);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .api-key-form-title {
+            color: var(--accent-green);
+            font-size: var(--text-xs);
+            font-weight: bold;
+        }
+        .byok-intro {
+            border: 1px solid var(--border);
+            background: var(--bg-root);
+            padding: 16px;
+            display: grid;
+            gap: 8px;
+        }
+        .byok-title {
+            color: var(--accent-green);
+            font-size: var(--text-xl);
+            line-height: 1.25;
+            font-weight: 700;
+        }
+        .byok-copy {
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.55;
+            max-width: 820px;
+        }
+        .logs-drawer {
+            position: fixed;
+            left: 220px;
+            right: 0;
+            bottom: 24px;
+            z-index: 120;
+            background: var(--bg-root);
+            border-top: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .logs-header {
+            height: 28px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            font-size: var(--text-xs);
+        }
+        .logs-toggle {
+            color: var(--accent-green);
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+        }
+        .logs-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logs-clear {
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .logs-clear:hover {
+            color: var(--accent-red);
+        }
+        .logs-body {
+            height: 220px;
+            overflow-y: auto;
+            padding: 8px 12px;
+            background: #050505;
+            font-size: var(--text-xs);
+            line-height: 1.5;
+            white-space: pre;
+        }
+        .log-line {
+            display: grid;
+            grid-template-columns: 72px 76px 92px 1fr;
+            gap: 8px;
+            min-width: 0;
+        }
+        .log-module,
+        .log-message {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .log-level.ok { color: var(--accent-green); }
+        .log-level.info { color: var(--text-secondary); }
+        .log-level.warn { color: var(--accent-amber); }
+        .log-level.error { color: var(--accent-red); }
+        .log-level.ai { color: var(--accent-purple); }
+        .log-level.router { color: var(--accent-blue); }
+
+        @media (max-width: 768px) {
+            .api-key-row {
+                grid-template-columns: 1fr;
+            }
+            .api-key-actions {
+                justify-content: flex-start;
+            }
+            .logs-drawer {
+                left: 0;
+            }
+            .log-line {
+                grid-template-columns: 60px 68px 76px 1fr;
+            }
+        }
+
         /* --- Vim-Style Fixed Bottom Status Bar --- */
         .vim-status-bar {
             height: 24px;
@@ -883,18 +1054,8 @@
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-                <pre class="logo-ascii"> ██████╗ ██████╗ ███╗  ██╗████████╗███████╗██╗  ██╗████████╗
-██╔════╝██╔═══██╗████╗ ██║╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
-██║     ██║   ██║██╔██╗██║   ██║   █████╗   ╚███╔╝    ██║
-██║     ██║   ██║██║╚████║   ██║   ██╔══╝   ██╔██╗    ██║
-╚██████╗╚██████╔╝██║ ╚███║   ██║   ███████╗██╔╝╚██╗   ██║
- ╚═════╝ ╚═════╝ ╚═╝  ╚══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝
-         ███████╗███╗  ██╗ ██████╗ ██╗███╗  ██╗███████╗
-         ██╔════╝████╗ ██║██╔════╝ ██║████╗ ██║██╔════╝
-         █████╗  ██╔██╗██║██║  ███╗██║██╔██╗██║█████╗
-         ██╔══╝  ██║╚████║██║   ██║██║██║╚████║██╔══╝
-         ███████╗██║ ╚███║╚██████╔╝██║██║ ╚███║███████╗
-         ╚══════╝╚═╝  ╚══╝ ╚═════╝ ╚═╝╚═╝  ╚══╝╚══════╝</pre>
+                <div class="brand-mark">CONTEXT_ENGINE</div>
+                <div class="brand-subtitle">v3.0 [BETA]</div>
             </div>
             
             <nav class="nav-group">
@@ -903,6 +1064,7 @@
                 <button class="nav-item" id="nav-gallery" onclick="setView('gallery')">[GALLERY]</button>
                 <button class="nav-item" id="nav-prompts" onclick="setView('prompts')">[PROMPTS]</button>
                 <button class="nav-item" id="nav-history" onclick="setView('history')">[HISTORY]</button>
+                <button class="nav-item" id="nav-byok" onclick="setView('byok')">[BYOK]</button>
                 <button class="nav-item" id="nav-settings" onclick="setView('settings')">[SETTINGS]</button>
             </nav>
 
@@ -919,7 +1081,7 @@
                 </div>
             </div>
 
-            <div class="sidebar-providers-container">
+            <div class="sidebar-providers-container" onclick="setView('byok')" style="cursor:pointer;">
                 <div class="sidebar-section-label">PROVIDERS:</div>
                 <div class="provider-list">
                     <div class="provider-item">
@@ -941,6 +1103,16 @@
                         <span class="provider-dot" id="l-kimi">●</span>
                         <span class="provider-name">KIMI</span>
                         <span class="provider-status" id="status-kimi">[ACTIVE]</span>
+                    </div>
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-cerebras">●</span>
+                        <span class="provider-name">CEREBRAS</span>
+                        <span class="provider-status" id="status-cerebras">[ACTIVE]</span>
+                    </div>
+                    <div class="provider-item">
+                        <span class="provider-dot" id="l-openrouter">●</span>
+                        <span class="provider-name">OPENROUTER</span>
+                        <span class="provider-status" id="status-openrouter">[ACTIVE]</span>
                     </div>
                 </div>
             </div>
@@ -989,6 +1161,7 @@
                 <section class="editor-section hidden" id="history-view"></section>
                 <section class="editor-section hidden" id="gallery-view"></section>
                 <section class="editor-section hidden" id="prompts-view"></section>
+                <section class="editor-section hidden" id="byok-view"></section>
 
                 <!-- Right Side Preview Column -->
                 <aside class="preview-panel" id="preview-panel">
@@ -1073,6 +1246,17 @@
         </main>
     </div>
 
+    <section class="logs-drawer collapsed" id="logs-drawer">
+        <div class="logs-header">
+            <span class="logs-toggle" id="logs-toggle" onclick="toggleLogs()">[LOGS ▼]</span>
+            <div class="logs-actions">
+                <span id="logs-connection">[CONNECTING]</span>
+                <span class="logs-clear" onclick="clearLogs()">[CLEAR]</span>
+            </div>
+        </div>
+        <div class="logs-body hidden" id="logs-body"></div>
+    </section>
+
     <!-- Vim-Style Bottom Status Bar -->
     <footer class="vim-status-bar">
         <div class="status-left">
@@ -1092,7 +1276,7 @@
     <script>
         // --- State Management ---
         const state = {
-            view: 'draft', // draft, article, history, settings, gallery, prompts
+            view: 'draft', // draft, article, history, settings, gallery, prompts, byok
             tab: 'deep_tech',
             token: localStorage.getItem('session_token') || '',
             draft: null,
@@ -1103,7 +1287,22 @@
                 quick_win: { text: '', undo: [], shots: [] }
             },
             article: { text: '', undo: [], includeCodebase: false },
-            settings: { narrative: '', sprint: false }
+            settings: { narrative: '', sprint: false },
+            keys: {},
+            keyGuide: {},
+            logs: [],
+            logsOpen: false,
+            logSource: null
+        };
+
+        const KEY_PROVIDERS = ['groq', 'deepseek', 'gemini', 'kimi', 'cerebras', 'openrouter'];
+        const LOG_LEVEL_CLASS = {
+            OK: 'ok',
+            INFO: 'info',
+            WARN: 'warn',
+            ERROR: 'error',
+            AI: 'ai',
+            ROUTER: 'router'
         };
 
         const CHIPS = {
@@ -1179,6 +1378,7 @@
                 init(); 
             }
             setupListeners();
+            connectLogStream();
         });
 
         async function init() {
@@ -1242,10 +1442,11 @@
                 document.getElementById('side-narrative').innerText = data.project_narrative || "No narrative defined.";
                 updateSprintUI(data.sprint_mode);
             }
-            const keys = await api('/api/settings/keys');
+            const keys = await api('/api/keys/status');
             if (keys) {
+                state.keys = keys;
                 const onlineProviders = [];
-                ['groq', 'deepseek', 'gemini', 'kimi'].forEach(k => {
+                KEY_PROVIDERS.forEach(k => {
                     const el = document.getElementById(`l-${k}`);
                     const lbl = document.getElementById(`status-${k}`);
                     const active = !!keys[k];
@@ -1260,6 +1461,10 @@
                     }
                 });
                 document.getElementById('status-bar-providers').innerText = onlineProviders.length > 0 ? `[${onlineProviders.join('/')}]` : '[NO_AI]';
+            }
+            const guide = await api('/api/keys/guide');
+            if (guide) {
+                state.keyGuide = guide;
             }
         }
 
@@ -1305,7 +1510,7 @@
             document.getElementById('main-container').classList.toggle('article-mode', isArticle);
             document.getElementById('tab-bar').classList.toggle('hidden', isArticle);
             document.getElementById('article-options').classList.toggle('hidden', !isArticle);
-            document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history');
+            document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history' || state.view === 'byok');
 
             // Bottom status bar updates
             const viewMap = {
@@ -1314,7 +1519,8 @@
                 history: '[HISTORY]',
                 settings: '[SETTINGS]',
                 gallery: '[GALLERY]',
-                prompts: '[PROMPTS]'
+                prompts: '[PROMPTS]',
+                byok: '[BYOK]'
             };
             const tabMap = {
                 deep_tech: '[X_POST]',
@@ -1494,7 +1700,35 @@
         }
 
         async function downloadFramed(filename) {
-            window.open(`/api/screenshot/${filename}/framed`, '_blank');
+            try {
+                const res = await fetch(`/api/screenshot/${filename}/framed`, {
+                    headers: { 'X-Session-Token': state.token }
+                });
+                if (res.status === 401) {
+                    showToast("Session expired", "error");
+                    setView('settings');
+                    return;
+                }
+                if (!res.ok) {
+                    showToast("Framed download failed", "error");
+                    return;
+                }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const base = filename.replace(/_framed\.png$/i, '').replace(/\.png$/i, '');
+                a.href = url;
+                a.download = `${base}_framed.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                showToast("Framed image downloaded", "success");
+            } catch (e) {
+                console.error("Download failed:", e);
+                showToast("Framed download failed", "error");
+            }
         }
 
         async function triggerCapture() {
@@ -1563,12 +1797,14 @@
             document.getElementById('history-view').classList.toggle('hidden', v !== 'history');
             document.getElementById('gallery-view').classList.toggle('hidden', v !== 'gallery');
             document.getElementById('prompts-view').classList.toggle('hidden', v !== 'prompts');
-            document.getElementById('preview-panel').classList.toggle('hidden', v === 'settings' || v === 'history' || v === 'gallery' || v === 'prompts');
+            document.getElementById('byok-view').classList.toggle('hidden', v !== 'byok');
+            document.getElementById('preview-panel').classList.toggle('hidden', v === 'settings' || v === 'history' || v === 'gallery' || v === 'prompts' || v === 'byok');
 
             if (v === 'history') loadHistory();
             if (v === 'settings') renderSettings();
             if (v === 'gallery') loadGallery();
             if (v === 'prompts') loadPrompts();
+            if (v === 'byok') renderByok();
             render();
         }
 
@@ -1743,7 +1979,7 @@
         }
 
         // --- Settings & Session Subview Rendering ---
-        function renderSettings() {
+        async function renderSettings() {
             const view = document.getElementById('settings-view');
             view.innerHTML = `
                 <div class="ascii-box">
@@ -1774,6 +2010,44 @@
                                 <button class="btn-brutalist" onclick="saveNarrative()">[UPDATE_NARRATIVE]</button>
                             </div>
                         </div>
+
+                        <div class="prompt-input-group" style="border-top: 1px dashed var(--border); padding-top: 16px;">
+                            <label>AI_PROVIDER_KEYS</label>
+                            <p style="font-size:var(--text-xs); color:var(--text-secondary); margin-bottom: 8px;">Provider keys now live on the dedicated BYOK page.</p>
+                            <div>
+                                <button class="btn-brutalist btn-primary-brutalist" onclick="setView('byok')">[OPEN_BYOK]</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderByok() {
+            await loadKeyState();
+            const view = document.getElementById('byok-view');
+            view.innerHTML = `
+                <div class="ascii-box">
+                    <div class="ascii-box-header">
+                        <span class="ascii-box-title">┌─ BRING_YOUR_OWN_KEYS</span>
+                        <span class="ascii-box-line"></span>
+                        <span class="ascii-box-limit">─┐</span>
+                    </div>
+                    <div class="ascii-box-body settings-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="byok-intro">
+                            <div class="byok-title">Configure your own API keys</div>
+                            <div class="byok-copy">
+                                Context Engine can use the default API routing configured for this app. BYOK is optional: add your own provider key when the default pool runs out of session quota, hits token limits, or when you want generations billed to your own account.
+                            </div>
+                        </div>
+
+                        <div class="prompt-input-group">
+                            <label>PROVIDER_KEYS</label>
+                            <div class="api-key-list" id="api-key-list">
+                                ${renderApiKeyRows()}
+                            </div>
+                            <div id="api-key-form-slot" style="margin-top:12px;"></div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1803,6 +2077,103 @@
                 state.settings.narrative = val;
                 document.getElementById('side-narrative').innerText = val || "No narrative defined.";
                 showToast("Narrative updated!", "success");
+            }
+        }
+
+        async function loadKeyState() {
+            const keys = await api('/api/keys/status');
+            if (keys) state.keys = keys;
+            const guide = await api('/api/keys/guide');
+            if (guide) state.keyGuide = guide;
+        }
+
+        function renderApiKeyRows() {
+            return KEY_PROVIDERS.map(provider => {
+                const guide = state.keyGuide[provider] || {};
+                const active = !!state.keys[provider];
+                const status = active ? '[ACTIVE ✓]' : '[NOT_CONFIGURED]';
+                const statusClass = active ? 'active' : 'missing';
+                const preview = active ? '[●●●●●●●●...set]' : '[no_key_saved]';
+                const action = active
+                    ? `<button class="btn-brutalist" style="font-size:var(--text-xs); border-color:var(--accent-red); color:var(--accent-red);" onclick="removeProviderKey('${provider}')">[REMOVE]</button>`
+                    : `<button class="btn-brutalist btn-primary-brutalist" style="font-size:var(--text-xs);" onclick="showAddKey('${provider}')">[ADD_KEY]</button>`;
+
+                return `
+                    <div class="api-key-row" id="api-key-row-${provider}">
+                        <div class="api-key-name">${(guide.name || provider).toUpperCase()}</div>
+                        <div class="api-key-meta">
+                            <span class="api-key-status ${statusClass}">${status}</span>
+                            <span class="api-key-preview">${preview}</span>
+                            <a class="api-key-link" href="${guide.url || '#'}" target="_blank">[GET_FREE_KEY ↗] ${guide.free_tier || ''} · ${guide.best_for || ''}</a>
+                        </div>
+                        <div class="api-key-actions">
+                            ${action}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddKey(provider) {
+            const guide = state.keyGuide[provider] || {};
+            const slot = document.getElementById('api-key-form-slot');
+            if (!slot) return;
+            slot.innerHTML = `
+                <div class="api-key-form">
+                    <div class="api-key-form-title">┌─ ADD_${provider.toUpperCase()}_KEY ──────────────────────────────────┐</div>
+                    <input type="password" id="api-key-input" class="prompt-field" placeholder="> paste_key_here_">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                        <a class="api-key-link" href="${guide.url || '#'}" target="_blank">[OPEN_${provider.toUpperCase()}_CONSOLE ↗]</a>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-brutalist btn-primary-brutalist" onclick="saveProviderKey('${provider}')">[SAVE_KEY]</button>
+                            <button class="btn-brutalist" onclick="cancelAddKey()">[CANCEL]</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('api-key-input').focus();
+        }
+
+        function cancelAddKey() {
+            const slot = document.getElementById('api-key-form-slot');
+            if (slot) slot.innerHTML = '';
+        }
+
+        async function saveProviderKey(provider) {
+            const input = document.getElementById('api-key-input');
+            const key = input ? input.value.trim() : '';
+            if (!key) {
+                showToast("API key cannot be empty", "error");
+                return;
+            }
+
+            const res = await api('/api/keys/update', 'POST', { provider, key });
+            if (res && res.success) {
+                showToast(`${provider.toUpperCase()} key saved`, "success");
+                await syncSettings();
+                if (state.view === 'byok') {
+                    renderByok();
+                } else {
+                    renderSettings();
+                }
+            } else {
+                showToast((res && res.error) || "Key save failed", "error");
+            }
+        }
+
+        async function removeProviderKey(provider) {
+            if (!confirm(`Remove ${provider.toUpperCase()} key?`)) return;
+            const res = await api('/api/keys/remove', 'DELETE', { provider });
+            if (res && res.success) {
+                showToast(`${provider.toUpperCase()} key removed`, "success");
+                await syncSettings();
+                if (state.view === 'byok') {
+                    renderByok();
+                } else {
+                    renderSettings();
+                }
+            } else {
+                showToast((res && res.error) || "Key removal failed", "error");
             }
         }
 
@@ -1965,6 +2336,91 @@
                     }
                 }
             }, 8000);
+        }
+
+        function connectLogStream() {
+            if (state.logSource) state.logSource.close();
+            const status = document.getElementById('logs-connection');
+            try {
+                state.logSource = new EventSource('/api/logs/stream');
+                state.logSource.onopen = () => {
+                    if (status) {
+                        status.innerText = '[LIVE]';
+                        status.style.color = 'var(--accent-green)';
+                    }
+                };
+                state.logSource.onmessage = (event) => {
+                    try {
+                        appendLog(JSON.parse(event.data));
+                    } catch (e) {
+                        console.error("Log parse failed:", e);
+                    }
+                };
+                state.logSource.onerror = () => {
+                    if (status) {
+                        status.innerText = '[RECONNECTING]';
+                        status.style.color = 'var(--accent-amber)';
+                    }
+                };
+            } catch (e) {
+                if (status) {
+                    status.innerText = '[OFFLINE]';
+                    status.style.color = 'var(--accent-red)';
+                }
+            }
+        }
+
+        function toggleLogs() {
+            state.logsOpen = !state.logsOpen;
+            const body = document.getElementById('logs-body');
+            const toggle = document.getElementById('logs-toggle');
+            if (!body || !toggle) return;
+            body.classList.toggle('hidden', !state.logsOpen);
+            toggle.innerText = state.logsOpen ? '[LOGS ▲]' : '[LOGS ▼]';
+            if (state.logsOpen) {
+                renderLogs();
+            }
+        }
+
+        function appendLog(entry) {
+            state.logs.push(entry);
+            if (state.logs.length > 50) state.logs = state.logs.slice(-50);
+            if (state.logsOpen) {
+                renderLogs();
+            }
+        }
+
+        function renderLogs() {
+            const body = document.getElementById('logs-body');
+            if (!body) return;
+            body.innerHTML = state.logs.map(log => {
+                const level = (log.level || 'INFO').toUpperCase();
+                const cls = LOG_LEVEL_CLASS[level] || 'info';
+                const moduleName = (log.module || '').padEnd(8, ' ').slice(0, 8);
+                return `
+                    <div class="log-line">
+                        <span>${escapeHtml(log.time || '')}</span>
+                        <span class="log-level ${cls}">[${escapeHtml(level).padEnd(6, ' ')}]</span>
+                        <span class="log-module">${escapeHtml(moduleName)}</span>
+                        <span class="log-message">${escapeHtml(log.message || '')}</span>
+                    </div>
+                `;
+            }).join('');
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function clearLogs() {
+            state.logs = [];
+            renderLogs();
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function parseMarkdown(md) {

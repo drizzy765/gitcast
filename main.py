@@ -12,6 +12,7 @@ from core.ocr import run_ocr
 from api.payload import build_payload
 from config.settings import (
     missing_api_keys,
+    ai_provider_key_status,
     is_onboarding_complete,
     is_sprint_mode,
     complete_onboarding,
@@ -61,6 +62,35 @@ if __name__ == "__main__":
     missing = missing_api_keys()
     if missing:
         print(f"[Warning] Missing API keys: {', '.join(missing)}")
+
+    if not any(ai_provider_key_status().values()):
+        print(
+            "\n"
+            "> [!!] NO API KEYS DETECTED\n"
+            ">\n"
+            "> context engine needs at least one AI provider key.\n"
+            "> all keys are free to obtain:\n"
+            ">\n"
+            ">   GROQ (recommended first key)\n"
+            ">   -> console.groq.com\n"
+            ">   -> free tier: 12k tokens/minute\n"
+            ">   -> best for: quick posts, linkedin\n"
+            ">\n"
+            ">   DEEPSEEK (recommended second key)\n"
+            ">   -> platform.deepseek.com\n"
+            ">   -> free tier: $5 credit on signup\n"
+            ">   -> best for: technical posts, PR descriptions\n"
+            ">\n"
+            ">   GEMINI (required for vision fallback)\n"
+            ">   -> aistudio.google.com\n"
+            ">   -> free tier: 1M tokens/day\n"
+            ">   -> best for: screenshots with low OCR confidence\n"
+            ">\n"
+            "> add keys to your .env file or via the dashboard:\n"
+            "> http://127.0.0.1:8000/app -> settings -> api_keys\n"
+            ">\n"
+            "> setup guide: github.com/YOUR_USERNAME/context-engine\n"
+        )
 
     if not is_onboarding_complete():
         print("[Context Engine] First launch — set your Project Narrative via tray → Settings.")

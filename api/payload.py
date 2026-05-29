@@ -1,6 +1,7 @@
 import base64
 from pathlib import Path
 from config.settings import get_project_narrative
+from core.log_stream import stream_log
 
 
 # ── Payload builder ───────────────────────────────────────────────────────────
@@ -60,6 +61,12 @@ def build_payload(
     # joined OCR text for legacy/summary access
     all_ocr = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")])
 
+    stream_log(
+        "Payload",
+        "OK",
+        f"assembled payload: {len(screenshots)} screenshot(s), {len(all_ocr)} OCR chars",
+    )
+
     return {
         "raw_thought": raw_thought.strip(),
         "ocr_text": all_ocr,
@@ -81,7 +88,7 @@ def build_payload(
 
 def _build_user_message(
     raw_thought: str,
-    screenshots: list[dict],
+    screenshots: list,
     git_diff: dict,
     narrative: str,
     use_vision: bool,
@@ -129,7 +136,7 @@ def _build_user_message(
 
 # ── Sprint Mode payload ───────────────────────────────────────────────────────
 
-def build_sprint_payload(sprint_log_entries: list[dict]) -> dict:
+def build_sprint_payload(sprint_log_entries: list) -> dict:
     """
     Builds the payload for Sprint Mode — takes the full list of
     silent captures and assembles them into one batched message
@@ -180,7 +187,7 @@ def _encode_image(image_path: str) -> str:
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
     except Exception as e:
-        print(f"[Payload] Image encoding failed: {e}")
+        stream_log("Payload", "WARN", f"image encoding failed: {e}")
         return ""
 
 

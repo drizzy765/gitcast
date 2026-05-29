@@ -3,6 +3,7 @@ import pytesseract
 from PIL import Image
 from pathlib import Path
 from config.settings import get_ocr_threshold
+from core.log_stream import stream_log
 
 # ── Tesseract path (Windows) ──────────────────────────────────────────────────
 
@@ -14,7 +15,7 @@ if Path(TESSERACT_PATH).exists():
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 else:
     # fallback — rely on PATH
-    print("[OCR] Warning: Tesseract not found at default path. Relying on PATH.")
+    stream_log("OCR", "WARN", "Tesseract not found at default path. Relying on PATH.")
 
 
 # ── OCR runner ────────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ def run_ocr(image_path: str) -> dict:
         ]
 
         if not confidences:
+            stream_log("OCR", "WARN", "confidence low (0%); no text detected")
             return _low_confidence_result("No text detected in screenshot")
 
         mean_confidence = sum(confidences) / len(confidences)
@@ -60,7 +62,13 @@ def run_ocr(image_path: str) -> dict:
 
         is_reliable = mean_confidence >= threshold
 
-        print(f"[OCR] Confidence: {mean_confidence:.1f}% — {'reliable' if is_reliable else 'low, will use vision fallback'}")
+        level = "OK" if is_reliable else "WARN"
+        message = (
+            f"confidence {mean_confidence:.1f}%"
+            if is_reliable
+            else f"confidence low ({mean_confidence:.1f}%) - vision fallback"
+        )
+        stream_log("OCR", level, message)
 
         return {
             "success": True,
@@ -127,6 +135,7 @@ def _low_confidence_result(reason: str) -> dict:
 
 
 def _error_result(error: str) -> dict:
+    stream_log("OCR", "ERROR", error)
     return {
         "success": False,
         "text": "",

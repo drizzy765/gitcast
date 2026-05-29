@@ -1,9 +1,10 @@
 import asyncio
 import httpx
 from ai.prompts import get_all_prompts, sprint_summary_prompt
+from core.log_stream import stream_log
 from config.settings import (
-    GROQ_API_KEY, 
-    GEMINI_API_KEY, 
+    GROQ_API_KEY,
+    GEMINI_API_KEY,
     DEEPSEEK_API_KEY, 
     MOONSHOT_API_KEY,
     CEREBRAS_API_KEY,
@@ -53,9 +54,24 @@ TIMEOUT = 60
 _client = httpx.AsyncClient(timeout=TIMEOUT)
 
 
+def refresh_provider_keys() -> None:
+    from config import settings
+
+    settings.reload_api_keys()
+    PROVIDERS["groq"]["api_key"] = settings.GROQ_API_KEY
+    PROVIDERS["deepseek"]["api_key"] = settings.DEEPSEEK_API_KEY
+    PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
+    PROVIDERS["cerebras"]["api_key"] = settings.CEREBRAS_API_KEY
+    PROVIDERS["openrouter"]["api_key"] = settings.OPENROUTER_API_KEY
+
+    global GEMINI_API_KEY
+    GEMINI_API_KEY = settings.GEMINI_API_KEY
+
+
 # ── Main generator ────────────────────────────────────────────────────────────
 
-async def generate_posts(payload: dict) -> dict[str, str]:
+async def generate_posts(payload: dict) -> dict:
+    refresh_provider_keys()
     prompts = get_all_prompts()
     format_keys = payload.get("format_keys", list(prompts.keys()))
     user_message = payload.get("user_message", "")
@@ -70,7 +86,8 @@ async def generate_posts(payload: dict) -> dict[str, str]:
 
     output = {}
     for format_key, system_prompt in selected_prompts.items():
-        print(f"[Generator] Thinking about: {format_key}...")
+        stream_log("Generator", "AI", f"thinking about {format_key}")
+        started = asyncio.get_event_loop().time()
         
         active_user_message = user_message
         if format_key == "pr_generator":
@@ -87,6 +104,7 @@ async def generate_posts(payload: dict) -> dict[str, str]:
         
         try:
             if use_vision and screenshots and format_key != "pr_generator":
+                stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
                 result = await _gemini_vision_call(
                     system_prompt=system_prompt,
                     user_message=active_user_message,
@@ -97,14 +115,15 @@ async def generate_posts(payload: dict) -> dict[str, str]:
                 result = await _ai_call(format_key, system_prompt, active_user_message)
 
             output[format_key] = result
-            print(f"[Generator] Variation '{format_key}' ready.")
+            elapsed = asyncio.get_event_loop().time() - started
+            stream_log("Generator", "OK", f"{format_key} complete ({elapsed:.1f}s)")
             
             # adaptive delay
             delay = 2.0 if "article" in format_key else 1.2
             if format_key != list(selected_prompts.keys())[-1]:
                 await asyncio.sleep(delay)
         except Exception as e:
-            print(f"[Generator Error] Failed '{format_key}': {e}")
+            stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
             output[format_key] = f"[Error] {str(e)}"
 
     return output
@@ -112,13 +131,13 @@ async def generate_posts(payload: dict) -> dict[str, str]:
 
 # ── Sprint generator ──────────────────────────────────────────────────────────
 
-async def generate_sprint_summary(entries: list[dict], narrative: str = "") -> str:
+async def generate_sprint_summary(entries: list, narrative: str = "") -> str:
     """
     Synthesizes multiple sprint captures into a single cohesive thread.
     """
     from api.payload import build_sprint_payload
     
-    print(f"[Generator] Synthesizing {len(entries)} captures into a sprint thread...")
+    stream_log("Generator", "AI", f"synthesizing {len(entries)} captures into sprint thread")
     
     payload = build_sprint_payload(entries)
     system_prompt = sprint_summary_prompt(len(entries))
@@ -126,7 +145,7 @@ async def generate_sprint_summary(entries: list[dict], narrative: str = "") -> s
     try:
         return await _ai_call("sprint_summary", system_prompt, payload["user_message"])
     except Exception as e:
-        print(f"[Generator Error] Sprint synthesis failed: {e}")
+        stream_log("Generator", "ERROR", f"sprint synthesis failed: {e}")
         return f"[Error] {str(e)}"
 
 
@@ -136,6 +155,8 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str) -> st
     """
     Identifies primary provider for a task and falls back through available providers.
     """
+    refresh_provider_keys()
+
     # 1. Identify primary provider
     primary = "groq" # default
     for name, config in PROVIDERS.items():
@@ -152,17 +173,20 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str) -> st
             
     # 3. Walk the chain
     last_error = None
+    stream_log("ROUTER", "ROUTER", f"{format_key} -> {primary}")
     for provider_name in chain:
         try:
+            if provider_name != primary:
+                stream_log("ROUTER", "ROUTER", f"{format_key} -> {provider_name} fallback")
             return await _call_provider(provider_name, system_prompt, user_message)
         except Exception as e:
             last_error = str(e)
-            print(f"[Fallback] {provider_name} failed: {e}. Trying next...")
+            stream_log("ROUTER", "WARN", f"{provider_name} failed: {e}")
             continue
             
     # 4. Final attempt with Gemini
     if GEMINI_API_KEY:
-        print("[Fallback] All OpenAI providers failed. Trying Gemini...")
+        stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
         try:
             return await _gemini_text_call(system_prompt, user_message)
         except Exception as e:
@@ -197,6 +221,7 @@ async def _call_provider(provider_name: str, system_prompt: str, user_message: s
 
     for attempt in range(retries + 1):
         try:
+            stream_log(provider_name, "AI", f"calling {config['model']}")
             response = await _client.post(url, headers=headers, json=body)
             
             if response.status_code == 429:
@@ -211,7 +236,7 @@ async def _call_provider(provider_name: str, system_prompt: str, user_message: s
 
             data = response.json()
             content = data["choices"][0]["message"]["content"].strip()
-            print(f"[AI] Successfully used {provider_name}")
+            stream_log(provider_name, "OK", "provider call complete")
             return content
 
         except Exception as e:
@@ -258,15 +283,17 @@ async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
     }
 
     try:
+        stream_log("Gemini", "AI", "calling gemini text fallback")
         response = await _client.post(url, headers=headers, json=body)
         if response.status_code != 200:
-            print(f"[Gemini Error] {response.status_code}: {response.text}")
+            stream_log("Gemini", "ERROR", f"text call failed with {response.status_code}")
             response.raise_for_status()
 
         data = response.json()
+        stream_log("Gemini", "OK", "text fallback complete")
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
     except Exception as e:
-        print(f"[Gemini Fallback Error] {e}")
+        stream_log("Gemini", "ERROR", f"text fallback failed: {e}")
         raise e
 
 
@@ -275,7 +302,7 @@ async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
 async def _gemini_vision_call(
     system_prompt: str,
     user_message: str,
-    screenshots: list[dict],
+    screenshots: list,
 ) -> str:
     """
     Calls Gemini 1.5 Flash with multiple screenshots as vision inputs.
@@ -307,12 +334,14 @@ async def _gemini_vision_call(
         },
     }
 
+    stream_log("Gemini", "AI", f"calling vision with {len(parts) - 1} screenshot(s)")
     response = await _client.post(url, headers=headers, json=body)
     if response.status_code != 200:
         raise Exception(f"Gemini Vision Error {response.status_code}: {response.text}")
 
     data = response.json()
     try:
+        stream_log("Gemini", "OK", "vision call complete")
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
     except (KeyError, IndexError):
         raise Exception("Gemini response format unexpected")
