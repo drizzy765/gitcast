@@ -171,8 +171,8 @@
             position: relative;
         }
         .hero-logo-box {
-            font-size: var(--text-sm);
-            line-height: 1.4;
+            font-size: clamp(5px, 1.35vw, 14px);
+            line-height: 1.12;
             color: var(--accent-green);
             white-space: pre;
             margin-bottom: 32px;
@@ -180,6 +180,8 @@
             font-family: 'JetBrains Mono', monospace;
             text-align: left;
             display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
         }
         .hero-tagline {
             font-size: var(--text-2xl);
@@ -459,9 +461,8 @@
 
         /* --- MOBILE LAYOUTS (Single column stacked) --- */
         @media (max-width: 768px) {
-            .hero-logo {
-                font-size: 4px;
-                overflow-x: auto;
+            .hero-logo-box {
+                font-size: 5px;
             }
             .hero-tagline {
                 font-size: var(--text-lg);
@@ -482,9 +483,18 @@
 
     <!-- Section 1: Hero Section -->
     <header class="hero-section">
-        <div class="hero-logo-box">┌──────────────────────────────────────────────┐
-│ CONTEXT_ENGINE // captur_build_publish v3.0  │
-└──────────────────────────────────────────────┘</div>
+        <pre class="hero-logo-box"> ██████╗ ██████╗ ███╗  ██╗████████╗███████╗██╗  ██╗████████╗
+██╔════╝██╔═══██╗████╗ ██║╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
+██║     ██║   ██║██╔██╗██║   ██║   █████╗   ╚███╔╝    ██║
+██║     ██║   ██║██║╚████║   ██║   ██╔══╝   ██╔██╗    ██║
+╚██████╗╚██████╔╝██║ ╚███║   ██║   ███████╗██╔╝╚██╗   ██║
+ ╚═════╝ ╚═════╝ ╚═╝  ╚══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝
+         ███████╗███╗  ██╗ ██████╗ ██╗███╗  ██╗███████╗
+         ██╔════╝████╗ ██║██╔════╝ ██║████╗ ██║██╔════╝
+         █████╗  ██╔██╗██║██║  ███╗██║██╔██╗██║█████╗
+         ██╔══╝  ██║╚████║██║   ██║██║██║╚████║██╔══╝
+         ███████╗██║ ╚███║╚██████╔╝██║██║ ╚███║███████╗
+         ╚══════╝╚═╝  ╚══╝ ╚═════╝ ╚═╝╚═╝  ╚══╝╚══════╝</pre>
 
         <div style="text-align: left; max-width: 680px; width: 100%;">
             <h1 class="hero-tagline">

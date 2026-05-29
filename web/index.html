@@ -156,13 +156,16 @@
             justify-content: center;
             border-bottom: 1px solid var(--border);
             background: var(--bg-surface);
+            overflow: hidden;
         }
         .logo-ascii {
-            font-size: 11px;
-            line-height: 1.2;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4px;
+            line-height: 1.12;
             color: var(--accent-green);
             white-space: pre;
             user-select: none;
+            margin: 0;
         }
 
         .nav-group {
@@ -880,10 +883,18 @@
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-                <div class="logo-ascii">┌─────────────────────┐
-│ > CONTEXT_ENGINE    │
-│   v3.0 [BETA]       │
-└─────────────────────┘</div>
+                <pre class="logo-ascii"> ██████╗ ██████╗ ███╗  ██╗████████╗███████╗██╗  ██╗████████╗
+██╔════╝██╔═══██╗████╗ ██║╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
+██║     ██║   ██║██╔██╗██║   ██║   █████╗   ╚███╔╝    ██║
+██║     ██║   ██║██║╚████║   ██║   ██╔══╝   ██╔██╗    ██║
+╚██████╗╚██████╔╝██║ ╚███║   ██║   ███████╗██╔╝╚██╗   ██║
+ ╚═════╝ ╚═════╝ ╚═╝  ╚══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝
+         ███████╗███╗  ██╗ ██████╗ ██╗███╗  ██╗███████╗
+         ██╔════╝████╗ ██║██╔════╝ ██║████╗ ██║██╔════╝
+         █████╗  ██╔██╗██║██║  ███╗██║██╔██╗██║█████╗
+         ██╔══╝  ██║╚████║██║   ██║██║██║╚████║██╔══╝
+         ███████╗██║ ╚███║╚██████╔╝██║██║ ╚███║███████╗
+         ╚══════╝╚═╝  ╚══╝ ╚═════╝ ╚═╝╚═╝  ╚══╝╚══════╝</pre>
             </div>
             
             <nav class="nav-group">
