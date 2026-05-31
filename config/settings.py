@@ -7,7 +7,12 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config"
+load_dotenv(BASE_DIR / ".env")
 STORAGE_DIR = BASE_DIR / "storage" / "data"
+POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", "")
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+WAITLIST_FILE = STORAGE_DIR / "waitlist.txt"
+METRICS_LOG = STORAGE_DIR / "metrics_log.json"
 PROMPTS_FILE = STORAGE_DIR / "prompts.json"
 CURRENT_DRAFT = STORAGE_DIR / "current_draft.json"
 SPRINT_LOG = STORAGE_DIR / "sprint_log.txt"
@@ -18,7 +23,6 @@ ENCRYPTION_KEY_PATH = CONFIG_DIR / ".secret_key"
 SETTINGS_FILE = CONFIG_DIR / "user_settings.json"
 screenshot_retention_hours = 24
 
-load_dotenv(BASE_DIR / ".env")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 

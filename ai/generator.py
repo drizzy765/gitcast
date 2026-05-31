@@ -2,6 +2,7 @@ import asyncio
 import httpx
 from ai.prompts import get_all_prompts, sprint_summary_prompt
 from core.log_stream import stream_log
+from api.analytics import track
 from config.settings import (
     GROQ_API_KEY,
     GEMINI_API_KEY,
@@ -52,6 +53,7 @@ TIMEOUT = 60
 
 # Shared client to prevent SSL/Concurrency overhead
 _client = httpx.AsyncClient(timeout=TIMEOUT)
+_last_call_meta = {"provider_used": "", "used_fallback": False}
 
 
 def refresh_provider_keys() -> None:
@@ -110,12 +112,19 @@ async def generate_posts(payload: dict) -> dict:
                     user_message=active_user_message,
                     screenshots=screenshots,
                 )
+                _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
             else:
                 # Automatic task-based routing with fallback
                 result = await _ai_call(format_key, system_prompt, active_user_message)
 
             output[format_key] = result
             elapsed = asyncio.get_event_loop().time() - started
+            track("post_generated", {
+                "format_keys": [format_key],
+                "provider_used": _last_call_meta.get("provider_used", ""),
+                "latency_seconds": round(elapsed, 1),
+                "used_fallback": bool(_last_call_meta.get("used_fallback", False)),
+            })
             stream_log("Generator", "OK", f"{format_key} complete ({elapsed:.1f}s)")
             
             # adaptive delay
@@ -178,7 +187,12 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str) -> st
         try:
             if provider_name != primary:
                 stream_log("ROUTER", "ROUTER", f"{format_key} -> {provider_name} fallback")
-            return await _call_provider(provider_name, system_prompt, user_message)
+            result = await _call_provider(provider_name, system_prompt, user_message)
+            _last_call_meta.update({
+                "provider_used": provider_name,
+                "used_fallback": provider_name != primary,
+            })
+            return result
         except Exception as e:
             last_error = str(e)
             stream_log("ROUTER", "WARN", f"{provider_name} failed: {e}")
@@ -188,7 +202,9 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str) -> st
     if GEMINI_API_KEY:
         stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
         try:
-            return await _gemini_text_call(system_prompt, user_message)
+            result = await _gemini_text_call(system_prompt, user_message)
+            _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
+            return result
         except Exception as e:
             last_error = f"Gemini also failed: {e}"
 

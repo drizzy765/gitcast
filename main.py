@@ -21,6 +21,8 @@ from config.settings import (
 from storage.sprint import log_sprint_capture
 from storage.cleanup import run_cleanup
 from storage.engagement import run_engagement_worker
+from api.analytics import track
+from api.monitoring import capture_error, init_sentry
 
 
 # ── Graceful shutdown ─────────────────────────────────────────────────────────
@@ -59,6 +61,8 @@ def on_trigger():
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    init_sentry()
+    track("app_started", {"version": "3.0"})
     missing = missing_api_keys()
     if missing:
         print(f"[Warning] Missing API keys: {', '.join(missing)}")
@@ -108,9 +112,14 @@ if __name__ == "__main__":
     api_thread.start()
 
     # Start tray in a daemon thread so it doesn't block signal handling in main thread
+    def run_tray_guarded():
+        try:
+            run_tray(trigger_callback=on_trigger)
+        except Exception as e:
+            capture_error(e, {"module": "tray"})
+
     tray_thread = threading.Thread(
-        target=run_tray, 
-        kwargs={"trigger_callback": on_trigger}, 
+        target=run_tray_guarded,
         daemon=True
     )
     tray_thread.start()

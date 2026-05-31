@@ -5,6 +5,7 @@ from pathlib import Path
 from datetime import datetime
 from config.settings import STORAGE_DIR
 from core.log_stream import stream_log
+from api.analytics import track
 BASE_DIR = STORAGE_DIR.parent.parent
 from .framing import add_programming_frame
 
@@ -197,6 +198,12 @@ def run_capture(delay: float = 5.0) -> dict:
             screenshot["framed_path"] = ""
 
     git_diff = get_git_diff(working_dir)
+    if screenshot.get("success"):
+        track("capture_completed", {
+            "has_git_diff": bool(git_diff.get("diff")),
+            "ocr_confidence": 0,
+            "ocr_reliable": False,
+        })
     return {
         "screenshot": screenshot,
         "working_dir": working_dir,

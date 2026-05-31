@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from cryptography.fernet import Fernet
 from config.settings import ENCRYPTION_KEY_PATH
+from api.analytics import track
 
 # [Security] module for data protection and sensitive content scanning
 
@@ -73,9 +74,13 @@ def scan_for_secrets(ocr_text: str) -> dict:
         if found:
             matches.extend(found)
     
+    unique_matches = list(set(matches))
+    if unique_matches:
+        track("sensitive_content_blocked", {"pattern_count": len(unique_matches)})
+
     return {
         "clean": len(matches) == 0,
-        "matches": list(set(matches))
+        "matches": unique_matches
     }
 
 def delete_capture(screenshot_path: str):

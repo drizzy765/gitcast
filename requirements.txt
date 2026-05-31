@@ -12,3 +12,7 @@ httpx
 cryptography
 rich
 keyboard
+slowapi
+limits
+sentry-sdk[fastapi]
+posthog

@@ -1,5 +1,6 @@
 import asyncio
-from fastapi import APIRouter, HTTPException, Depends
+import time
+from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
@@ -10,7 +11,9 @@ from ai.formatter import split_into_thread
 from ai.viral_patterns import get_all_patterns
 from api.payload import validate_payload
 from api.auth import verify_token
-from storage.logger import load_posts
+from storage.logger import decline_post, get_unverified_posts, load_posts, log_post, verify_post
+from storage.metrics import get_metrics, save_metrics
+from storage.insights import calculate_insights
 from storage.tone_memory import save_rating
 from core.codebase_reader import summarise_for_prompt
 from config.settings import (
@@ -22,9 +25,19 @@ from config.settings import (
     AI_ROUTING_MAP,
     API_KEY_ENV_MAP,
     BASE_DIR,
+    WAITLIST_FILE,
     reload_api_keys,
 )
 from core.log_stream import get_logs_after, get_latest_log_id, stream_log
+from api.analytics import track
+from api.ratelimit import limiter
+from api.validators import (
+    check_prompt_injection,
+    sanitize_path,
+    sanitize_text,
+    validate_api_key as validate_provider_api_key,
+    validate_email,
+)
 import json
 import os
 
@@ -147,16 +160,35 @@ class SettingsUpdate(BaseModel):
 class PublishRequest(BaseModel):
     post_text: str
     screenshot_path: Optional[str] = None
+    format_key: Optional[str] = "deep_tech"
 
 
 class WaitlistRequest(BaseModel):
     email: str
 
 
+class PostVerifyRequest(BaseModel):
+    post_id: str
+    post_url: Optional[str] = ""
+
+
+class PostDeclineRequest(BaseModel):
+    post_id: str
+
+
+class MetricsSaveRequest(BaseModel):
+    post_id: str
+    impressions: int
+    likes: int
+    comments: int
+    reposts: int
+    hashtags: Optional[List[str]] = []
+    days_after_post: int
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-import re
-EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_INSIGHTS_CACHE = {"timestamp": 0.0, "data": None}
 
 KEY_GUIDE = {
     "groq": {
@@ -237,11 +269,12 @@ def get_ai_keys_status():
 
 
 @router.post("/keys/update", dependencies=[Depends(verify_token)])
-def update_ai_key(request: ProviderKeyUpdate):
-    provider = _normalize_provider(request.provider)
-    key = request.key.strip()
-    if not key:
-        return {"success": False, "error": "API key cannot be empty"}
+@limiter.limit("5/minute")
+def update_ai_key(request: Request, body: ProviderKeyUpdate):
+    provider = _normalize_provider(sanitize_text(body.provider))
+    key = (body.key or "").strip()
+    if not validate_provider_api_key(key, provider):
+        raise HTTPException(status_code=400, detail=f"Invalid {provider} API key format")
 
     env_name = API_KEY_ENV_MAP[provider]
     try:
@@ -249,6 +282,7 @@ def update_ai_key(request: ProviderKeyUpdate):
         os.environ[env_name] = key
         _reload_key_runtime()
         stream_log("Keys", "OK", f"{provider} key updated")
+        track("api_key_added", {"provider": provider})
         return {"success": True, "provider": provider}
     except Exception as e:
         stream_log("Keys", "ERROR", f"{provider} key update failed: {e}")
@@ -257,7 +291,7 @@ def update_ai_key(request: ProviderKeyUpdate):
 
 @router.delete("/keys/remove", dependencies=[Depends(verify_token)])
 def remove_ai_key(request: ProviderKeyRemove):
-    provider = _normalize_provider(request.provider)
+    provider = _normalize_provider(sanitize_text(request.provider))
     env_name = API_KEY_ENV_MAP[provider]
     try:
         unset_key(str(_env_path()), env_name)
@@ -300,17 +334,13 @@ async def stream_logs():
 @router.post("/waitlist")
 def add_to_waitlist(request: WaitlistRequest):
     """Appends an email to the waitlist file."""
-    email = request.email.strip()
-    if not EMAIL_REGEX.match(email):
+    email = sanitize_text(request.email).lower()
+    if not validate_email(email):
         raise HTTPException(status_code=400, detail="Invalid email format")
     
-    from config.settings import STORAGE_DIR
-    waitlist_dir = STORAGE_DIR / "data"
-    waitlist_dir.mkdir(parents=True, exist_ok=True)
-    waitlist_file = waitlist_dir / "waitlist.txt"
-    
     try:
-        with open(waitlist_file, "a", encoding="utf-8") as f:
+        WAITLIST_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(WAITLIST_FILE, "a", encoding="utf-8") as f:
             f.write(email + "\n")
         return {"success": True, "message": "you're on the list"}
     except Exception as e:
@@ -321,16 +351,28 @@ def add_to_waitlist(request: WaitlistRequest):
 def update_settings(update: SettingsUpdate):
     """Updates global project settings."""
     from config.settings import set_project_narrative
-    set_project_narrative(update.project_narrative)
+    set_project_narrative(sanitize_text(update.project_narrative))
     return {"success": True}
 
 
 @router.post("/publish", dependencies=[Depends(verify_token)])
-async def publish(request: PublishRequest):
+@limiter.limit("10/minute")
+async def publish(request: Request, body: PublishRequest):
     """Publishes a post to X (Twitter)."""
     from publisher.twitter import publish_post
     try:
-        result = publish_post(request.post_text, request.screenshot_path)
+        post_text = sanitize_text(body.post_text)
+        screenshot_path = sanitize_path(body.screenshot_path) if body.screenshot_path else None
+        result = publish_post(post_text, screenshot_path)
+        if result.get("success") or result.get("fallback"):
+            log_post(
+                post_text=post_text,
+                format_key=sanitize_text(body.format_key or "deep_tech"),
+                screenshot_path=body.screenshot_path or "",
+                tweet_url=result.get("tweet_url", ""),
+                tweet_id=result.get("tweet_id", ""),
+                fallback=bool(result.get("fallback")),
+            )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Publishing failed: {e}")
@@ -341,7 +383,7 @@ def delete_screenshot(filename: str):
     """Securely deletes a screenshot from disk."""
     from core.security import delete_capture
     from config.settings import STORAGE_DIR
-    path = STORAGE_DIR / "screenshots" / filename
+    path = sanitize_path(str(STORAGE_DIR / "screenshots" / sanitize_text(filename)))
     delete_capture(str(path))
     return {"success": True}
 
@@ -426,8 +468,16 @@ async def get_framed_screenshot(filename: str):
 
 
 @router.post("/generate", response_model=GenerateResponse, dependencies=[Depends(verify_token)])
-async def generate(request: GenerateRequest):
-    payload = request.dict()
+@limiter.limit("10/minute")
+async def generate(request: Request, body: GenerateRequest):
+    payload = body.dict()
+    for key, value in list(payload.items()):
+        if isinstance(value, str):
+            payload[key] = sanitize_text(value)
+    injection = check_prompt_injection(body.raw_thought)
+    if not injection["safe"]:
+        payload["raw_thought"] = injection.get("sanitized", "")
+        payload["user_message"] = sanitize_text(payload.get("user_message", ""))
     
     # Use all prompts if no specific format keys provided
     if not payload.get("format_keys"):
@@ -487,7 +537,8 @@ def get_current_draft():
 
 
 @router.post("/chat", dependencies=[Depends(verify_token)])
-async def chat_refine(request: ChatRequest):
+@limiter.limit("20/minute")
+async def chat_refine(request: Request, body: ChatRequest):
     """Refines a post variation using AI chat."""
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to refine.")
@@ -499,7 +550,12 @@ async def chat_refine(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 
     # Build the refinement prompt
-    current_text = draft["variations"].get(request.format_key, "")
+    message = sanitize_text(body.message)
+    injection = check_prompt_injection(message)
+    if not injection["safe"]:
+        message = injection.get("sanitized", "")
+    format_key = sanitize_text(body.format_key)
+    current_text = draft["variations"].get(format_key, "")
     
     # Simple refinement instruction
     refinement_system_prompt = (
@@ -510,21 +566,21 @@ async def chat_refine(request: ChatRequest):
     
     refinement_user_message = (
         f"Original Context:\n{draft['payload']['user_message']}\n\n"
-        f"Current Draft for '{request.format_key}':\n{current_text}\n\n"
-        f"User Instruction: {request.message}\n\n"
+        f"Current Draft for '{format_key}':\n{current_text}\n\n"
+        f"User Instruction: {message}\n\n"
         "Output ONLY the revised post text. No preamble."
     )
 
     try:
         # Use routing for the specific format_key
         new_text = await _ai_call(
-            request.format_key,
+            format_key,
             refinement_system_prompt,
             refinement_user_message
         )
         
         # Update and save
-        draft["variations"][request.format_key] = new_text
+        draft["variations"][format_key] = new_text
         with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
             json.dump(draft, f, indent=4)
             
@@ -546,7 +602,7 @@ async def cli_trigger(request: CliTriggerRequest):
         ocr = run_ocr(capture["screenshot"]["path"])
         
         payload = build_payload(
-            raw_thought=request.thought,
+            raw_thought=sanitize_text(request.thought),
             ocr_result=ocr,
             capture_result=capture,
         )
@@ -638,7 +694,7 @@ def list_screenshots():
 async def recommend_screenshot(request: RecommendRequest):
     """Uses AI to recommend where to post a specific screenshot."""
     from config.settings import STORAGE_DIR
-    path = STORAGE_DIR / "screenshots" / request.filename
+    path = STORAGE_DIR / "screenshots" / sanitize_text(request.filename)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Screenshot not found")
 
@@ -671,8 +727,9 @@ async def recommend_screenshot(request: RecommendRequest):
 def delete_prompt(format_key: str):
     """Deletes a prompt definition."""
     definitions = load_prompt_definitions()
-    if format_key in definitions:
-        del definitions[format_key]
+    clean_key = sanitize_text(format_key)
+    if clean_key in definitions:
+        del definitions[clean_key]
         try:
             with open(PROMPTS_FILE, "w", encoding="utf-8") as f:
                 json.dump(definitions, f, indent=4)
@@ -693,10 +750,10 @@ def get_prompts():
 def update_prompt(update: PromptUpdate):
     """Updates a single prompt definition."""
     definitions = load_prompt_definitions()
-    definitions[update.format_key] = {
-        "label": update.label,
-        "description": update.description,
-        "system_prompt": update.system_prompt
+    definitions[sanitize_text(update.format_key)] = {
+        "label": sanitize_text(update.label),
+        "description": sanitize_text(update.description),
+        "system_prompt": sanitize_text(update.system_prompt)
     }
     
     try:
@@ -711,8 +768,8 @@ def update_prompt(update: PromptUpdate):
 def rate_post(request: RateRequest):
     """Stores a rating for a historical post."""
     save_rating(
-        post_text=request.post_text,
-        format_key=request.format_key,
+        post_text=sanitize_text(request.post_text),
+        format_key=sanitize_text(request.format_key),
         rating=request.rating,
         timestamp=request.timestamp
     )
@@ -733,7 +790,7 @@ def get_plan():
 
 @router.put("/settings/plan", dependencies=[Depends(verify_token)])
 def update_plan(update: PlanUpdate):
-    set_twitter_plan(update.plan)
+    set_twitter_plan(sanitize_text(update.plan))
     return {"success": True}
 
 
@@ -756,7 +813,8 @@ def get_keys_status():
 
 
 @router.post("/article/generate", dependencies=[Depends(verify_token)])
-async def generate_article(request: ArticleGenerateRequest):
+@limiter.limit("5/minute")
+async def generate_article(request: Request, body: ArticleGenerateRequest):
     """Generates a full technical article from sprint context."""
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to generate article from.")
@@ -768,8 +826,8 @@ async def generate_article(request: ArticleGenerateRequest):
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 
     codebase_summary = ""
-    if request.include_codebase:
-        codebase_summary = summarise_for_prompt(request.repo_path)
+    if body.include_codebase:
+        codebase_summary = summarise_for_prompt(sanitize_text(body.repo_path))
 
     # Use Article prompt
     sys_prompt = article_prompt(codebase_summary)
@@ -797,7 +855,12 @@ async def generate_article(request: ArticleGenerateRequest):
 @router.post("/article/refine", dependencies=[Depends(verify_token)])
 async def refine_article(request: ArticleRefineRequest):
     """Refines an article draft based on user instructions."""
-    sys_prompt = article_refinement_prompt(request.current_article, request.instruction)
+    current_article = sanitize_text(request.current_article)
+    instruction = sanitize_text(request.instruction)
+    injection = check_prompt_injection(instruction)
+    if not injection["safe"]:
+        instruction = injection.get("sanitized", "")
+    sys_prompt = article_refinement_prompt(current_article, instruction)
     try:
         article = await _ai_call("article", sys_prompt, "Refine the article.")
         return {"success": True, "article": article}
@@ -814,5 +877,74 @@ def get_patterns():
 @router.post("/thread/split", dependencies=[Depends(verify_token)])
 def thread_split(request: ThreadSplitRequest):
     """Splits a long post into a numbered thread."""
-    tweets = split_into_thread(request.post_text)
+    tweets = split_into_thread(sanitize_text(request.post_text))
     return {"success": True, "tweets": tweets}
+
+
+@router.post("/posts/verify", dependencies=[Depends(verify_token)])
+def verify_logged_post(request: PostVerifyRequest):
+    post_id = sanitize_text(request.post_id)
+    post_url = sanitize_text(request.post_url or "")
+    result = verify_post(post_id, post_url)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error", "post not found"))
+    track("post_verified", {"has_url": bool(post_url)})
+    return {"success": True}
+
+
+@router.post("/posts/decline", dependencies=[Depends(verify_token)])
+def decline_logged_post(request: PostDeclineRequest):
+    result = decline_post(sanitize_text(request.post_id))
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error", "post not found"))
+    return {"success": True}
+
+
+@router.get("/posts/unverified", dependencies=[Depends(verify_token)])
+def unverified_posts():
+    return {"posts": get_unverified_posts()}
+
+
+@router.post("/metrics/save", dependencies=[Depends(verify_token)])
+def save_post_metrics(request: MetricsSaveRequest):
+    values = {
+        "impressions": request.impressions,
+        "likes": request.likes,
+        "comments": request.comments,
+        "reposts": request.reposts,
+        "days_after_post": request.days_after_post,
+    }
+    if any(value < 0 for value in values.values()):
+        raise HTTPException(status_code=400, detail="Metric values must be non-negative")
+    if request.days_after_post < 1 or request.days_after_post > 30:
+        raise HTTPException(status_code=400, detail="days_after_post must be between 1 and 30")
+
+    hashtags = [sanitize_text(tag) for tag in (request.hashtags or []) if sanitize_text(tag)]
+    if len(hashtags) > 10:
+        raise HTTPException(status_code=400, detail="hashtags cannot exceed 10 items")
+
+    result = save_metrics(
+        sanitize_text(request.post_id),
+        {
+            **values,
+            "hashtags": hashtags,
+        },
+    )
+    track("metrics_saved", {"days_after": request.days_after_post})
+    return result
+
+
+@router.get("/metrics/{post_id}", dependencies=[Depends(verify_token)])
+def get_post_metrics(post_id: str):
+    return get_metrics(sanitize_text(post_id))
+
+
+@router.get("/insights", dependencies=[Depends(verify_token)])
+def get_insights():
+    now = time.time()
+    if _INSIGHTS_CACHE["data"] is not None and now - _INSIGHTS_CACHE["timestamp"] < 3600:
+        return _INSIGHTS_CACHE["data"]
+    data = calculate_insights()
+    _INSIGHTS_CACHE["timestamp"] = now
+    _INSIGHTS_CACHE["data"] = data
+    return data

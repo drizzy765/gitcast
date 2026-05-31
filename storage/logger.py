@@ -3,6 +3,29 @@ from datetime import datetime, timedelta
 from config.settings import POST_LOG
 
 
+def _post_id(entry: dict) -> str:
+    return str(entry.get("id") or entry.get("timestamp") or "")
+
+
+def _normalize_entry(entry: dict) -> dict:
+    post_id = _post_id(entry)
+    return {
+        **entry,
+        "id": post_id,
+        "posted_verified": bool(entry.get("posted_verified", False)),
+        "posted_declined": bool(entry.get("posted_declined", False)),
+        "post_url": entry.get("post_url", entry.get("tweet_url", "")) or "",
+        "verified_at": entry.get("verified_at", "") or "",
+    }
+
+
+def save_posts(posts: list) -> None:
+    POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(POST_LOG, "w", encoding="utf-8") as f:
+        for entry in posts:
+            f.write(json.dumps(_normalize_entry(entry)) + "\n")
+
+
 def log_post(
     post_text: str,
     format_key: str,
@@ -17,6 +40,7 @@ def log_post(
         timestamp = datetime.now().isoformat()
 
     entry = {
+        "id": timestamp,
         "timestamp": timestamp,
         "post_text": post_text,
         "format_key": format_key,
@@ -24,6 +48,10 @@ def log_post(
         "tweet_url": tweet_url,
         "tweet_id": tweet_id,
         "fallback": fallback,
+        "posted_verified": False,
+        "posted_declined": False,
+        "post_url": "",
+        "verified_at": "",
     }
 
     try:
@@ -44,10 +72,44 @@ def load_posts() -> list:
             line = line.strip()
             if line:
                 try:
-                    entries.append(json.loads(line))
+                    entries.append(_normalize_entry(json.loads(line)))
                 except json.JSONDecodeError:
                     continue
     return entries
+
+
+def verify_post(post_id: str, post_url: str = "") -> dict:
+    posts = load_posts()
+    target = str(post_id)
+    for entry in posts:
+        if entry.get("id") == target or entry.get("timestamp") == target:
+            entry["posted_verified"] = True
+            entry["posted_declined"] = False
+            entry["verified_at"] = datetime.now().isoformat()
+            if post_url:
+                entry["post_url"] = post_url
+            save_posts(posts)
+            return {"success": True, "post_id": target}
+    return {"success": False, "error": "post not found"}
+
+
+def decline_post(post_id: str) -> dict:
+    posts = load_posts()
+    target = str(post_id)
+    for entry in posts:
+        if entry.get("id") == target or entry.get("timestamp") == target:
+            entry["posted_declined"] = True
+            save_posts(posts)
+            return {"success": True, "post_id": target}
+    return {"success": False, "error": "post not found"}
+
+
+def get_unverified_posts() -> list:
+    posts = [
+        entry for entry in load_posts()
+        if not entry.get("posted_verified") and not entry.get("posted_declined")
+    ]
+    return sorted(posts, key=lambda item: item.get("timestamp", ""), reverse=True)
 
 
 def get_streak() -> dict:
@@ -57,9 +119,9 @@ def get_streak() -> dict:
       - total_posts: total number of posts logged
       - last_post_date: date string of the most recent post
     """
-    posts = load_posts()
+    posts = [post for post in load_posts() if not post.get("posted_declined")]
     if not posts:
-        return {"current_streak": 0, "total_posts": 0, "last_post_date": ""}
+        return {"current_streak": 0, "best_streak": 0, "total_posts": 0, "last_post_date": ""}
 
     # collect unique post dates
     post_dates = set()
@@ -81,11 +143,11 @@ def get_streak() -> dict:
     if last_post_date < today - timedelta(days=1):
         return {
             "current_streak": 0,
+            "best_streak": 0,
             "total_posts": len(posts),
             "last_post_date": str(last_post_date),
         }
 
-    # count consecutive days backwards from the most recent post date
     streak = 1
     for i in range(1, len(sorted_dates)):
         if sorted_dates[i] == sorted_dates[i - 1] - timedelta(days=1):
@@ -93,8 +155,19 @@ def get_streak() -> dict:
         else:
             break
 
+    best_streak = 1
+    running = 1
+    for i in range(1, len(sorted_dates)):
+        if sorted_dates[i] == sorted_dates[i - 1] - timedelta(days=1):
+            running += 1
+        else:
+            best_streak = max(best_streak, running)
+            running = 1
+    best_streak = max(best_streak, running)
+
     return {
         "current_streak": streak,
+        "best_streak": best_streak,
         "total_posts": len(posts),
         "last_post_date": str(last_post_date),
     }

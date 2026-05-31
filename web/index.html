@@ -1026,6 +1026,140 @@
             color: var(--accent-amber);
             font-weight: bold;
         }
+        .history-alert-dot {
+            color: var(--accent-amber);
+            animation: pulseDot 1.2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 1; }
+        }
+        .history-card {
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-card.declined {
+            opacity: 0.45;
+        }
+        .history-card.pending {
+            border-color: rgba(255, 184, 0, 0.45);
+        }
+        .history-card.verified {
+            border-color: rgba(0, 255, 136, 0.55);
+        }
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+        }
+        .verified-badge {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+        .pending-dot {
+            color: var(--accent-amber);
+            animation: pulseDot 1.2s infinite;
+        }
+        .history-actions,
+        .metrics-grid,
+        .insight-grid {
+            display: grid;
+            gap: 8px;
+        }
+        .history-actions {
+            grid-template-columns: 1fr 1fr;
+        }
+        .verify-url-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+        .input-brutalist {
+            width: 100%;
+            background: var(--bg-root);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px;
+            font-size: var(--text-sm);
+            outline: none;
+        }
+        .input-brutalist:focus {
+            border-color: var(--accent-green);
+        }
+        .metrics-panel {
+            border: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--bg-root);
+        }
+        .metrics-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .metric-field {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .performance-badge {
+            color: var(--accent-green);
+            font-size: var(--text-xs);
+            font-weight: bold;
+        }
+        .insight-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .insight-card {
+            border: 1px solid var(--border);
+            padding: 12px;
+            background: var(--bg-surface);
+        }
+        .insight-label {
+            color: var(--text-secondary);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+        }
+        .insight-value {
+            color: var(--accent-green);
+            font-size: var(--text-xl);
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        .insight-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        .insight-table th,
+        .insight-table td {
+            border-bottom: 1px solid var(--border);
+            padding: 8px;
+            text-align: left;
+        }
+        .insight-table th {
+            color: var(--text-secondary);
+            font-size: var(--text-xs);
+        }
+        @media (max-width: 900px) {
+            .insight-grid,
+            .metrics-grid,
+            .history-actions,
+            .verify-url-row {
+                grid-template-columns: 1fr;
+            }
+        }
 
         /* Utility helper */
         .hidden { display: none !important; }
@@ -1063,7 +1197,8 @@
                 <button class="nav-item" id="nav-article" onclick="setView('article')">[ARTICLE_MODE]</button>
                 <button class="nav-item" id="nav-gallery" onclick="setView('gallery')">[GALLERY]</button>
                 <button class="nav-item" id="nav-prompts" onclick="setView('prompts')">[PROMPTS]</button>
-                <button class="nav-item" id="nav-history" onclick="setView('history')">[HISTORY]</button>
+                <button class="nav-item" id="nav-history" onclick="setView('history')">[HISTORY<span id="history-dot" class="history-alert-dot hidden"> ●</span>]</button>
+                <button class="nav-item" id="nav-insights" onclick="setView('insights')">[INSIGHTS]</button>
                 <button class="nav-item" id="nav-byok" onclick="setView('byok')">[BYOK]</button>
                 <button class="nav-item" id="nav-settings" onclick="setView('settings')">[SETTINGS]</button>
             </nav>
@@ -1162,6 +1297,7 @@
                 <section class="editor-section hidden" id="gallery-view"></section>
                 <section class="editor-section hidden" id="prompts-view"></section>
                 <section class="editor-section hidden" id="byok-view"></section>
+                <section class="editor-section hidden" id="insights-view"></section>
 
                 <!-- Right Side Preview Column -->
                 <aside class="preview-panel" id="preview-panel">
@@ -1276,7 +1412,7 @@
     <script>
         // --- State Management ---
         const state = {
-            view: 'draft', // draft, article, history, settings, gallery, prompts, byok
+            view: 'draft', // draft, article, history, insights, settings, gallery, prompts, byok
             tab: 'deep_tech',
             token: localStorage.getItem('session_token') || '',
             draft: null,
@@ -1290,6 +1426,7 @@
             settings: { narrative: '', sprint: false },
             keys: {},
             keyGuide: {},
+            unverifiedCount: 0,
             logs: [],
             logsOpen: false,
             logSource: null
@@ -1386,6 +1523,7 @@
             await fetchDraft();
             render();
             updateVimStats();
+            updateHistoryDot();
             startPolling();
         }
 
@@ -1510,13 +1648,14 @@
             document.getElementById('main-container').classList.toggle('article-mode', isArticle);
             document.getElementById('tab-bar').classList.toggle('hidden', isArticle);
             document.getElementById('article-options').classList.toggle('hidden', !isArticle);
-            document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history' || state.view === 'byok');
+            document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history' || state.view === 'insights' || state.view === 'byok');
 
             // Bottom status bar updates
             const viewMap = {
                 draft: '[DRAFT_ROOM]',
                 article: '[ARTICLE_MODE]',
                 history: '[HISTORY]',
+                insights: '[INSIGHTS]',
                 settings: '[SETTINGS]',
                 gallery: '[GALLERY]',
                 prompts: '[PROMPTS]',
@@ -1741,10 +1880,11 @@
             const text = state.tabs[state.tab].text;
             if (state.tab === 'deep_tech' || state.tab === 'quick_win') {
                 const shot = state.tabs[state.tab].shots.find(s => s.status === 'accepted');
-                const res = await api('/api/publish', 'POST', { post_text: text, screenshot_path: shot ? shot.path : null });
+                const res = await api('/api/publish', 'POST', { post_text: text, screenshot_path: shot ? shot.path : null, format_key: state.tab });
                 if (res && (res.success || res.fallback)) {
                     showToast("Published successfully!", "success");
                     updateVimStats(); // Real-time stats reload!
+                    updateHistoryDot();
                 }
             } else {
                 copyContent();
@@ -1798,9 +1938,11 @@
             document.getElementById('gallery-view').classList.toggle('hidden', v !== 'gallery');
             document.getElementById('prompts-view').classList.toggle('hidden', v !== 'prompts');
             document.getElementById('byok-view').classList.toggle('hidden', v !== 'byok');
-            document.getElementById('preview-panel').classList.toggle('hidden', v === 'settings' || v === 'history' || v === 'gallery' || v === 'prompts' || v === 'byok');
+            document.getElementById('insights-view').classList.toggle('hidden', v !== 'insights');
+            document.getElementById('preview-panel').classList.toggle('hidden', v === 'settings' || v === 'history' || v === 'insights' || v === 'gallery' || v === 'prompts' || v === 'byok');
 
             if (v === 'history') loadHistory();
+            if (v === 'insights') loadInsights();
             if (v === 'settings') renderSettings();
             if (v === 'gallery') loadGallery();
             if (v === 'prompts') loadPrompts();
@@ -2178,10 +2320,47 @@
         }
 
         // --- History Subview Rendering ---
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function postId(post) {
+            return post.id || post.timestamp;
+        }
+
+        function engagementBadge(metrics) {
+            if (!metrics) return '';
+            const impressions = Number(metrics.impressions || 0);
+            const likes = Number(metrics.likes || 0);
+            const comments = Number(metrics.comments || 0);
+            const reposts = Number(metrics.reposts || 0);
+            const rate = impressions ? (((likes + comments + reposts) / impressions) * 100).toFixed(1) : '0.0';
+            return `[${impressions.toLocaleString()} impressions · ${likes.toLocaleString()} likes · ${rate}% engagement]`;
+        }
+
+        function shouldShowMetrics(post) {
+            if (!post.posted_verified || post.metrics) return false;
+            const verifiedAt = new Date(post.verified_at || post.timestamp);
+            return Date.now() - verifiedAt.getTime() >= 24 * 60 * 60 * 1000;
+        }
+
+        async function updateHistoryDot() {
+            const data = await api('/api/posts/unverified');
+            state.unverifiedCount = data && data.posts ? data.posts.length : 0;
+            const dot = document.getElementById('history-dot');
+            if (dot) dot.classList.toggle('hidden', state.unverifiedCount === 0);
+        }
+
         async function loadHistory() {
             const data = await api('/api/history');
             const view = document.getElementById('history-view');
             if (data && data.history) {
+                const posts = data.history.slice().reverse();
                 view.innerHTML = `
                     <div class="ascii-box">
                         <div class="ascii-box-header">
@@ -2190,24 +2369,176 @@
                             <span class="ascii-box-limit">─┐</span>
                         </div>
                         <div class="ascii-box-body" style="display:grid; gap:16px; max-height: 600px; overflow-y: auto; padding: 16px;">
-                            ${data.history.slice().reverse().map(h => `
-                                <div class="prompt-card" style="margin-bottom:0; cursor:pointer;" onclick="reuseHistory('${h.post_text.replace(/'/g, "\\'")}')">
-                                    <div class="prompt-header">
-                                        <span class="badge badge-tag" style="border:1px solid var(--accent-blue); color:var(--accent-blue); font-size:var(--text-xs); padding:2px 6px;">[${h.format_key.toUpperCase()}]</span>
-                                        <span style="font-size:var(--text-xs); color:var(--text-secondary);">${h.timestamp}</span>
+                            ${posts.map(h => {
+                                const id = postId(h);
+                                const encodedId = encodeURIComponent(id);
+                                const status = h.posted_verified ? 'verified' : (h.posted_declined ? 'declined' : 'pending');
+                                const ts = h.timestamp ? new Date(h.timestamp).toLocaleTimeString() : '';
+                                return `
+                                    <div class="history-card ${status}" id="history-${encodedId}">
+                                        <div class="history-meta">
+                                            <span>${escapeHtml((h.format_key || 'POST').toUpperCase())} · ${escapeHtml(ts)} ${status === 'pending' ? '<span class="pending-dot">●</span>' : ''}</span>
+                                            <span>${h.posted_verified ? `[POSTED ✓] ${escapeHtml(h.verified_at || '')}` : (h.posted_declined ? '[NOT_POSTED ✗]' : '[✓?]')}</span>
+                                        </div>
+                                        <div style="font-size:var(--text-sm); white-space:pre-wrap; word-break:break-word; cursor:pointer;" onclick='reuseHistory(${JSON.stringify(h.post_text || "")})'>${escapeHtml(h.post_text || '')}</div>
+                                        <div style="font-size:var(--text-xs); color:var(--text-secondary);">format: ${escapeHtml((h.format_key || '').toUpperCase())} · provider: ${escapeHtml(h.provider || 'local')}</div>
+                                        ${h.posted_verified && h.post_url ? `<a href="${escapeHtml(h.post_url)}" target="_blank" style="color:var(--accent-blue); font-size:var(--text-xs);">[OPEN_POST ↗]</a>` : ''}
+                                        ${h.metrics ? `<div class="performance-badge">${engagementBadge(h.metrics)}</div>` : ''}
+                                        ${!h.posted_verified && !h.posted_declined ? `
+                                            <div class="history-actions">
+                                                <button class="btn-brutalist btn-primary-brutalist" onclick="showVerifyInput('${encodedId}')">[YES ✓]</button>
+                                                <button class="btn-brutalist" onclick="declinePost('${encodedId}')">[NO ✗]</button>
+                                            </div>
+                                            <div class="verify-url-row hidden" id="verify-row-${encodedId}">
+                                                <input class="input-brutalist" id="verify-url-${encodedId}" placeholder="paste post URL (optional)">
+                                                <button class="btn-brutalist btn-primary-brutalist" onclick="verifyPost('${encodedId}')">[CONFIRM ✓]</button>
+                                            </div>
+                                        ` : ''}
+                                        ${shouldShowMetrics(h) ? renderMetricsForm(h) : ''}
                                     </div>
-                                    <div style="font-size:var(--text-sm); white-space:pre-wrap; word-break:break-word;">${h.post_text}</div>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
+                updateHistoryDot();
+            }
+        }
+
+        function renderMetricsForm(post) {
+            const id = encodeURIComponent(postId(post));
+            return `
+                <div class="metrics-panel" id="metrics-panel-${id}">
+                    <div style="color:var(--accent-amber); font-size:var(--text-xs);">┌─ HOW_DID_IT_PERFORM</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// posted 24h ago — add your metrics to improve CE</div>
+                    <div class="metrics-grid">
+                        <label class="metric-field">impressions <input class="input-brutalist" type="number" min="0" id="m-impressions-${id}" value="0"></label>
+                        <label class="metric-field">likes <input class="input-brutalist" type="number" min="0" id="m-likes-${id}" value="0"></label>
+                        <label class="metric-field">comments <input class="input-brutalist" type="number" min="0" id="m-comments-${id}" value="0"></label>
+                        <label class="metric-field">reposts <input class="input-brutalist" type="number" min="0" id="m-reposts-${id}" value="0"></label>
+                    </div>
+                    <input class="input-brutalist" id="m-hashtags-${id}" placeholder="hashtags: #buildinpublic #python">
+                    <div class="history-actions">
+                        <button class="btn-brutalist btn-primary-brutalist" onclick="saveMetrics('${id}')">[SAVE_METRICS ✓]</button>
+                        <button class="btn-brutalist" onclick="document.getElementById('metrics-panel-${id}').classList.add('hidden')">[SKIP →]</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showVerifyInput(encodedId) {
+            const row = document.getElementById(`verify-row-${encodedId}`);
+            if (row) row.classList.toggle('hidden');
+        }
+
+        async function verifyPost(encodedId) {
+            const input = document.getElementById(`verify-url-${encodedId}`);
+            const post_url = input ? input.value.trim() : '';
+            const res = await api('/api/posts/verify', 'POST', { post_id: decodeURIComponent(encodedId), post_url });
+            if (res && res.success) {
+                showToast("Post verified", "success");
+                loadHistory();
+            }
+        }
+
+        async function declinePost(encodedId) {
+            const res = await api('/api/posts/decline', 'POST', { post_id: decodeURIComponent(encodedId) });
+            if (res && res.success) {
+                showToast("Marked not posted", "info");
+                loadHistory();
+            }
+        }
+
+        async function saveMetrics(encodedId) {
+            const num = (name) => Number(document.getElementById(`m-${name}-${encodedId}`).value || 0);
+            const hashtags = (document.getElementById(`m-hashtags-${encodedId}`).value || '')
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 10);
+            const res = await api('/api/metrics/save', 'POST', {
+                post_id: decodeURIComponent(encodedId),
+                impressions: num('impressions'),
+                likes: num('likes'),
+                comments: num('comments'),
+                reposts: num('reposts'),
+                hashtags,
+                days_after_post: 1
+            });
+            if (res && res.success) {
+                showToast("Metrics saved", "success");
+                loadHistory();
             }
         }
 
         function reuseHistory(text) {
             state.tabs[state.tab].text = text;
             setView('draft');
+        }
+
+        async function loadInsights() {
+            const data = await api('/api/insights');
+            const view = document.getElementById('insights-view');
+            if (!data || !view) return;
+
+            if (data.insufficient_data) {
+                view.innerHTML = `
+                    <div class="ascii-box">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ NOT_ENOUGH_DATA</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                            <div style="color:var(--text-secondary);">// need 5 posts with metrics to generate insights</div>
+                            <div style="color:var(--text-secondary);">// you have ${data.posts_with_metrics || 0}. add metrics to ${data.posts_needed || 0} more posts.</div>
+                            <button class="btn-brutalist btn-primary-brutalist" onclick="setView('history')">[GO_TO_HISTORY →]</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const overview = data.overview || {};
+            const top = data.top_post || {};
+            const patterns = data.viral_patterns || [];
+            const hashtags = data.hashtag_performance || [];
+            view.innerHTML = `
+                <div class="ascii-box" style="height:100%;">
+                    <div class="ascii-box-header">
+                        <span class="ascii-box-title">┌─ YOUR_INSIGHTS</span>
+                        <span class="ascii-box-line"></span>
+                        <span class="ascii-box-limit">─┐</span>
+                    </div>
+                    <div class="ascii-box-body" style="padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
+                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// based on ${overview.total_posts || 0} posts with performance data</div>
+                        <div class="insight-grid">
+                            <div class="insight-card"><div class="insight-label">TOTAL_POSTS</div><div class="insight-value">${overview.total_posts || 0}</div></div>
+                            <div class="insight-card"><div class="insight-label">IMPRESSIONS</div><div class="insight-value">${Number(overview.total_impressions || 0).toLocaleString()}</div></div>
+                            <div class="insight-card"><div class="insight-label">AVG_ENGAGE</div><div class="insight-value">${overview.avg_engagement_rate || 0}%</div></div>
+                            <div class="insight-card"><div class="insight-label">STREAK</div><div class="insight-value">${overview.posting_streak || 0} days</div></div>
+                        </div>
+                        <div class="history-card verified">
+                            <div class="history-meta"><span>TOP_PERFORMER</span><span>${escapeHtml((top.format_key || '').toUpperCase())}</span></div>
+                            <div style="white-space:pre-wrap;">"${escapeHtml(top.post_text || '')}"</div>
+                            <div class="performance-badge">${Number(top.impressions || 0).toLocaleString()} impressions · ${Number(top.likes || 0).toLocaleString()} likes</div>
+                            <div style="color:var(--text-secondary); font-size:var(--text-xs);">format: ${escapeHtml((top.format_key || '').toUpperCase())} · posted: ${escapeHtml(top.timestamp || '')}</div>
+                        </div>
+                        <div class="history-card">
+                            <div class="history-meta"><span>VIRAL_PATTERNS</span><span>[${patterns.length}]</span></div>
+                            ${patterns.map(p => `<div>● ${escapeHtml(p.description)}</div>`).join('') || '<div style="color:var(--text-secondary);">// no patterns yet</div>'}
+                        </div>
+                        <div class="history-card">
+                            <div class="history-meta"><span>HASHTAG_PERFORMANCE</span><span>[AVG_IMPRESSIONS]</span></div>
+                            <table class="insight-table">
+                                <thead><tr><th>HASHTAG</th><th>AVG_IMPRESSIONS</th><th>USES</th></tr></thead>
+                                <tbody>
+                                    ${hashtags.map(h => `<tr><td>${escapeHtml(h.hashtag)}</td><td>${Number(h.avg_impressions || 0).toLocaleString()}</td><td>${h.uses || 0}</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // --- Interactive Vim Stats Calculation (Streaks / Count today) ---
@@ -2219,12 +2550,13 @@
                 if (data && data.history) {
                     const todayStr = new Date().toDateString();
                     postsToday = data.history.filter(h => {
+                        if (h.posted_declined) return false;
                         const d = new Date(h.timestamp);
                         return d.toDateString() === todayStr;
                     }).length;
 
                     // Group posts by unique publication dates
-                    const dates = Array.from(new Set(data.history.map(h => new Date(h.timestamp).toDateString())));
+                    const dates = Array.from(new Set(data.history.filter(h => !h.posted_declined).map(h => new Date(h.timestamp).toDateString())));
                     const sortedDates = dates.map(d => new Date(d)).sort((a,b) => b - a);
                     let currentStreak = 0;
                     let checkDate = new Date();

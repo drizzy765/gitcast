@@ -8,6 +8,7 @@ from config.settings import (
     TWITTER_BEARER_TOKEN,
 )
 from publisher.clipboard import open_x_compose
+from api.analytics import track
 
 
 def is_configured() -> bool:
@@ -49,6 +50,7 @@ def publish_post(post_text: str, screenshot_path: str = None) -> dict:
         print("[Publisher] Twitter API not configured — falling back to clipboard.")
         result = open_x_compose(post_text)
         result["fallback"] = True
+        track("post_published", {"platform": "twitter", "used_fallback": True})
         return result
 
     try:
@@ -73,6 +75,7 @@ def publish_post(post_text: str, screenshot_path: str = None) -> dict:
         tweet_url = f"https://twitter.com/i/web/status/{tweet_id}"
 
         print(f"[Publisher] Tweet posted — {tweet_url}")
+        track("post_published", {"platform": "twitter", "used_fallback": False})
         return {
             "success": True,
             "tweet_url": tweet_url,
@@ -85,6 +88,7 @@ def publish_post(post_text: str, screenshot_path: str = None) -> dict:
         print("[Publisher] Falling back to clipboard.")
         result = open_x_compose(post_text)
         result["fallback"] = True
+        track("post_published", {"platform": "twitter", "used_fallback": True})
         return result
 
 

@@ -1,12 +1,19 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from api.routes import router
 from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR
+from api.monitoring import init_sentry
+from api.ratelimit import limiter
 
 # ── App setup ─────────────────────────────────────────────────────────────────
+
+init_sentry()
 
 app = FastAPI(
     title="Context Engine",
@@ -15,6 +22,28 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url=None,
 )
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    retry_after = 60
+    headers = getattr(exc, "headers", None) or {}
+    try:
+        retry_after = int(headers.get("Retry-After", retry_after))
+    except (TypeError, ValueError):
+        retry_after = 60
+    headers["Retry-After"] = str(retry_after)
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "error": "rate limit exceeded",
+            "retry_after": retry_after,
+            "message": f"[!!] slow down. retry in {retry_after}s.",
+        },
+        headers=headers,
+    )
 
 # allow the UI layer to call the API from localhost
 app.add_middleware(
@@ -23,6 +52,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SlowAPIMiddleware)
+
+try:
+    from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
+    app.add_middleware(SentryAsgiMiddleware)
+except Exception:
+    pass
 
 # Serve storage directory for images
 # We mount 'storage' folder which contains 'data/screenshots'

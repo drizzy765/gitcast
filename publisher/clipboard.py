@@ -1,4 +1,5 @@
 import webbrowser
+from api.analytics import track
 
 
 def copy_to_clipboard(post_text: str) -> dict:
@@ -13,6 +14,7 @@ def copy_to_clipboard(post_text: str) -> dict:
         root.update()  # required for clipboard to persist after destroy
         root.destroy()
         print("[Publisher] Text copied to clipboard.")
+        track("post_copied", {"platform": "clipboard"})
         return {"success": True, "method": "clipboard"}
     except Exception as e:
         print(f"[Publisher] Clipboard copy failed: {e}")
