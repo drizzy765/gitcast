@@ -1646,7 +1646,7 @@
         function render() {
             const isArticle = state.view === 'article';
             document.getElementById('main-container').classList.toggle('article-mode', isArticle);
-            document.getElementById('tab-bar').classList.toggle('hidden', isArticle);
+            document.getElementById('tab-bar').classList.toggle('hidden', state.view !== 'draft');
             document.getElementById('article-options').classList.toggle('hidden', !isArticle);
             document.getElementById('command-area').classList.toggle('hidden', state.view === 'settings' || state.view === 'history' || state.view === 'insights' || state.view === 'byok');
 
