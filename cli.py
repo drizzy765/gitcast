@@ -5,8 +5,8 @@ import webbrowser
 def main():
     if len(sys.argv) < 2:
         print("Usage:")
-        print("  ce \"your thought here\"  -> Quick single capture")
-        print("  ce capture            -> Start interactive multi-shot session")
+        print("  sl \"your thought here\"  -> Quick single capture")
+        print("  sl capture            -> Start interactive multi-shot session")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -18,7 +18,7 @@ def main():
         return
 
     thought = " ".join(sys.argv[1:])
-    print(f"[CE] Initializing capture with thought: '{thought}'")
+    print(f"[SL] Initializing capture with thought: '{thought}'")
 
     try:
         # We'll call an internal trigger endpoint or just fire the main logic
@@ -32,14 +32,14 @@ def main():
         )
         
         if response.status_code == 200:
-            print("[CE] Context captured. Opening Draft Room...")
+            print("[SL] Context captured. Opening Draft Room...")
             webbrowser.open("http://127.0.0.1:8000")
         else:
-            print(f"[CE Error] Failed to trigger: {response.text}")
+            print(f"[SL Error] Failed to trigger: {response.text}")
             
     except Exception as e:
-        print(f"[CE Error] Connection failed: {e}")
-        print("Is the Context Engine running? (python main.py)")
+        print(f"[SL Error] Connection failed: {e}")
+        print("Is Shiplog running? (python main.py)")
 
 if __name__ == "__main__":
     main()

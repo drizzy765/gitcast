@@ -28,7 +28,7 @@ from api.monitoring import capture_error, init_sentry
 # ── Graceful shutdown ─────────────────────────────────────────────────────────
 
 def handle_exit(sig, frame):
-    print("\n[Context Engine] Shutting down... bye.")
+    print("\n[Shiplog] Shutting down... bye.")
     stop_tray()
     os._exit(0)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             "\n"
             "> [!!] NO API KEYS DETECTED\n"
             ">\n"
-            "> context engine needs at least one AI provider key.\n"
+            "> shiplog needs at least one AI provider key.\n"
             "> all keys are free to obtain:\n"
             ">\n"
             ">   GROQ (recommended first key)\n"
@@ -97,11 +97,11 @@ if __name__ == "__main__":
         )
 
     if not is_onboarding_complete():
-        print("[Context Engine] First launch — set your Project Narrative via tray → Settings.")
+        print("[Shiplog] First launch — set your Project Narrative via tray → Settings.")
         complete_onboarding()
 
-    print("[Context Engine] Running — press Ctrl+Alt+S to trigger (Instant).")
-    print("[Context Engine] Press Ctrl+C to quit.\n")
+    print("[Shiplog] Running — press Ctrl+Alt+S to trigger (Instant).")
+    print("[Shiplog] Press Ctrl+C to quit.\n")
 
     # Run maintenance tasks
     run_cleanup()
