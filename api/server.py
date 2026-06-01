@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from api.routes import router
-from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR
+from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR, CONFIG_DIR
 from api.monitoring import init_sentry
 from api.ratelimit import limiter
 
@@ -16,7 +16,7 @@ from api.ratelimit import limiter
 init_sentry()
 
 app = FastAPI(
-    title="Context Engine",
+    title="Shiplog",
     description="Local AI server for build-in-public post generation",
     version="0.1.0",
     docs_url="/docs",
@@ -96,14 +96,31 @@ def health_check():
     }
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Auth token retrieval (Localhost only) ───────────────────────────────────────
 
 from api.auth import get_token
 
+@app.get("/api/token")
+def get_session_token(request: Request):
+    client_host = request.client.host if request.client else None
+    if client_host not in ["127.0.0.1", "localhost", "::1"]:
+        raise HTTPException(status_code=403, detail="Forbidden: Access allowed only from localhost")
+    return {"token": get_token()}
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
 def start_server():
     """Starts the FastAPI server. Called from main.py in a background thread."""
+    # Write session token to config/session_token.txt
+    try:
+        token_file = CONFIG_DIR / "session_token.txt"
+        token_file.write_text(get_token(), encoding="utf-8")
+    except Exception as e:
+        print(f"[Server] Failed to write session token to file: {e}")
+
     print(f"\n[Auth] Session Token: {get_token()}")
-    print("[Server] Starting Context Engine API on http://127.0.0.1:8000")
+    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
     uvicorn.run(
         "api.server:app",
         host="127.0.0.1",
@@ -114,6 +131,6 @@ def start_server():
 
 
 if __name__ == "__main__":
-    print("[Server] Starting Context Engine API on http://127.0.0.1:8000")
+    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
     print("[Server] Docs available at http://127.0.0.1:8000/docs")
     start_server()
