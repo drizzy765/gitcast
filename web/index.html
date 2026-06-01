@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONTEXT_ENGINE | TERMINAL_WORKSPACE</title>
+    <title>Shiplog — Every ship deserves a log.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
@@ -1043,7 +1043,7 @@
             gap: 10px;
         }
         .history-card.declined {
-            opacity: 0.45;
+            opacity: 0.4;
         }
         .history-card.pending {
             border-color: rgba(255, 184, 0, 0.45);
@@ -1058,9 +1058,23 @@
             color: var(--text-secondary);
             font-size: var(--text-xs);
             text-transform: uppercase;
+            flex-wrap: wrap;
+        }
+        .history-preview {
+            font-size: var(--text-sm);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .history-detail-line {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
         }
         .verified-badge {
             color: var(--accent-green);
+            font-weight: bold;
+        }
+        .skipped-badge {
+            color: var(--accent-red);
             font-weight: bold;
         }
         .pending-dot {
@@ -1078,7 +1092,7 @@
         }
         .verify-url-row {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 1fr auto auto;
             gap: 8px;
         }
         .input-brutalist {
@@ -1101,6 +1115,19 @@
             gap: 10px;
             background: var(--bg-root);
         }
+        .terminal-panel {
+            border: 1px solid var(--border);
+            padding: 12px;
+            background: var(--bg-root);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .terminal-panel-title {
+            color: var(--accent-amber);
+            font-size: var(--text-xs);
+            font-weight: bold;
+        }
         .metrics-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -1112,6 +1139,39 @@
             font-size: var(--text-xs);
             color: var(--text-secondary);
             text-transform: uppercase;
+        }
+        .hashtag-chip-row,
+        .platform-row,
+        .metrics-summary-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .hashtag-chip,
+        .platform-chip {
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            background: transparent;
+            padding: 4px 8px;
+            font-size: var(--text-xs);
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .platform-chip.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .metric-summary-cell {
+            min-width: 150px;
+            color: var(--text-secondary);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+        }
+        .metric-summary-cell strong {
+            color: var(--text-primary);
+            font-size: var(--text-sm);
+            margin-left: 8px;
         }
         .performance-badge {
             color: var(--accent-green);
@@ -1152,12 +1212,89 @@
             color: var(--text-secondary);
             font-size: var(--text-xs);
         }
+        .streak-grid {
+            display: grid;
+            gap: 8px;
+            overflow-x: auto;
+        }
+        .streak-header,
+        .streak-row {
+            display: grid;
+            grid-template-columns: repeat(7, 48px);
+            gap: 8px;
+            align-items: center;
+        }
+        .streak-header {
+            color: var(--text-secondary);
+            font-size: var(--text-xs);
+        }
+        .streak-day {
+            width: 48px;
+            height: 28px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xs);
+        }
+        .streak-day.posted {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+        .viral-score {
+            color: var(--accent-green);
+            font-size: var(--text-2xl);
+            font-weight: bold;
+            text-align: center;
+            padding: 12px 0;
+        }
         @media (max-width: 900px) {
             .insight-grid,
             .metrics-grid,
             .history-actions,
             .verify-url-row {
                 grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .app-wrapper {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+            body {
+                overflow: auto;
+                height: auto;
+            }
+            aside.sidebar {
+                width: 100%;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .main-header {
+                padding: 0 12px;
+                gap: 12px;
+                overflow-x: auto;
+            }
+            .editor-section,
+            .preview-panel {
+                padding: 12px;
+            }
+            .preview-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+            .content-area {
+                flex-direction: column;
+                overflow: visible;
+            }
+            .vim-status-bar {
+                position: sticky;
+                bottom: 0;
             }
         }
 
@@ -1188,8 +1325,8 @@
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-                <div class="brand-mark">CONTEXT_ENGINE</div>
-                <div class="brand-subtitle">v3.0 [BETA]</div>
+                <div class="brand-mark">SHIPLOG</div>
+                <div class="brand-subtitle">v1.0 [BETA]</div>
             </div>
             
             <nav class="nav-group">
@@ -1293,7 +1430,18 @@
 
                 <!-- Hidden subviews loaded dynamically in Javascript -->
                 <section class="editor-section hidden" id="settings-view"></section>
-                <section class="editor-section hidden" id="history-view"></section>
+                <section class="editor-section hidden" id="history-view">
+                    <div class="ascii-box">
+                        <div class="ascii-box-header">
+                            <span class="ascii-box-title">┌─ POST_HISTORY</span>
+                            <span class="ascii-box-line"></span>
+                            <span class="ascii-box-limit">─┐</span>
+                        </div>
+                        <div class="ascii-box-body" id="history-list" style="display:grid; gap:16px; max-height: 600px; overflow-y: auto; padding: 16px;">
+                            <!-- History cards will be rendered here dynamically -->
+                        </div>
+                    </div>
+                </section>
                 <section class="editor-section hidden" id="gallery-view"></section>
                 <section class="editor-section hidden" id="prompts-view"></section>
                 <section class="editor-section hidden" id="byok-view"></section>
@@ -1396,6 +1544,7 @@
     <!-- Vim-Style Bottom Status Bar -->
     <footer class="vim-status-bar">
         <div class="status-left">
+            <span class="status-brand" style="background: var(--accent-green); color: var(--bg-root); font-weight: bold; padding: 0 4px; margin-right: 4px;">[SHIPLOG]</span>
             <span class="status-mode" id="status-bar-view">[DRAFT_ROOM]</span>
             <span class="status-channel" id="status-bar-tab">[X_POST]</span>
             <span class="status-provider" id="status-bar-providers">[NO_AI]</span>
@@ -1427,6 +1576,9 @@
             keys: {},
             keyGuide: {},
             unverifiedCount: 0,
+            historyPosts: [],
+            metricForms: {},
+            metricPlatforms: loadMetricPlatforms(),
             logs: [],
             logsOpen: false,
             logSource: null
@@ -1450,13 +1602,22 @@
             article: ["Expand intro", "Add code examples", "Make it conversational", "Add conclusion", "Add TL/DR", "More opinionated"]
         };
 
+        function loadMetricPlatforms() {
+            try {
+                return JSON.parse(localStorage.getItem('metric_platforms') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
         // Custom ASCII Loading spinner characters
         const SPINNER_CHARS = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
         let spinnerInterval = null;
 
         // --- Terminal Boot Sequence ---
         const BOOT_LINES = [
-            "> CONTEXT_ENGINE v3.0",
+            "> SHIPLOG v1.0",
+            "> every ship deserves a log.",
             "> loading modules...",
             "> [OK] capture engine",
             "> [OK] ai providers",
@@ -1507,7 +1668,8 @@
         }
 
         // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
             runBootSequence();
             if (!state.token) { 
                 setView('settings'); 
@@ -1525,6 +1687,9 @@
             updateVimStats();
             updateHistoryDot();
             startPolling();
+            if (state.view === 'history') {
+                loadHistory();
+            }
         }
 
         function setupListeners() {
@@ -1553,14 +1718,43 @@
         }
 
         // --- API Calls ---
+        async function initAuth() {
+            try {
+                const res = await fetch('/api/token');
+                const data = await res.json();
+                window.CE_TOKEN = data.token;
+                state.token = data.token; // compatibility with rest of codebase
+            } catch(e) {
+                console.error('Failed to get session token:', e);
+            }
+        }
+
+        async function apiFetch(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Session-Token': window.CE_TOKEN || '',
+                ...(options.headers || {})
+            };
+            const res = await fetch(url, { ...options, headers });
+            if (res.status === 401) {
+                console.error('Auth failed — token may have expired');
+                await initAuth();  // refresh token and retry once
+                const headers2 = {
+                    'Content-Type': 'application/json',
+                    'X-Session-Token': window.CE_TOKEN || ''
+                };
+                return fetch(url, { ...options, headers: headers2 });
+            }
+            return res;
+        }
+
         async function api(path, method = 'GET', body = null) {
             const options = {
-                method,
-                headers: { 'X-Session-Token': state.token, 'Content-Type': 'application/json' }
+                method
             };
             if (body) options.body = JSON.stringify(body);
             try {
-                const res = await fetch(path, options);
+                const res = await apiFetch(path, options);
                 if (res.status === 401) { 
                     showToast("Session expired", "error"); 
                     return null; 
@@ -1840,9 +2034,7 @@
 
         async function downloadFramed(filename) {
             try {
-                const res = await fetch(`/api/screenshot/${filename}/framed`, {
-                    headers: { 'X-Session-Token': state.token }
-                });
+                const res = await apiFetch(`/api/screenshot/${filename}/framed`);
                 if (res.status === 401) {
                     showToast("Session expired", "error");
                     setView('settings');
@@ -1885,6 +2077,7 @@
                     showToast("Published successfully!", "success");
                     updateVimStats(); // Real-time stats reload!
                     updateHistoryDot();
+                    loadHistory();
                 }
             } else {
                 copyContent();
@@ -2179,7 +2372,7 @@
                         <div class="byok-intro">
                             <div class="byok-title">Configure your own API keys</div>
                             <div class="byok-copy">
-                                Context Engine can use the default API routing configured for this app. BYOK is optional: add your own provider key when the default pool runs out of session quota, hits token limits, or when you want generations billed to your own account.
+                                Shiplog can use the default API routing configured for this app. BYOK is optional: add your own provider key when the default pool runs out of session quota, hits token limits, or when you want generations billed to your own account.
                             </div>
                         </div>
 
@@ -2319,155 +2512,601 @@
             }
         }
 
-        // --- History Subview Rendering ---
-        function escapeHtml(value) {
-            return String(value || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
+        // --- History, Metrics, and Insights Rendering ---
         function postId(post) {
-            return post.id || post.timestamp;
+            return String(post.id || post.timestamp || '');
         }
 
-        function engagementBadge(metrics) {
-            if (!metrics) return '';
-            const impressions = Number(metrics.impressions || 0);
-            const likes = Number(metrics.likes || 0);
-            const comments = Number(metrics.comments || 0);
-            const reposts = Number(metrics.reposts || 0);
-            const rate = impressions ? (((likes + comments + reposts) / impressions) * 100).toFixed(1) : '0.0';
-            return `[${impressions.toLocaleString()} impressions · ${likes.toLocaleString()} likes · ${rate}% engagement]`;
+        function encodedPostId(post) {
+            return encodeURIComponent(postId(post));
         }
 
-        function shouldShowMetrics(post) {
-            if (!post.posted_verified || post.metrics) return false;
-            const verifiedAt = new Date(post.verified_at || post.timestamp);
-            return Date.now() - verifiedAt.getTime() >= 24 * 60 * 60 * 1000;
+        function parsePostDate(value) {
+            const date = new Date(value || '');
+            return Number.isNaN(date.getTime()) ? null : date;
         }
 
-        async function updateHistoryDot() {
-            const data = await api('/api/posts/unverified');
-            state.unverifiedCount = data && data.posts ? data.posts.length : 0;
+        function formatDateTime(value) {
+            const date = parsePostDate(value);
+            if (!date) return '';
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function formatDateOnly(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+        }
+
+        function engagementRate(metrics) {
+            const impressions = Number(metrics?.impressions || 0);
+            const engagement = Number(metrics?.likes || 0) + Number(metrics?.comments || 0) + Number(metrics?.reposts || 0);
+            return impressions > 0 ? (engagement / impressions) * 100 : 0;
+        }
+
+        function metricPlatform(postIdValue) {
+            return state.metricPlatforms[postIdValue] || 'X_TWITTER';
+        }
+
+        function saveMetricPlatform(postIdValue, platform) {
+            state.metricPlatforms[postIdValue] = platform;
+            localStorage.setItem('metric_platforms', JSON.stringify(state.metricPlatforms));
+        }
+
+        function updateHistoryDot(hasUnverified) {
+            if (hasUnverified !== undefined) {
+                state.unverifiedCount = hasUnverified ? 1 : 0;
+            }
             const dot = document.getElementById('history-dot');
-            if (dot) dot.classList.toggle('hidden', state.unverifiedCount === 0);
-        }
-
-        async function loadHistory() {
-            const data = await api('/api/history');
-            const view = document.getElementById('history-view');
-            if (data && data.history) {
-                const posts = data.history.slice().reverse();
-                view.innerHTML = `
-                    <div class="ascii-box">
-                        <div class="ascii-box-header">
-                            <span class="ascii-box-title">┌─ PUBLISHED_POSTS</span>
-                            <span class="ascii-box-line"></span>
-                            <span class="ascii-box-limit">─┐</span>
-                        </div>
-                        <div class="ascii-box-body" style="display:grid; gap:16px; max-height: 600px; overflow-y: auto; padding: 16px;">
-                            ${posts.map(h => {
-                                const id = postId(h);
-                                const encodedId = encodeURIComponent(id);
-                                const status = h.posted_verified ? 'verified' : (h.posted_declined ? 'declined' : 'pending');
-                                const ts = h.timestamp ? new Date(h.timestamp).toLocaleTimeString() : '';
-                                return `
-                                    <div class="history-card ${status}" id="history-${encodedId}">
-                                        <div class="history-meta">
-                                            <span>${escapeHtml((h.format_key || 'POST').toUpperCase())} · ${escapeHtml(ts)} ${status === 'pending' ? '<span class="pending-dot">●</span>' : ''}</span>
-                                            <span>${h.posted_verified ? `[POSTED ✓] ${escapeHtml(h.verified_at || '')}` : (h.posted_declined ? '[NOT_POSTED ✗]' : '[✓?]')}</span>
-                                        </div>
-                                        <div style="font-size:var(--text-sm); white-space:pre-wrap; word-break:break-word; cursor:pointer;" onclick='reuseHistory(${JSON.stringify(h.post_text || "")})'>${escapeHtml(h.post_text || '')}</div>
-                                        <div style="font-size:var(--text-xs); color:var(--text-secondary);">format: ${escapeHtml((h.format_key || '').toUpperCase())} · provider: ${escapeHtml(h.provider || 'local')}</div>
-                                        ${h.posted_verified && h.post_url ? `<a href="${escapeHtml(h.post_url)}" target="_blank" style="color:var(--accent-blue); font-size:var(--text-xs);">[OPEN_POST ↗]</a>` : ''}
-                                        ${h.metrics ? `<div class="performance-badge">${engagementBadge(h.metrics)}</div>` : ''}
-                                        ${!h.posted_verified && !h.posted_declined ? `
-                                            <div class="history-actions">
-                                                <button class="btn-brutalist btn-primary-brutalist" onclick="showVerifyInput('${encodedId}')">[YES ✓]</button>
-                                                <button class="btn-brutalist" onclick="declinePost('${encodedId}')">[NO ✗]</button>
-                                            </div>
-                                            <div class="verify-url-row hidden" id="verify-row-${encodedId}">
-                                                <input class="input-brutalist" id="verify-url-${encodedId}" placeholder="paste post URL (optional)">
-                                                <button class="btn-brutalist btn-primary-brutalist" onclick="verifyPost('${encodedId}')">[CONFIRM ✓]</button>
-                                            </div>
-                                        ` : ''}
-                                        ${shouldShowMetrics(h) ? renderMetricsForm(h) : ''}
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-                updateHistoryDot();
+            if (dot) {
+                dot.classList.toggle('hidden', !hasUnverified);
+            }
+            const navItem = document.querySelector('[data-page="history"]') || document.getElementById('nav-history');
+            if (navItem) {
+                let navDot = navItem.querySelector('.history-alert-dot');
+                if (hasUnverified) {
+                    if (!navDot) {
+                        navDot = document.createElement('span');
+                        navDot.className = 'history-alert-dot';
+                        navDot.style.color = 'var(--accent-amber)';
+                        navDot.style.animation = 'pulseDot 1.2s infinite';
+                        navDot.innerText = ' ●';
+                        navItem.appendChild(navDot);
+                    }
+                } else {
+                    if (navDot) navDot.remove();
+                }
             }
         }
 
+        function renderLoadingBox(title) {
+            return `
+                <div class="ascii-box">
+                    <div class="ascii-box-header"><span class="ascii-box-title">┌─ ${title}</span><span class="ascii-box-line"></span><span class="ascii-box-limit">─┐</span></div>
+                    <div class="ascii-box-body" style="padding:16px; color:var(--text-secondary);">// loading_</div>
+                </div>
+            `;
+        }
+
+        async function loadHistory() {
+            const container = document.getElementById('history-list');
+            if (!container) return;
+            container.innerHTML = renderLoadingBox('POST_HISTORY');
+
+            // fetch all posts
+            const res = await apiFetch('/api/history');
+            const data = await res.json();
+            const posts = data.posts || data.history || [];
+            
+            // fetch unverified post IDs
+            const uvRes = await apiFetch('/api/posts/unverified');
+            const uvData = await uvRes.json();
+            const unverifiedIds = new Set(
+                (uvData.posts || []).map(p => p.id || p.timestamp)
+            );
+            
+            container.innerHTML = '';
+            
+            if (posts.length === 0) {
+                container.innerHTML = 
+                    '<div class="empty-state" style="color:var(--text-secondary);">' +
+                    '// no posts yet. press ctrl+shift+p to capture.' +
+                    '</div>';
+                updateHistoryDot(false);
+                return;
+            }
+            
+            // Show newest first for post history
+            const sortedPosts = posts.slice().reverse();
+            
+            sortedPosts.forEach(post => {
+                const card = buildHistoryCard(post, unverifiedIds);
+                container.appendChild(card);
+            });
+            
+            // update nav dot
+            updateHistoryDot(unverifiedIds.size > 0);
+        }
+
+        function buildHistoryCard(post, unverifiedIds) {
+            const isUnverified = unverifiedIds.has(post.id)
+                || unverifiedIds.has(post.timestamp);
+            const isVerified = post.posted_verified === true;
+            const isDeclined = post.posted_verified === 'declined'
+                || post.declined === true
+                || post.posted_declined === true;
+
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.id = 'history-' + encodeURIComponent(post.id || post.timestamp);
+
+            // Styling and classes
+            if (isVerified) {
+                card.classList.add('verified');
+                card.style.borderColor = 'rgba(0, 255, 136, 0.55)';
+            } else if (isDeclined) {
+                card.classList.add('declined');
+                card.style.opacity = '0.4';
+            } else if (isUnverified) {
+                card.classList.add('pending');
+                card.style.borderColor = 'rgba(255, 184, 0, 0.45)';
+            }
+
+            // Header Section
+            const header = document.createElement('div');
+            header.className = 'history-meta';
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.gap = '12px';
+            header.style.color = 'var(--text-secondary)';
+            header.style.fontSize = '11px';
+            header.style.textTransform = 'uppercase';
+
+            const fmtKey = (post.format_key || 'POST').toUpperCase();
+            const timeStr = formatDateTime(post.timestamp);
+
+            const titleSpan = document.createElement('span');
+            titleSpan.innerText = `${fmtKey} · ${timeStr}`;
+            header.appendChild(titleSpan);
+
+            if (isVerified) {
+                const badge = document.createElement('span');
+                badge.className = 'verified-badge';
+                badge.style.color = '#00ff88';
+                badge.style.fontSize = '11px';
+                badge.innerText = '── [POSTED ✓]';
+                header.appendChild(badge);
+            } else if (isDeclined) {
+                const badge = document.createElement('span');
+                badge.className = 'skipped-badge';
+                badge.style.color = '#ff4444';
+                badge.style.fontSize = '11px';
+                badge.innerText = '── [SKIPPED ✗]';
+                header.appendChild(badge);
+            }
+            card.appendChild(header);
+
+            // Preview Section
+            const preview = document.createElement('div');
+            preview.className = 'history-preview';
+            preview.style.fontSize = '13px';
+            preview.style.whiteSpace = 'pre-wrap';
+            preview.style.wordBreak = 'break-word';
+            const textPreview = (post.post_text || '').slice(0, 120) + ((post.post_text || '').length > 120 ? '...' : '');
+            preview.innerText = `"${textPreview}"`;
+            card.appendChild(preview);
+
+            if (!isDeclined) {
+                // Details Section
+                const details = document.createElement('div');
+                details.className = 'history-detail-line';
+                details.style.fontSize = '11px';
+                details.style.color = 'var(--text-secondary)';
+                const prov = post.provider_used || post.provider || 'local';
+                if (isVerified) {
+                    details.innerText = `format: ${post.format_key || 'POST'} · provider: ${prov}`;
+                } else if (isUnverified) {
+                    details.innerText = `format: ${post.format_key || 'POST'}  provider: ${prov}`;
+                }
+                card.appendChild(details);
+
+                if (isVerified) {
+                    // Posted Date / URL
+                    const postedRow = document.createElement('div');
+                    postedRow.className = 'history-detail-line';
+                    postedRow.style.fontSize = '11px';
+                    postedRow.style.color = 'var(--text-secondary)';
+                    const vTime = formatDateTime(post.verified_at || post.timestamp);
+                    postedRow.innerText = `posted: ${vTime}`;
+
+                    if (post.post_url) {
+                        const link = document.createElement('a');
+                        link.href = post.post_url;
+                        link.target = '_blank';
+                        link.style.color = 'var(--accent-blue)';
+                        link.style.marginLeft = '8px';
+                        link.innerText = 'view post ↗';
+                        postedRow.appendChild(link);
+                    }
+                    card.appendChild(postedRow);
+
+                    // Metrics Summary
+                    if (post.metrics) {
+                        const summary = document.createElement('div');
+                        summary.innerHTML = renderMetricsSummary(post, post.metrics);
+                        card.appendChild(summary);
+                    } else {
+                        // [ADD_METRICS →] Button and Form container
+                        const addMetricsBtn = document.createElement('button');
+                        addMetricsBtn.className = 'btn-brutalist';
+                        addMetricsBtn.style.border = '1px solid #ffb800';
+                        addMetricsBtn.style.color = '#ffb800';
+                        addMetricsBtn.style.background = 'transparent';
+                        addMetricsBtn.style.padding = '4px 10px';
+                        addMetricsBtn.style.fontSize = '11px';
+                        addMetricsBtn.style.cursor = 'pointer';
+                        addMetricsBtn.style.alignSelf = 'flex-start';
+                        addMetricsBtn.style.marginTop = '8px';
+                        addMetricsBtn.innerText = '[ADD_METRICS →]';
+
+                        const metricsContainer = document.createElement('div');
+                        metricsContainer.className = 'hidden';
+                        metricsContainer.innerHTML = renderMetricsForm(post);
+
+                        addMetricsBtn.onclick = () => {
+                            metricsContainer.classList.toggle('hidden');
+                        };
+
+                        card.appendChild(addMetricsBtn);
+                        card.appendChild(metricsContainer);
+                    }
+                }
+
+                if (isUnverified) {
+                    // Verification Prompt Section
+                    const unverifiedPanel = document.createElement('div');
+                    unverifiedPanel.className = 'terminal-panel';
+                    unverifiedPanel.style.border = '1px solid #2a2a2a';
+                    unverifiedPanel.style.padding = '10px 14px';
+                    unverifiedPanel.style.marginTop = '10px';
+
+                    const panelTitle = document.createElement('div');
+                    panelTitle.style.color = '#666666';
+                    panelTitle.style.textTransform = 'uppercase';
+                    panelTitle.style.fontSize = '11px';
+                    panelTitle.style.fontFamily = 'JetBrains Mono, monospace';
+                    panelTitle.innerText = '┌─ DID_YOU_POST_THIS?';
+                    unverifiedPanel.appendChild(panelTitle);
+
+                    const actionsRow = document.createElement('div');
+                    actionsRow.className = 'history-actions';
+                    actionsRow.style.display = 'grid';
+                    actionsRow.style.gridTemplateColumns = '1fr 1fr';
+                    actionsRow.style.gap = '8px';
+                    actionsRow.style.marginTop = '8px';
+
+                    const yesBtn = document.createElement('button');
+                    yesBtn.className = 'btn-brutalist';
+                    yesBtn.style.background = 'transparent';
+                    yesBtn.style.border = '1px solid #00ff88';
+                    yesBtn.style.color = '#00ff88';
+                    yesBtn.style.fontFamily = 'JetBrains Mono, monospace';
+                    yesBtn.style.fontSize = '12px';
+                    yesBtn.style.padding = '6px 14px';
+                    yesBtn.style.cursor = 'pointer';
+                    yesBtn.innerText = '[YES, I POSTED IT ✓]';
+
+                    // Hover effects
+                    yesBtn.onmouseenter = () => {
+                        yesBtn.style.background = '#00ff88';
+                        yesBtn.style.color = '#0a0a0a';
+                    };
+                    yesBtn.onmouseleave = () => {
+                        yesBtn.style.background = 'transparent';
+                        yesBtn.style.color = '#00ff88';
+                    };
+
+                    const noBtn = document.createElement('button');
+                    noBtn.className = 'btn-brutalist';
+                    noBtn.style.background = 'transparent';
+                    noBtn.style.border = '1px solid #ff4444';
+                    noBtn.style.color = '#ff4444';
+                    noBtn.style.fontFamily = 'JetBrains Mono, monospace';
+                    noBtn.style.fontSize = '12px';
+                    noBtn.style.padding = '6px 14px';
+                    noBtn.style.cursor = 'pointer';
+                    noBtn.innerText = '[NO, I SKIPPED IT ✗]';
+
+                    // Hover effects
+                    noBtn.onmouseenter = () => {
+                        noBtn.style.background = '#ff4444';
+                        noBtn.style.color = '#0a0a0a';
+                    };
+                    noBtn.onmouseleave = () => {
+                        noBtn.style.background = 'transparent';
+                        noBtn.style.color = '#ff4444';
+                    };
+
+                    actionsRow.appendChild(yesBtn);
+                    actionsRow.appendChild(noBtn);
+                    unverifiedPanel.appendChild(actionsRow);
+
+                    // YES, I POSTED IT handler
+                    yesBtn.onclick = () => {
+                        actionsRow.remove();
+
+                        const urlContainer = document.createElement('div');
+                        urlContainer.className = 'verify-url-row';
+                        urlContainer.style.display = 'grid';
+                        urlContainer.style.gridTemplateColumns = '1fr auto auto';
+                        urlContainer.style.gap = '8px';
+                        urlContainer.style.marginTop = '8px';
+
+                        const urlInput = document.createElement('input');
+                        urlInput.className = 'input-brutalist';
+                        urlInput.placeholder = '> paste post URL (optional)_';
+                        urlInput.style.width = '100%';
+                        urlInput.style.background = 'var(--bg-root)';
+                        urlInput.style.border = '1px solid var(--border)';
+                        urlInput.style.color = 'var(--text-primary)';
+                        urlInput.style.padding = '8px';
+                        urlInput.style.fontSize = '13px';
+                        urlInput.style.outline = 'none';
+
+                        urlInput.onfocus = () => {
+                            urlInput.style.borderColor = 'var(--accent-green)';
+                        };
+                        urlInput.onblur = () => {
+                            urlInput.style.borderColor = 'var(--border)';
+                        };
+
+                        const confirmBtn = document.createElement('button');
+                        confirmBtn.className = 'btn-brutalist btn-primary-brutalist';
+                        confirmBtn.style.fontFamily = 'JetBrains Mono, monospace';
+                        confirmBtn.style.fontSize = '12px';
+                        confirmBtn.style.padding = '6px 14px';
+                        confirmBtn.style.cursor = 'pointer';
+                        confirmBtn.innerText = '[CONFIRM ✓]';
+
+                        const skipBtn = document.createElement('button');
+                        skipBtn.className = 'btn-brutalist';
+                        skipBtn.style.fontFamily = 'JetBrains Mono, monospace';
+                        skipBtn.style.fontSize = '12px';
+                        skipBtn.style.padding = '6px 14px';
+                        skipBtn.style.cursor = 'pointer';
+                        skipBtn.innerText = '[SKIP URL]';
+
+                        urlContainer.appendChild(urlInput);
+                        urlContainer.appendChild(confirmBtn);
+                        urlContainer.appendChild(skipBtn);
+                        unverifiedPanel.appendChild(urlContainer);
+
+                        urlInput.focus();
+
+                        confirmBtn.onclick = () => {
+                            verifyPost(post.id || post.timestamp, card, urlInput.value.trim());
+                        };
+
+                        skipBtn.onclick = () => {
+                            verifyPost(post.id || post.timestamp, card, '');
+                        };
+                    };
+
+                    noBtn.onclick = () => {
+                        declinePost(post.id || post.timestamp, card);
+                    };
+
+                    card.appendChild(unverifiedPanel);
+                }
+
+                // USE AS DRAFT Button
+                const reuseBtn = document.createElement('button');
+                reuseBtn.className = 'btn-brutalist';
+                reuseBtn.style.fontSize = '11px';
+                reuseBtn.style.alignSelf = 'flex-start';
+                reuseBtn.style.marginTop = '8px';
+                reuseBtn.innerText = '[USE_AS_DRAFT]';
+                reuseBtn.onclick = () => {
+                    reuseHistory(post.post_text || '');
+                };
+                card.appendChild(reuseBtn);
+            }
+
+            return card;
+        }
+
+        async function verifyPost(postId, cardElement, url = '') {
+            const res = await apiFetch('/api/posts/verify', {
+                method: 'POST',
+                body: JSON.stringify({ post_id: postId, post_url: url })
+            });
+            if (res.ok) {
+                showToast("Post verified", "success");
+                await loadHistory();
+            } else {
+                showToast("Verification failed", "error");
+            }
+        }
+
+        async function declinePost(postId, cardElement) {
+            const res = await apiFetch('/api/posts/decline', {
+                method: 'POST',
+                body: JSON.stringify({ post_id: postId })
+            });
+            if (res.ok) {
+                showToast("Marked skipped", "info");
+                if (cardElement) {
+                    cardElement.style.opacity = '0.4';
+                }
+                await loadHistory();
+            } else {
+                showToast("Operation failed", "error");
+            }
+        }
+
+        function replaceHistoryCard(post) {
+            const card = document.getElementById(`history-${encodedPostId(post)}`);
+            if (card) {
+                const newCard = buildHistoryCard(post, new Set());
+                card.replaceWith(newCard);
+            }
+        }
+
+        function renderMetricsAvailability(post) {
+            const date = parsePostDate(post.timestamp);
+            if (!date) return '';
+            const now = new Date();
+            const daysSince = (now - date) / (1000 * 60 * 60 * 24);
+            const daysRemaining = Math.max(0, 7 - Math.floor(daysSince));
+            const availableDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+            if (daysRemaining > 0) {
+                return `
+                    <div class="metrics-panel">
+                        <div class="terminal-panel-title">┌─ PERFORMANCE_METRICS</div>
+                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// metrics available in ${daysRemaining} days</div>
+                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// come back on ${formatDateOnly(availableDate)} to log performance</div>
+                    </div>
+                `;
+            }
+            const id = encodedPostId(post);
+            return `
+                <button class="btn-brutalist" style="border-color:var(--accent-amber); color:var(--accent-amber); align-self:flex-start;" onclick="document.getElementById('metrics-panel-${id}')?.scrollIntoView({block:'center'})">[ADD_METRICS →]</button>
+                ${renderMetricsForm(post)}
+            `;
+        }
+
         function renderMetricsForm(post) {
-            const id = encodeURIComponent(postId(post));
+            const id = encodedPostId(post);
+            const form = state.metricForms[id] || { hashtags: [], platform: metricPlatform(postId(post)) };
+            state.metricForms[id] = form;
             return `
                 <div class="metrics-panel" id="metrics-panel-${id}">
-                    <div style="color:var(--accent-amber); font-size:var(--text-xs);">┌─ HOW_DID_IT_PERFORM</div>
-                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// posted 24h ago — add your metrics to improve CE</div>
+                    <div class="terminal-panel-title">┌─ LOG_PERFORMANCE</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// 7 days have passed - how did this post do?</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// this data trains SL to write better posts</div>
                     <div class="metrics-grid">
-                        <label class="metric-field">impressions <input class="input-brutalist" type="number" min="0" id="m-impressions-${id}" value="0"></label>
-                        <label class="metric-field">likes <input class="input-brutalist" type="number" min="0" id="m-likes-${id}" value="0"></label>
-                        <label class="metric-field">comments <input class="input-brutalist" type="number" min="0" id="m-comments-${id}" value="0"></label>
-                        <label class="metric-field">reposts <input class="input-brutalist" type="number" min="0" id="m-reposts-${id}" value="0"></label>
+                        <label class="metric-field">IMPRESSIONS <input class="input-brutalist" type="number" min="0" step="1" id="m-impressions-${id}" value="0"></label>
+                        <label class="metric-field">LIKES <input class="input-brutalist" type="number" min="0" step="1" id="m-likes-${id}" value="0"></label>
+                        <label class="metric-field">COMMENTS <input class="input-brutalist" type="number" min="0" step="1" id="m-comments-${id}" value="0"></label>
+                        <label class="metric-field">REPOSTS <input class="input-brutalist" type="number" min="0" step="1" id="m-reposts-${id}" value="0"></label>
                     </div>
-                    <input class="input-brutalist" id="m-hashtags-${id}" placeholder="hashtags: #buildinpublic #python">
+                    <div style="font-size:var(--text-xs); color:var(--text-secondary);">HASHTAGS_USED:</div>
+                    <div class="hashtag-chip-row" id="hashtag-row-${id}">
+                        ${renderHashtagChips(id)}
+                        <input class="input-brutalist" style="max-width:180px;" id="m-hashtag-input-${id}" placeholder="[+ type to add]" onkeydown="handleHashtagKey(event, '${id}')">
+                    </div>
+                    <div style="font-size:var(--text-xs); color:var(--text-secondary);">PLATFORM:</div>
+                    <div class="platform-row" id="platform-row-${id}">
+                        ${['X_TWITTER', 'LINKEDIN', 'BOTH'].map(platform => `<button class="platform-chip ${form.platform === platform ? 'active' : ''}" onclick="setMetricPlatform('${id}', '${platform}')">[${platform}${form.platform === platform ? ' ●' : ''}]</button>`).join('')}
+                    </div>
                     <div class="history-actions">
                         <button class="btn-brutalist btn-primary-brutalist" onclick="saveMetrics('${id}')">[SAVE_METRICS ✓]</button>
-                        <button class="btn-brutalist" onclick="document.getElementById('metrics-panel-${id}').classList.add('hidden')">[SKIP →]</button>
+                        <button class="btn-brutalist" onclick="document.getElementById('metrics-panel-${id}').classList.add('hidden')">[REMIND_ME_LATER →]</button>
                     </div>
                 </div>
             `;
         }
 
-        function showVerifyInput(encodedId) {
-            const row = document.getElementById(`verify-row-${encodedId}`);
-            if (row) row.classList.toggle('hidden');
+        function showNotification(msg, type = 'info') {
+            showToast(msg, type);
         }
 
-        async function verifyPost(encodedId) {
-            const input = document.getElementById(`verify-url-${encodedId}`);
-            const post_url = input ? input.value.trim() : '';
-            const res = await api('/api/posts/verify', 'POST', { post_id: decodeURIComponent(encodedId), post_url });
-            if (res && res.success) {
-                showToast("Post verified", "success");
-                loadHistory();
+        async function exportArticle() {
+            const editor = document.getElementById('article-editor') || document.getElementById('main-editor');
+            if (!editor) return;
+            
+            const content = editor.value || editor.innerText || '';
+            if (!content.trim()) {
+                showNotification('[!!] no article content to export', 'error');
+                return;
             }
+            
+            // create and trigger download
+            const blob = new Blob([content], {type: 'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // filename: article-YYYY-MM-DD.md
+            const date = new Date().toISOString().split('T')[0];
+            a.download = 'article-' + date + '.md';
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('[OK] article exported as markdown', 'success');
+            
+            // track analytics
+            apiFetch('/api/analytics/track', {
+                method: 'POST',
+                body: JSON.stringify({event: 'article_exported'})
+            }).catch(() => {});
         }
 
-        async function declinePost(encodedId) {
-            const res = await api('/api/posts/decline', 'POST', { post_id: decodeURIComponent(encodedId) });
-            if (res && res.success) {
-                showToast("Marked not posted", "info");
-                loadHistory();
-            }
+        function updateStoredPost(encodedId, patch) {
+            const id = decodeURIComponent(encodedId);
+            const index = state.historyPosts.findIndex(post => postId(post) === id);
+            if (index === -1) return null;
+            state.historyPosts[index] = { ...state.historyPosts[index], ...patch };
+            return state.historyPosts[index];
+        }
+
+        function validMetricValue(encodedId, name) {
+            const input = document.getElementById(`m-${name}-${encodedId}`);
+            const value = input ? input.value : '';
+            if (value === '' || !/^\d+$/.test(value) || Number(value) < 0) return null;
+            return Number(value);
         }
 
         async function saveMetrics(encodedId) {
-            const num = (name) => Number(document.getElementById(`m-${name}-${encodedId}`).value || 0);
-            const hashtags = (document.getElementById(`m-hashtags-${encodedId}`).value || '')
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 10);
+            const values = {
+                impressions: validMetricValue(encodedId, 'impressions'),
+                likes: validMetricValue(encodedId, 'likes'),
+                comments: validMetricValue(encodedId, 'comments'),
+                reposts: validMetricValue(encodedId, 'reposts')
+            };
+            if (Object.values(values).some(value => value === null)) {
+                showToast("Metrics must be whole numbers >= 0", "error");
+                return;
+            }
+            const form = state.metricForms[encodedId] || { hashtags: [], platform: 'X_TWITTER' };
+            const post_id = decodeURIComponent(encodedId);
             const res = await api('/api/metrics/save', 'POST', {
-                post_id: decodeURIComponent(encodedId),
-                impressions: num('impressions'),
-                likes: num('likes'),
-                comments: num('comments'),
-                reposts: num('reposts'),
-                hashtags,
-                days_after_post: 1
+                post_id,
+                ...values,
+                hashtags: form.hashtags.slice(0, 10),
+                days_after_post: 7
             });
             if (res && res.success) {
+                saveMetricPlatform(post_id, form.platform || 'X_TWITTER');
+                const metrics = { post_id, ...values, hashtags: form.hashtags.slice(0, 10), days_after_post: 7 };
+                const post = updateStoredPost(encodedId, { metrics });
+                if (post) replaceHistoryCard(post);
                 showToast("Metrics saved", "success");
-                loadHistory();
             }
+        }
+
+        function renderMetricsSummary(post, metrics) {
+            const rate = engagementRate(metrics).toFixed(1);
+            const platform = metricPlatform(postId(post));
+            const hashtags = (metrics.hashtags || []).join(' ') || '// none';
+            return `
+                <div class="metrics-panel">
+                    <div class="terminal-panel-title">┌─ PERFORMANCE_SUMMARY</div>
+                    <div class="metrics-summary-grid">
+                        <div class="metric-summary-cell">IMPRESSIONS <strong>${Number(metrics.impressions || 0).toLocaleString()}</strong></div>
+                        <div class="metric-summary-cell">LIKES <strong>${Number(metrics.likes || 0).toLocaleString()}</strong></div>
+                        <div class="metric-summary-cell">COMMENTS <strong>${Number(metrics.comments || 0).toLocaleString()}</strong></div>
+                        <div class="metric-summary-cell">REPOSTS <strong>${Number(metrics.reposts || 0).toLocaleString()}</strong></div>
+                        <div class="metric-summary-cell">ENGAGEMENT <strong>${rate}%</strong></div>
+                        <div class="metric-summary-cell">PLATFORM <strong>${escapeHtml(platform)}</strong></div>
+                    </div>
+                    <div class="history-detail-line">HASHTAGS ${escapeHtml(hashtags)}</div>
+                    <button class="btn-brutalist" style="align-self:flex-start;" onclick="setView('insights')">[VIEW_INSIGHTS →]</button>
+                </div>
+            `;
         }
 
         function reuseHistory(text) {
@@ -2476,32 +3115,25 @@
         }
 
         async function loadInsights() {
-            const data = await api('/api/insights');
             const view = document.getElementById('insights-view');
-            if (!data || !view) return;
+            if (!view) return;
+            view.innerHTML = renderLoadingBox('YOUR_INSIGHTS');
+            const [data, historyData] = await Promise.all([
+                api('/api/insights'),
+                api('/api/history')
+            ]);
+            const posts = (historyData?.history || []).filter(post => !post.posted_declined);
+            const rows = buildInsightRows(posts);
+            const overview = data?.overview || {};
+            const streak = computeStreakStats(posts);
+            const avgEngagement = rows.length ? rows.reduce((sum, row) => sum + row.engagement_rate, 0) / rows.length : Number(overview.avg_engagement_rate || 0);
+            const consistencyScore = (streak.daysPosted / 30) * 100;
+            const viralRaw = avgEngagement * consistencyScore;
+            const viralScore = Math.min(10, viralRaw / 20);
+            const leaderboard = buildFormatLeaderboard(rows);
+            const timing = buildTimingInsights(rows);
+            const coach = buildCoachMessage({ streak, leaderboard, avgEngagement, viralScore });
 
-            if (data.insufficient_data) {
-                view.innerHTML = `
-                    <div class="ascii-box">
-                        <div class="ascii-box-header">
-                            <span class="ascii-box-title">┌─ NOT_ENOUGH_DATA</span>
-                            <span class="ascii-box-line"></span>
-                            <span class="ascii-box-limit">─┐</span>
-                        </div>
-                        <div class="ascii-box-body" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
-                            <div style="color:var(--text-secondary);">// need 5 posts with metrics to generate insights</div>
-                            <div style="color:var(--text-secondary);">// you have ${data.posts_with_metrics || 0}. add metrics to ${data.posts_needed || 0} more posts.</div>
-                            <button class="btn-brutalist btn-primary-brutalist" onclick="setView('history')">[GO_TO_HISTORY →]</button>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-
-            const overview = data.overview || {};
-            const top = data.top_post || {};
-            const patterns = data.viral_patterns || [];
-            const hashtags = data.hashtag_performance || [];
             view.innerHTML = `
                 <div class="ascii-box" style="height:100%;">
                     <div class="ascii-box-header">
@@ -2510,35 +3142,203 @@
                         <span class="ascii-box-limit">─┐</span>
                     </div>
                     <div class="ascii-box-body" style="padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
-                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// based on ${overview.total_posts || 0} posts with performance data</div>
+                        <div class="terminal-panel" style="color:var(--accent-green);">${escapeHtml(coach)}</div>
+                        ${data?.insufficient_data ? `<div class="terminal-panel" style="color:var(--text-secondary);">// need 5 posts with metrics for backend insights · you have ${data.posts_with_metrics || 0}</div>` : ''}
                         <div class="insight-grid">
-                            <div class="insight-card"><div class="insight-label">TOTAL_POSTS</div><div class="insight-value">${overview.total_posts || 0}</div></div>
-                            <div class="insight-card"><div class="insight-label">IMPRESSIONS</div><div class="insight-value">${Number(overview.total_impressions || 0).toLocaleString()}</div></div>
-                            <div class="insight-card"><div class="insight-label">AVG_ENGAGE</div><div class="insight-value">${overview.avg_engagement_rate || 0}%</div></div>
-                            <div class="insight-card"><div class="insight-label">STREAK</div><div class="insight-value">${overview.posting_streak || 0} days</div></div>
+                            <div class="insight-card"><div class="insight-label">TOTAL_POSTS</div><div class="insight-value">${posts.length}</div></div>
+                            <div class="insight-card"><div class="insight-label">IMPRESSIONS</div><div class="insight-value">${rows.reduce((sum, row) => sum + row.impressions, 0).toLocaleString()}</div></div>
+                            <div class="insight-card"><div class="insight-label">AVG_ENGAGE</div><div class="insight-value">${avgEngagement.toFixed(1)}%</div></div>
+                            <div class="insight-card"><div class="insight-label">STREAK</div><div class="insight-value">${streak.current} days</div></div>
                         </div>
-                        <div class="history-card verified">
-                            <div class="history-meta"><span>TOP_PERFORMER</span><span>${escapeHtml((top.format_key || '').toUpperCase())}</span></div>
-                            <div style="white-space:pre-wrap;">"${escapeHtml(top.post_text || '')}"</div>
-                            <div class="performance-badge">${Number(top.impressions || 0).toLocaleString()} impressions · ${Number(top.likes || 0).toLocaleString()} likes</div>
-                            <div style="color:var(--text-secondary); font-size:var(--text-xs);">format: ${escapeHtml((top.format_key || '').toUpperCase())} · posted: ${escapeHtml(top.timestamp || '')}</div>
-                        </div>
-                        <div class="history-card">
-                            <div class="history-meta"><span>VIRAL_PATTERNS</span><span>[${patterns.length}]</span></div>
-                            ${patterns.map(p => `<div>● ${escapeHtml(p.description)}</div>`).join('') || '<div style="color:var(--text-secondary);">// no patterns yet</div>'}
-                        </div>
-                        <div class="history-card">
-                            <div class="history-meta"><span>HASHTAG_PERFORMANCE</span><span>[AVG_IMPRESSIONS]</span></div>
-                            <table class="insight-table">
-                                <thead><tr><th>HASHTAG</th><th>AVG_IMPRESSIONS</th><th>USES</th></tr></thead>
-                                <tbody>
-                                    ${hashtags.map(h => `<tr><td>${escapeHtml(h.hashtag)}</td><td>${Number(h.avg_impressions || 0).toLocaleString()}</td><td>${h.uses || 0}</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                        ${renderPostingStreak(streak)}
+                        ${renderOptimalTimes(timing, rows.length)}
+                        ${renderFormatLeaderboard(leaderboard)}
+                        ${renderViralCoefficient(viralScore, leaderboard, timing)}
+                        ${renderLegacyInsights(data)}
                     </div>
                 </div>
             `;
+        }
+
+        function buildInsightRows(posts) {
+            return posts.filter(post => post.metrics).map(post => {
+                const dt = parsePostDate(post.timestamp);
+                const metrics = post.metrics || {};
+                return {
+                    post,
+                    dt,
+                    format_key: (post.format_key || 'post').toUpperCase(),
+                    day: dt ? dt.toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase() : '',
+                    hour: dt ? dt.getHours() : null,
+                    impressions: Number(metrics.impressions || 0),
+                    likes: Number(metrics.likes || 0),
+                    comments: Number(metrics.comments || 0),
+                    reposts: Number(metrics.reposts || 0),
+                    engagement_rate: engagementRate(metrics)
+                };
+            });
+        }
+
+        function dateKey(date) {
+            return formatDateOnly(date);
+        }
+
+        function computeStreakStats(posts) {
+            const postedDates = new Set(posts.map(post => parsePostDate(post.timestamp)).filter(Boolean).map(dateKey));
+            const days = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            for (let i = 29; i >= 0; i--) {
+                const day = new Date(today);
+                day.setDate(today.getDate() - i);
+                days.push({ date: day, posted: postedDates.has(dateKey(day)) });
+            }
+            let current = 0;
+            for (let i = days.length - 1; i >= 0 && days[i].posted; i--) current++;
+            let best = 0;
+            let run = 0;
+            days.forEach(day => {
+                run = day.posted ? run + 1 : 0;
+                best = Math.max(best, run);
+            });
+            return { days, current, best, daysPosted: days.filter(day => day.posted).length };
+        }
+
+        function groupAverage(rows, keyFn) {
+            const groups = {};
+            rows.forEach(row => {
+                const key = keyFn(row);
+                if (!key) return;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(row.impressions);
+            });
+            return Object.entries(groups).map(([name, values]) => ({
+                name,
+                avg: values.reduce((sum, value) => sum + value, 0) / values.length,
+                posts: values.length
+            })).sort((a, b) => b.avg - a.avg);
+        }
+
+        function buildFormatLeaderboard(rows) {
+            return groupAverage(rows, row => row.format_key).map((item, index, list) => ({
+                ...item,
+                rank: index + 1,
+                trend: index === 0 ? '↑ best' : (index === list.length - 1 ? '↓ weakest' : '→ stable')
+            }));
+        }
+
+        function timeWindow(hour) {
+            if (hour === null) return '';
+            if (hour >= 21 && hour < 23) return '9PM - 11PM';
+            if (hour >= 18 && hour < 21) return '6PM - 9PM';
+            if (hour >= 15 && hour < 18) return '3PM - 6PM';
+            if (hour >= 12 && hour < 15) return '12PM - 3PM';
+            if (hour >= 9 && hour < 12) return '9AM - 12PM';
+            if (hour >= 6 && hour < 9) return '6AM - 9AM';
+            return 'LATE_NIGHT';
+        }
+
+        function buildTimingInsights(rows) {
+            const avg = rows.length ? rows.reduce((sum, row) => sum + row.impressions, 0) / rows.length : 0;
+            const days = groupAverage(rows, row => row.day);
+            const times = groupAverage(rows, row => timeWindow(row.hour));
+            const bestDay = days[0] || null;
+            const worstDay = days[days.length - 1] || null;
+            const bestTime = times[0] || null;
+            const multiple = item => item && avg ? `${(item.avg / avg).toFixed(1)}x avg impressions` : 'no data';
+            return { avg, bestDay, worstDay, bestTime, multiple };
+        }
+
+        function renderPostingStreak(streak) {
+            const padded = [...streak.days];
+            while (padded.length % 7 !== 0) padded.push({ date: null, posted: false });
+            const rows = [];
+            for (let i = 0; i < padded.length; i += 7) rows.push(padded.slice(i, i + 7));
+            return `
+                <div class="terminal-panel">
+                    <div class="terminal-panel-title">┌─ POSTING_STREAK</div>
+                    <div class="streak-grid">
+                        <div class="streak-header"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
+                        ${rows.map(row => `<div class="streak-row">${row.map(day => `<div class="streak-day ${day.posted ? 'posted' : ''}" title="${day.date ? dateKey(day.date) : ''}">${day.date ? (day.posted ? '■' : ' ') : ''}</div>`).join('')}</div>`).join('')}
+                    </div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">[■] = posted &nbsp; [ ] = no post</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">current streak: ${streak.current} days · best streak: ${streak.best} days</div>
+                </div>
+            `;
+        }
+
+        function renderOptimalTimes(timing, rowCount) {
+            if (rowCount < 2) {
+                return `<div class="terminal-panel"><div class="terminal-panel-title">┌─ OPTIMAL_POSTING_TIMES</div><div style="color:var(--text-secondary);">// not enough metrics yet</div></div>`;
+            }
+            return `
+                <div class="terminal-panel">
+                    <div class="terminal-panel-title">┌─ OPTIMAL_POSTING_TIMES</div>
+                    <div style="color:var(--text-secondary);">based on your engagement data:</div>
+                    <div>best day: &nbsp;&nbsp; ${escapeHtml(timing.bestDay?.name || 'UNKNOWN')} &nbsp; (${timing.multiple(timing.bestDay)})</div>
+                    <div>best time: &nbsp; ${escapeHtml(timing.bestTime?.name || 'UNKNOWN')} &nbsp; (${timing.multiple(timing.bestTime)})</div>
+                    <div>worst day: &nbsp; ${escapeHtml(timing.worstDay?.name || 'UNKNOWN')} &nbsp; (${timing.multiple(timing.worstDay)})</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// your audience is most active ${(timing.bestDay?.name || 'unknown').toLowerCase()} ${(timing.bestTime?.name || '').toLowerCase()}</div>
+                </div>
+            `;
+        }
+
+        function renderFormatLeaderboard(leaderboard) {
+            return `
+                <div class="terminal-panel">
+                    <div class="terminal-panel-title">┌─ FORMAT_LEADERBOARD</div>
+                    ${leaderboard.length ? `
+                        <table class="insight-table">
+                            <thead><tr><th>RANK</th><th>FORMAT</th><th>AVG_IMPR</th><th>POSTS</th><th>TREND</th></tr></thead>
+                            <tbody>${leaderboard.map(item => `<tr><td>${String(item.rank).padStart(2, '0')}</td><td>${escapeHtml(item.name)}</td><td>${Math.round(item.avg).toLocaleString()}</td><td>${item.posts}</td><td>${escapeHtml(item.trend)}</td></tr>`).join('')}</tbody>
+                        </table>
+                    ` : '<div style="color:var(--text-secondary);">// no metrics logged yet</div>'}
+                </div>
+            `;
+        }
+
+        function renderViralCoefficient(score, leaderboard, timing) {
+            const bestFormat = leaderboard[0]?.name || 'STRUGGLE';
+            const bestDay = timing.bestDay?.name || 'TUESDAY';
+            const message = score > 7 ? '// above 7.0 = strong viral potential' : (score >= 4 ? '// 4.0-7.0 = building momentum' : '// below 4.0 = needs more consistency');
+            return `
+                <div class="terminal-panel">
+                    <div class="terminal-panel-title">┌─ VIRAL_COEFFICIENT</div>
+                    <div class="viral-score">${score.toFixed(1)} / 10</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">${message}</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// 4.0-7.0 = building momentum</div>
+                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// below 4.0 = needs more consistency</div>
+                    <div>top improvement: post more ${escapeHtml(bestFormat)} format</div>
+                    <div>post on ${escapeHtml(bestDay)} for stronger impressions</div>
+                </div>
+            `;
+        }
+
+        function renderLegacyInsights(data) {
+            if (!data || data.insufficient_data) return '';
+            const patterns = data.viral_patterns || [];
+            const hashtags = data.hashtag_performance || [];
+            return `
+                <div class="history-card">
+                    <div class="history-meta"><span>VIRAL_PATTERNS</span><span>[${patterns.length}]</span></div>
+                    ${patterns.map(p => `<div>■ ${escapeHtml(p.description)}</div>`).join('') || '<div style="color:var(--text-secondary);">// no patterns yet</div>'}
+                </div>
+                <div class="history-card">
+                    <div class="history-meta"><span>HASHTAG_PERFORMANCE</span><span>[AVG_IMPRESSIONS]</span></div>
+                    ${hashtags.length ? `<table class="insight-table"><thead><tr><th>HASHTAG</th><th>AVG_IMPRESSIONS</th><th>USES</th></tr></thead><tbody>${hashtags.map(h => `<tr><td>${escapeHtml(h.hashtag)}</td><td>${Number(h.avg_impressions || 0).toLocaleString()}</td><td>${h.uses || 0}</td></tr>`).join('')}</tbody></table>` : '<div style="color:var(--text-secondary);">// no hashtag data yet</div>'}
+                </div>
+            `;
+        }
+
+        function buildCoachMessage({ streak, leaderboard, avgEngagement, viralScore }) {
+            const bestFormat = (leaderboard[0]?.name || '').toLowerCase();
+            const lastPostedIndex = [...streak.days].reverse().findIndex(day => day.posted);
+            if (viralScore > 7) return '> [OK] your content is trending viral. double down.';
+            if (streak.current > 7) return '> [OK] consistency is your superpower. keep going.';
+            if (bestFormat === 'struggle') return '> [INSIGHT] your audience connects with vulnerability.';
+            if (avgEngagement < 1 && leaderboard.length) return '> [!!] low engagement - try STRUGGLE format this week.';
+            if (lastPostedIndex >= 7 || lastPostedIndex === -1) return `> [!!] you haven't posted in ${lastPostedIndex === -1 ? 30 : lastPostedIndex} days. what did you build?`;
+            return '> [OK] keep feeding the loop. log metrics after day 7.';
         }
 
         // --- Interactive Vim Stats Calculation (Streaks / Count today) ---
