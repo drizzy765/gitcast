@@ -1,29 +1,35 @@
-import json
 from datetime import datetime, timedelta
-from config.settings import POST_LOG
+from typing import Optional
 
-
-def _post_id(entry: dict) -> str:
-    return str(entry.get("id") or entry.get("timestamp") or "")
+from storage.supabase_client import get_client
 
 
 def _normalize_entry(entry: dict) -> dict:
-    post_id = _post_id(entry)
+    timestamp = entry.get("timestamp") or entry.get("created_at") or ""
+    tweet_url = entry.get("tweet_url", "") or ""
     return {
         **entry,
-        "id": post_id,
+        "id": str(entry.get("id", "")),
+        "timestamp": timestamp,
         "posted_verified": bool(entry.get("posted_verified", False)),
-        "posted_declined": bool(entry.get("posted_declined", False)),
-        "post_url": entry.get("post_url", entry.get("tweet_url", "")) or "",
+        "posted_declined": bool(entry.get("declined", False)),
+        "post_url": tweet_url,
         "verified_at": entry.get("verified_at", "") or "",
+        "metrics": {
+            "impressions": int(entry.get("impressions") or 0),
+            "likes": int(entry.get("likes") or 0),
+            "comments": int(entry.get("comments") or 0),
+            "reposts": int(entry.get("reposts") or 0),
+            "hashtags": entry.get("hashtags") or [],
+            "platform": entry.get("platform") or "",
+            "days_after_post": int(entry.get("days_after_post") or 0),
+            "measured_at": entry.get("metrics_saved_at") or "",
+        } if entry.get("metrics_saved") else {},
     }
 
 
-def save_posts(posts: list) -> None:
-    POST_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with open(POST_LOG, "w", encoding="utf-8") as f:
-        for entry in posts:
-            f.write(json.dumps(_normalize_entry(entry)) + "\n")
+def save_posts(posts: list, user_id: Optional[str] = None) -> None:
+    print("[Logger] save_posts is deprecated for Supabase storage")
 
 
 def log_post(
@@ -34,111 +40,117 @@ def log_post(
     tweet_id: str = "",
     fallback: bool = False,
     timestamp: str = "",
-) -> None:
-    """Append a JSON log entry for a published post to POST_LOG (one entry per line)."""
-    if not timestamp:
-        timestamp = datetime.now().isoformat()
+    user_id: Optional[str] = None,
+    provider_used: str = "",
+) -> Optional[str]:
+    if not user_id:
+        raise ValueError("user_id is required")
 
-    entry = {
-        "id": timestamp,
-        "timestamp": timestamp,
+    payload = {
+        "user_id": user_id,
         "post_text": post_text,
         "format_key": format_key,
-        "screenshot_path": screenshot_path,
+        "provider_used": provider_used or ("fallback" if fallback else ""),
+        "platform": "twitter",
         "tweet_url": tweet_url,
         "tweet_id": tweet_id,
-        "fallback": fallback,
-        "posted_verified": False,
-        "posted_declined": False,
-        "post_url": "",
-        "verified_at": "",
     }
+    if timestamp:
+        payload["timestamp"] = timestamp
 
     try:
-        with open(POST_LOG, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
-        print(f"[Logger] Post logged to {POST_LOG}")
+        response = get_client().table("posts").insert(payload).execute()
+        row = response.data[0] if response.data else {}
+        print("[Logger] Post metadata logged to Supabase")
+        return row.get("id")
     except Exception as e:
-        print(f"[Logger] Failed to log post: {e}")
+        print(f"[Logger] Failed to log post metadata: {e}")
+        return None
 
 
-def load_posts() -> list:
-    """Read all post entries from POST_LOG and return as a list of dicts."""
-    if not POST_LOG.exists():
+def load_posts(user_id: str) -> list:
+    try:
+        response = (
+            get_client()
+            .table("posts")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("timestamp", desc=True)
+            .execute()
+        )
+        return [_normalize_entry(entry) for entry in (response.data or [])]
+    except Exception as e:
+        print(f"[Logger] Failed to load posts: {e}")
         return []
-    entries = []
-    with open(POST_LOG, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    entries.append(_normalize_entry(json.loads(line)))
-                except json.JSONDecodeError:
-                    continue
-    return entries
 
 
-def verify_post(post_id: str, post_url: str = "") -> dict:
-    posts = load_posts()
-    target = str(post_id)
-    for entry in posts:
-        if entry.get("id") == target or entry.get("timestamp") == target:
-            entry["posted_verified"] = True
-            entry["posted_declined"] = False
-            entry["verified_at"] = datetime.now().isoformat()
-            if post_url:
-                entry["post_url"] = post_url
-            save_posts(posts)
-            return {"success": True, "post_id": target}
+def verify_post(post_id: str, post_url: str = "", user_id: Optional[str] = None) -> dict:
+    if not user_id:
+        return {"success": False, "error": "user_id is required"}
+
+    payload = {
+        "posted_verified": True,
+        "declined": False,
+        "verified_at": datetime.now().isoformat(),
+    }
+    if post_url:
+        payload["tweet_url"] = post_url
+
+    response = (
+        get_client()
+        .table("posts")
+        .update(payload)
+        .eq("id", post_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if response.data:
+        return {"success": True, "post_id": post_id}
     return {"success": False, "error": "post not found"}
 
 
-def decline_post(post_id: str) -> dict:
-    posts = load_posts()
-    target = str(post_id)
-    for entry in posts:
-        if entry.get("id") == target or entry.get("timestamp") == target:
-            entry["posted_declined"] = True
-            save_posts(posts)
-            return {"success": True, "post_id": target}
+def decline_post(post_id: str, user_id: Optional[str] = None) -> dict:
+    if not user_id:
+        return {"success": False, "error": "user_id is required"}
+
+    response = (
+        get_client()
+        .table("posts")
+        .update({"declined": True})
+        .eq("id", post_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if response.data:
+        return {"success": True, "post_id": post_id}
     return {"success": False, "error": "post not found"}
 
 
-def get_unverified_posts() -> list:
+def get_unverified_posts(user_id: str) -> list:
     posts = [
-        entry for entry in load_posts()
+        entry for entry in load_posts(user_id)
         if not entry.get("posted_verified") and not entry.get("posted_declined")
     ]
     return sorted(posts, key=lambda item: item.get("timestamp", ""), reverse=True)
 
 
-def get_streak() -> dict:
-    """
-    Calculate posting streak stats:
-      - current_streak: consecutive days with at least one post (ending today or yesterday)
-      - total_posts: total number of posts logged
-      - last_post_date: date string of the most recent post
-    """
-    posts = [post for post in load_posts() if not post.get("posted_declined")]
+def get_streak(user_id: str) -> dict:
+    posts = [post for post in load_posts(user_id) if not post.get("posted_declined")]
     if not posts:
         return {"current_streak": 0, "best_streak": 0, "total_posts": 0, "last_post_date": ""}
 
-    # collect unique post dates
     post_dates = set()
     for entry in posts:
         try:
-            dt = datetime.fromisoformat(entry["timestamp"])
-            post_dates.add(dt.date())
+            post_dates.add(datetime.fromisoformat(str(entry["timestamp"]).replace("Z", "+00:00")).date())
         except (KeyError, ValueError):
             continue
 
     if not post_dates:
-        return {"current_streak": 0, "total_posts": len(posts), "last_post_date": ""}
+        return {"current_streak": 0, "best_streak": 0, "total_posts": len(posts), "last_post_date": ""}
 
     sorted_dates = sorted(post_dates, reverse=True)
     last_post_date = sorted_dates[0]
-
-    # streak must start from today or yesterday to count as current
     today = datetime.now().date()
     if last_post_date < today - timedelta(days=1):
         return {
@@ -174,14 +186,4 @@ def get_streak() -> dict:
 
 
 if __name__ == "__main__":
-    print("[Logger] Logging a sample post...")
-    log_post(
-        post_text="🚀 Just shipped a new feature! #buildinpublic",
-        format_key="quick_win",
-        screenshot_path="storage/data/test_screenshot.png",
-        tweet_url="https://twitter.com/i/web/status/123456789",
-        tweet_id="123456789",
-        fallback=False,
-    )
-    print(f"[Logger] All posts: {load_posts()}")
-    print(f"[Logger] Streak: {get_streak()}")
+    print("[Logger] Supabase logger module loaded")

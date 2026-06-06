@@ -11,6 +11,12 @@ load_dotenv(BASE_DIR / ".env")
 STORAGE_DIR = BASE_DIR / "storage" / "data"
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", "")
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 WAITLIST_FILE = STORAGE_DIR / "waitlist.txt"
 METRICS_LOG = STORAGE_DIR / "metrics_log.json"
 PROMPTS_FILE = STORAGE_DIR / "prompts.json"

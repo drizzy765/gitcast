@@ -9,7 +9,9 @@ tweepy
 mss
 pytesseract
 httpx
+supabase
 cryptography
+python-jose[cryptography]
 rich
 keyboard
 slowapi

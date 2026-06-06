@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from api.routes import router
+from api.auth_routes import router as auth_router
 from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR, CONFIG_DIR
 from api.monitoring import init_sentry
 from api.ratelimit import limiter
@@ -67,6 +68,7 @@ app.mount("/storage", StaticFiles(directory=str(BASE_DIR / "storage")), name="st
 
 # register routes
 app.include_router(router, prefix="/api")
+app.include_router(auth_router, prefix="/auth")
 
 # Serve Frontend
 @app.get("/")

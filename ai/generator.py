@@ -1,5 +1,6 @@
 import asyncio
 import httpx
+from datetime import datetime
 from ai.prompts import get_all_prompts, sprint_summary_prompt
 from core.log_stream import stream_log
 from api.analytics import track
@@ -56,10 +57,46 @@ _client = httpx.AsyncClient(timeout=TIMEOUT)
 _last_call_meta = {"provider_used": "", "used_fallback": False}
 
 
-def refresh_provider_keys() -> None:
+def _load_user_provider_keys(user_id: str) -> dict:
+    from storage.key_manager import decrypt_key
+    from storage.supabase_client import get_client
+
+    if not user_id:
+        return {}
+
+    response = (
+        get_client()
+        .table("api_keys")
+        .select("provider,encrypted_key")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    keys = {}
+    for row in response.data or []:
+        provider = row.get("provider")
+        encrypted_key = row.get("encrypted_key")
+        if not provider or not encrypted_key:
+            continue
+        try:
+            keys[provider] = decrypt_key(encrypted_key)
+            (
+                get_client()
+                .table("api_keys")
+                .update({"last_used_at": datetime.now().isoformat()})
+                .eq("user_id", user_id)
+                .eq("provider", provider)
+                .execute()
+            )
+        except Exception as e:
+            stream_log("Keys", "WARN", f"{provider} key decrypt failed: {e}")
+    return keys
+
+
+def refresh_provider_keys(user_id: str = "") -> None:
     from config import settings
 
     settings.reload_api_keys()
+    user_keys = _load_user_provider_keys(user_id) if user_id else {}
     PROVIDERS["groq"]["api_key"] = settings.GROQ_API_KEY
     PROVIDERS["deepseek"]["api_key"] = settings.DEEPSEEK_API_KEY
     PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
@@ -68,12 +105,17 @@ def refresh_provider_keys() -> None:
 
     global GEMINI_API_KEY
     GEMINI_API_KEY = settings.GEMINI_API_KEY
+    for provider, api_key in user_keys.items():
+        if provider == "gemini":
+            GEMINI_API_KEY = api_key
+        elif provider in PROVIDERS:
+            PROVIDERS[provider]["api_key"] = api_key
 
 
 # ── Main generator ────────────────────────────────────────────────────────────
 
-async def generate_posts(payload: dict) -> dict:
-    refresh_provider_keys()
+async def generate_posts(payload: dict, user_id: str = "") -> dict:
+    refresh_provider_keys(user_id)
     prompts = get_all_prompts()
     format_keys = payload.get("format_keys", list(prompts.keys()))
     user_message = payload.get("user_message", "")
@@ -115,7 +157,7 @@ async def generate_posts(payload: dict) -> dict:
                 _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
             else:
                 # Automatic task-based routing with fallback
-                result = await _ai_call(format_key, system_prompt, active_user_message)
+                result = await _ai_call(format_key, system_prompt, active_user_message, user_id=user_id)
 
             output[format_key] = result
             elapsed = asyncio.get_event_loop().time() - started
@@ -140,7 +182,7 @@ async def generate_posts(payload: dict) -> dict:
 
 # ── Sprint generator ──────────────────────────────────────────────────────────
 
-async def generate_sprint_summary(entries: list, narrative: str = "") -> str:
+async def generate_sprint_summary(entries: list, narrative: str = "", user_id: str = "") -> str:
     """
     Synthesizes multiple sprint captures into a single cohesive thread.
     """
@@ -152,7 +194,7 @@ async def generate_sprint_summary(entries: list, narrative: str = "") -> str:
     system_prompt = sprint_summary_prompt(len(entries))
     
     try:
-        return await _ai_call("sprint_summary", system_prompt, payload["user_message"])
+        return await _ai_call("sprint_summary", system_prompt, payload["user_message"], user_id=user_id)
     except Exception as e:
         stream_log("Generator", "ERROR", f"sprint synthesis failed: {e}")
         return f"[Error] {str(e)}"
@@ -160,11 +202,11 @@ async def generate_sprint_summary(entries: list, narrative: str = "") -> str:
 
 # ── Provider Routing & Fallback ────────────────────────────────────────────────
 
-async def _ai_call(format_key: str, system_prompt: str, user_message: str) -> str:
+async def _ai_call(format_key: str, system_prompt: str, user_message: str, user_id: str = "") -> str:
     """
     Identifies primary provider for a task and falls back through available providers.
     """
-    refresh_provider_keys()
+    refresh_provider_keys(user_id)
 
     # 1. Identify primary provider
     primary = "groq" # default

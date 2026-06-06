@@ -12,6 +12,18 @@ def _parse_dt(value: str):
         return None
 
 
+def _parse_metric_post_dt(post_id: str):
+    value = str(post_id or "")
+    try:
+        if len(value) >= 15 and value[8] == "_":
+            return datetime.strptime(value[:15], "%Y%m%d_%H%M%S")
+        if len(value) >= 19 and value[4] == "-" and "T" in value[:19]:
+            return datetime.strptime(value[:19], "%Y-%m-%dT%H:%M:%S")
+    except Exception:
+        return None
+    return None
+
+
 def _avg(values: list) -> float:
     return sum(values) / len(values) if values else 0.0
 
@@ -51,6 +63,37 @@ def _time_window(dt: datetime) -> str:
     return "late-night"
 
 
+def _format_from_metric_post_id(post_id: str) -> str:
+    value = str(post_id or "")
+    if "-" not in value:
+        return ""
+    suffix = value.rsplit("-", 1)[1]
+    return suffix if suffix and not suffix[:2].isdigit() else ""
+
+
+def _row_from_metric(post_id: str, metrics: dict, post: dict = None) -> dict:
+    post = post or {}
+    dt = _parse_dt(post.get("timestamp", "")) or _parse_metric_post_dt(post_id) or _parse_dt(metrics.get("measured_at", ""))
+    impressions = int(metrics.get("impressions", 0))
+    text = post.get("post_text", "")
+    return {
+        "post_id": post_id,
+        "post_text": text,
+        "format_key": post.get("format_key", "") or _format_from_metric_post_id(post_id) or metrics.get("platform", ""),
+        "timestamp": post.get("timestamp", "") or (dt.isoformat() if dt else metrics.get("measured_at", "")),
+        "dt": dt,
+        "day": dt.strftime("%A").lower() if dt else "",
+        "time_window": _time_window(dt) if dt else "",
+        "char_bucket": _bucket_chars(len(text)),
+        "impressions": impressions,
+        "likes": int(metrics.get("likes", 0)),
+        "comments": int(metrics.get("comments", 0)),
+        "reposts": int(metrics.get("reposts", 0)),
+        "hashtags": metrics.get("hashtags", []),
+        "engagement_rate": _engagement_rate(metrics),
+    }
+
+
 def _best_group(rows: list, key: str) -> dict:
     groups = defaultdict(list)
     for row in rows:
@@ -62,45 +105,34 @@ def _best_group(rows: list, key: str) -> dict:
     return {"name": name, "avg": round(_avg(values), 1), "sample_size": len(values)}
 
 
-def calculate_insights() -> dict:
-    posts = load_posts()
-    metrics_entries = get_all_metrics()
+def calculate_insights(user_id: str) -> dict:
+    posts = load_posts(user_id)
+    metrics_entries = get_all_metrics(user_id)
     metrics_by_post = {}
     for metric in metrics_entries:
         metrics_by_post[metric.get("post_id")] = metric
 
     rows = []
+    matched_metric_ids = set()
     for post in posts:
         post_id = post.get("id") or post.get("timestamp")
         metrics = metrics_by_post.get(post_id) or post.get("metrics")
         if not metrics:
             continue
-        dt = _parse_dt(post.get("timestamp", ""))
-        impressions = int(metrics.get("impressions", 0))
-        row = {
-            "post_id": post_id,
-            "post_text": post.get("post_text", ""),
-            "format_key": post.get("format_key", ""),
-            "timestamp": post.get("timestamp", ""),
-            "dt": dt,
-            "day": dt.strftime("%A").lower() if dt else "",
-            "time_window": _time_window(dt) if dt else "",
-            "char_bucket": _bucket_chars(len(post.get("post_text", ""))),
-            "impressions": impressions,
-            "likes": int(metrics.get("likes", 0)),
-            "comments": int(metrics.get("comments", 0)),
-            "reposts": int(metrics.get("reposts", 0)),
-            "hashtags": metrics.get("hashtags", []),
-            "engagement_rate": _engagement_rate(metrics),
-        }
-        rows.append(row)
+        matched_metric_ids.add(post_id)
+        rows.append(_row_from_metric(post_id, metrics, post))
+
+    for post_id, metrics in metrics_by_post.items():
+        if post_id in matched_metric_ids:
+            continue
+        rows.append(_row_from_metric(post_id, metrics))
 
     if len(rows) < 5:
         return {"insufficient_data": True, "posts_needed": 5 - len(rows), "posts_with_metrics": len(rows)}
 
     cutoff = datetime.now() - timedelta(days=30)
     recent = [row for row in rows if row["dt"] and row["dt"] >= cutoff] or rows
-    streak = get_streak()
+    streak = get_streak(user_id)
     total_impressions = sum(row["impressions"] for row in recent)
     best_format = _best_group(rows, "format_key")
     best_day = _best_group(rows, "day")
@@ -168,4 +200,4 @@ def calculate_insights() -> dict:
 
 
 if __name__ == "__main__":
-    print("[Insights] Calculated insights:", calculate_insights())
+    print("[Insights] Supabase insights module loaded")
