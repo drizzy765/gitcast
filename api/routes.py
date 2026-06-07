@@ -10,7 +10,7 @@ from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, ar
 from ai.formatter import split_into_thread
 from ai.viral_patterns import get_all_patterns
 from api.payload import validate_payload
-from api.auth_middleware import get_current_user
+from api.auth_middleware import LOCAL_USER_ID, get_current_user
 from storage.logger import decline_post, get_unverified_posts, load_posts, log_post, verify_post
 from storage.metrics import get_metrics, save_metrics
 from storage.insights import calculate_insights
@@ -19,8 +19,11 @@ from storage.key_manager import encrypt_key, mask_key
 from storage.supabase_client import get_client
 from core.codebase_reader import summarise_for_prompt
 from config.settings import (
+    DEFAULTS,
     get_twitter_plan,
+    load_settings,
     set_twitter_plan,
+    save_settings,
     validate_api_keys,
     CURRENT_DRAFT,
     SPRINT_LOG,
@@ -264,6 +267,10 @@ def _normalize_provider(provider: str) -> str:
     return normalized
 
 
+def _is_local_user(user_id: str) -> bool:
+    return user_id == LOCAL_USER_ID
+
+
 def _reload_key_runtime() -> None:
     load_dotenv(_env_path(), override=True)
     reload_api_keys()
@@ -275,35 +282,80 @@ def _reload_key_runtime() -> None:
 
 
 def _settings_for_user(user_id: str) -> dict:
-    response = (
-        get_client()
-        .table("user_settings")
-        .select("*")
-        .eq("user_id", user_id)
-        .execute()
-    )
-    if response.data:
-        return response.data[0]
-    created = get_client().table("user_settings").insert({"user_id": user_id}).execute()
-    return created.data[0] if created.data else {"user_id": user_id}
+    def local_settings() -> dict:
+        settings = load_settings()
+        return {**DEFAULTS, **settings, "user_id": user_id}
+
+    try:
+        client = get_client()
+    except RuntimeError as exc:
+        if "SUPABASE_URL and SUPABASE_SERVICE_KEY" not in str(exc):
+            raise
+        stream_log("Settings", "WARN", "Supabase not configured; using local settings")
+        return local_settings()
+
+    try:
+        response = (
+            client
+            .table("user_settings")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data:
+            return response.data[0]
+        created = client.table("user_settings").insert({"user_id": user_id}).execute()
+        return created.data[0] if created.data else {"user_id": user_id}
+    except Exception as exc:
+        stream_log("Settings", "WARN", f"Supabase settings unavailable; using local settings: {exc}")
+        return local_settings()
 
 
 def _update_settings_for_user(user_id: str, values: dict) -> dict:
+    def save_local_settings(payload: dict) -> dict:
+        settings = {**load_settings(), **payload}
+        settings.pop("updated_at", None)
+        save_settings(settings)
+        return {**DEFAULTS, **settings, "user_id": user_id}
+
     payload = {key: value for key, value in values.items() if value is not None}
     if not payload:
         return _settings_for_user(user_id)
     payload["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-    response = (
-        get_client()
-        .table("user_settings")
-        .upsert({"user_id": user_id, **payload}, on_conflict="user_id")
-        .execute()
-    )
-    return response.data[0] if response.data else _settings_for_user(user_id)
+    try:
+        client = get_client()
+    except RuntimeError as exc:
+        if "SUPABASE_URL and SUPABASE_SERVICE_KEY" not in str(exc):
+            raise
+        stream_log("Settings", "WARN", "Supabase not configured; saving local settings")
+        return save_local_settings(payload)
+
+    try:
+        response = (
+            client
+            .table("user_settings")
+            .upsert({"user_id": user_id, **payload}, on_conflict="user_id")
+            .execute()
+        )
+        return response.data[0] if response.data else _settings_for_user(user_id)
+    except Exception as exc:
+        stream_log("Settings", "WARN", f"Supabase settings unavailable; saving local settings: {exc}")
+        return save_local_settings(payload)
 
 
 @router.get("/keys/status")
 def get_ai_keys_status(user_id: str = Depends(get_current_user)):
+    if _is_local_user(user_id):
+        env_values = dotenv_values(_env_path())
+        return {
+            provider: {
+                "configured": bool((env_values.get(env_name) or os.getenv(env_name) or "").strip()),
+                "key_preview": "",
+                "last_used_at": None,
+            }
+            for provider, env_name in API_KEY_ENV_MAP.items()
+        }
+
     response = (
         get_client()
         .table("api_keys")
@@ -331,6 +383,13 @@ def update_ai_key(request: Request, body: ProviderKeyUpdate, user_id: str = Depe
         raise HTTPException(status_code=400, detail=f"Invalid {provider} API key format")
 
     try:
+        if _is_local_user(user_id):
+            set_key(str(_env_path()), API_KEY_ENV_MAP[provider], key)
+            _reload_key_runtime()
+            stream_log("Keys", "OK", f"{provider} key saved locally")
+            track("api_key_added", {"provider": provider, "storage": "local"})
+            return {"success": True, "provider": provider, "key_preview": mask_key(key)}
+
         get_client().table("api_keys").upsert(
             {
                 "user_id": user_id,
@@ -353,6 +412,12 @@ def update_ai_key(request: Request, body: ProviderKeyUpdate, user_id: str = Depe
 def remove_ai_key(request: ProviderKeyRemove, user_id: str = Depends(get_current_user)):
     provider = _normalize_provider(sanitize_text(request.provider))
     try:
+        if _is_local_user(user_id):
+            unset_key(str(_env_path()), API_KEY_ENV_MAP[provider])
+            _reload_key_runtime()
+            stream_log("Keys", "OK", f"{provider} key removed locally")
+            return {"success": True}
+
         get_client().table("api_keys").delete().eq("user_id", user_id).eq("provider", provider).execute()
         _reload_key_runtime()
         stream_log("Keys", "OK", f"{provider} key removed")
