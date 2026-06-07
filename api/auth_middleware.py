@@ -1,8 +1,11 @@
-from fastapi import Header, HTTPException
+from typing import Optional
+from fastapi import Header, Query, HTTPException
 from jose import JWTError, jwt
 
 from config.settings import SUPABASE_JWT_AUDIENCE, SUPABASE_JWT_SECRET
 from storage.supabase_client import get_client
+
+LOCAL_USER_ID = "local_user"
 
 
 def _unauthorized(message: str = "Unauthorized") -> HTTPException:
@@ -43,15 +46,24 @@ def verify_jwt(token: str) -> dict:
         raise _unauthorized("Invalid bearer token") from exc
 
 
-async def get_current_user(authorization: str = Header(None)) -> str:
+async def get_current_user(
+    authorization: str = Header(None),
+    x_session_token: str = Header(None),
+    token: Optional[str] = Query(None),
+) -> str:
+    from api.auth import get_token
+    session_token = x_session_token or token
+    if session_token and session_token == get_token():
+        return LOCAL_USER_ID
+
     if not authorization:
         raise _unauthorized("Missing Authorization header")
 
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
+    scheme, _, bearer_token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not bearer_token:
         raise _unauthorized("Authorization header must be Bearer token")
 
-    payload = verify_jwt(token.strip())
+    payload = verify_jwt(bearer_token.strip())
     return str(payload["user_id"])
 
 
