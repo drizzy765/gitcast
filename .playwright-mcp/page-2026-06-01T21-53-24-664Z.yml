@@ -1,0 +1,87 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3] [cursor=pointer]: "> SHIPLOG v1.0"
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: SHIPLOG
+        - generic [ref=e8]: v1.0 [BETA]
+      - navigation [ref=e9]:
+        - button "[DRAFT_ROOM]" [ref=e10] [cursor=pointer]
+        - button "[ARTICLE_MODE]" [ref=e11] [cursor=pointer]
+        - button "[GALLERY]" [ref=e12] [cursor=pointer]
+        - button "[PROMPTS]" [ref=e13] [cursor=pointer]
+        - button "[HISTORY ]" [ref=e14] [cursor=pointer]
+        - button "[INSIGHTS]" [ref=e15] [cursor=pointer]
+        - button "[BYOK]" [ref=e16] [cursor=pointer]
+        - button "[SETTINGS]" [ref=e17] [cursor=pointer]
+      - generic [ref=e18]:
+        - generic [ref=e19]: NARRATIVE
+        - generic [ref=e21] [cursor=pointer]: "> // define your mission▋"
+      - generic [ref=e23] [cursor=pointer]: SPRINT_MODE [OFF]
+      - generic [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: "PROVIDERS:"
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: ●
+            - generic [ref=e29]: GROQ
+            - generic [ref=e30]: "[ACTIVE]"
+          - generic [ref=e31]:
+            - generic [ref=e32]: ●
+            - generic [ref=e33]: DEEPSEEK
+            - generic [ref=e34]: "[ACTIVE]"
+          - generic [ref=e35]:
+            - generic [ref=e36]: ●
+            - generic [ref=e37]: GEMINI
+            - generic [ref=e38]: "[ACTIVE]"
+          - generic [ref=e39]:
+            - generic [ref=e40]: ●
+            - generic [ref=e41]: KIMI
+            - generic [ref=e42]: "[ACTIVE]"
+          - generic [ref=e43]:
+            - generic [ref=e44]: ●
+            - generic [ref=e45]: CEREBRAS
+            - generic [ref=e46]: "[ACTIVE]"
+          - generic [ref=e47]:
+            - generic [ref=e48]: ●
+            - generic [ref=e49]: OPENROUTER
+            - generic [ref=e50]: "[ACTIVE]"
+    - main [ref=e51]:
+      - button "[NEW_CAPTURE]" [ref=e53] [cursor=pointer]
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]: ┌─ SETTINGS_AND_SESSION
+          - generic [ref=e60]: ─┐
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: SESSION_TOKEN
+            - generic [ref=e64]:
+              - textbox "Paste session token from terminal...▋" [ref=e65]
+              - button "[SAVE_TOKEN]" [ref=e66] [cursor=pointer]
+            - paragraph [ref=e67]:
+              - text: The session token is generated each time the server starts.
+              - text: Look for
+              - strong [ref=e68]: "[Auth] Session Token: ..."
+              - text: in your terminal output.
+          - generic [ref=e69]:
+            - generic [ref=e70]: PROJECT_NARRATIVE
+            - paragraph [ref=e71]: This context is sent to the AI to help it understand what you're building.
+            - textbox [ref=e72]
+            - button "[UPDATE_NARRATIVE]" [ref=e74] [cursor=pointer]
+          - generic [ref=e75]:
+            - generic [ref=e76]: AI_PROVIDER_KEYS
+            - paragraph [ref=e77]: Provider keys now live on the dedicated BYOK page.
+            - button "[OPEN_BYOK]" [ref=e79] [cursor=pointer]
+  - generic [ref=e81]:
+    - generic [ref=e82] [cursor=pointer]: "[LOGS ▼]"
+    - generic [ref=e83]:
+      - generic [ref=e84]: "[CONNECTING]"
+      - generic [ref=e85] [cursor=pointer]: "[CLEAR]"
+  - contentinfo [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e88]: "[SHIPLOG]"
+      - generic [ref=e89]: "[SETTINGS]"
+      - generic [ref=e90]: "[X_POST]"
+      - generic [ref=e91]: "[NO_AI]"
+    - generic [ref=e92]:
+      - generic [ref=e93]: "[0 POSTS TODAY]"
+      - generic [ref=e94]: "[STREAK: 0]"

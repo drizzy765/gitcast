@@ -1072,10 +1072,14 @@
         .verified-badge {
             color: var(--accent-green);
             font-weight: bold;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
         }
         .skipped-badge {
             color: var(--accent-red);
             font-weight: bold;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
         }
         .pending-dot {
             color: var(--accent-amber);
@@ -1094,6 +1098,220 @@
             display: grid;
             grid-template-columns: 1fr auto auto;
             gap: 8px;
+        }
+        .verify-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            border-top: 1px solid #2a2a2a;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .verify-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #666666;
+            flex: 1;
+            min-width: 160px;
+        }
+        .btn-verify-yes,
+        .btn-verify-later,
+        .btn-verify-no,
+        .btn-reminder,
+        .metrics-action {
+            background: transparent;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 4px 12px;
+            cursor: pointer;
+            border-radius: 0;
+        }
+        .btn-verify-yes {
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        .btn-verify-yes:hover {
+            background: #00ff88;
+            color: #0a0a0a;
+        }
+        .btn-verify-later {
+            border: 1px solid #ffb800;
+            color: #ffb800;
+        }
+        .btn-verify-later:hover,
+        .btn-reminder:hover,
+        .metrics-action.amber:hover {
+            background: #ffb800;
+            color: #0a0a0a;
+        }
+        .btn-verify-no {
+            border: 1px solid #444444;
+            color: #666666;
+        }
+        .btn-verify-no:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .url-input {
+            background: var(--bg-root);
+            border: 1px solid #2a2a2a;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 5px 8px;
+            min-width: 240px;
+            outline: none;
+        }
+        .url-input:focus {
+            border-color: #00ff88;
+        }
+        .reminder-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 20px;
+            border-bottom: 1px solid #ffb800;
+            background: #1a1400;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .reminder-icon {
+            color: #ffb800;
+            animation: pulseDot 2s infinite;
+        }
+        .reminder-text {
+            color: #ffb800;
+            flex: 1;
+        }
+        .btn-reminder {
+            border: 1px solid #ffb800;
+            color: #ffb800;
+            padding: 3px 10px;
+        }
+        .btn-dismiss {
+            color: #444444;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .metrics-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(10, 10, 10, 0.96);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .metrics-modal {
+            width: min(760px, 100%);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            border: 1px solid #ffb800;
+            background: #0a0a0a;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .metrics-modal-title {
+            color: #ffb800;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .metrics-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .metrics-modal-header .metrics-modal-title {
+            flex: 1;
+        }
+        .metrics-close {
+            border: 1px solid #444444;
+            color: #888888;
+            background: transparent;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 3px 8px;
+        }
+        .metrics-close:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .metrics-modal-preview {
+            border: 1px solid #2a2a2a;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 12px;
+        }
+        .metrics-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 16px;
+        }
+        .metrics-form-grid label,
+        .pr-status-row label {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .metrics-number,
+        .metrics-text-input {
+            width: 100%;
+            background: var(--bg-root);
+            border: 1px solid #2a2a2a;
+            color: var(--text-primary);
+            padding: 7px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            outline: none;
+        }
+        .metrics-number:focus,
+        .metrics-text-input:focus {
+            border-color: #00ff88;
+        }
+        .metrics-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .metrics-action.green {
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        .metrics-action.green:hover {
+            background: #00ff88;
+            color: #0a0a0a;
+        }
+        .metrics-action.amber {
+            border: 1px solid #ffb800;
+            color: #ffb800;
+        }
+        .metrics-action.gray {
+            border: 1px solid #444444;
+            color: #666666;
+        }
+        .metrics-action.red {
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+        .pr-status-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         .input-brutalist {
             width: 100%;
@@ -1253,6 +1471,7 @@
         @media (max-width: 900px) {
             .insight-grid,
             .metrics-grid,
+            .metrics-form-grid,
             .history-actions,
             .verify-url-row {
                 grid-template-columns: 1fr;
@@ -1295,6 +1514,31 @@
             .vim-status-bar {
                 position: sticky;
                 bottom: 0;
+            }
+            .verify-row,
+            .reminder-banner,
+            .metrics-modal-header,
+            .metrics-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .verify-label,
+            .url-input,
+            .btn-verify-yes,
+            .btn-verify-later,
+            .btn-verify-no,
+            .btn-reminder,
+            .metrics-close,
+            .metrics-action {
+                width: 100%;
+            }
+            .metrics-overlay {
+                padding: 12px;
+                align-items: flex-start;
+            }
+            .metrics-form-grid label,
+            .pr-status-row label {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -1411,11 +1655,12 @@
                             <span class="ascii-box-line"></span>
                             <span class="ascii-box-limit" id="char-count">[0/280]─┐</span>
                         </div>
-                        <div class="ascii-box-body" style="flex: 1; display: flex; flex-direction: column; padding: 12px;">
-                            <textarea id="main-editor" placeholder="Generating post content...▋" style="flex: 1; width: 100%; height: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
+                        <div class="ascii-box-body" style="flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px;">
+                            <textarea id="main-editor" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
                             <div class="editor-inner-footer">
                                 <span class="undo-btn" id="undo-btn" onclick="undoRefinement()">← [UNDO_LAST_CHANGE]</span>
                             </div>
+                            <div id="draft-verify-slot"></div>
                         </div>
                     </div>
 
@@ -1577,6 +1822,7 @@
             keyGuide: {},
             unverifiedCount: 0,
             historyPosts: [],
+            draftPostMeta: {},
             metricForms: {},
             metricPlatforms: loadMetricPlatforms(),
             logs: [],
@@ -1686,6 +1932,7 @@
             render();
             updateVimStats();
             updateHistoryDot();
+            checkPendingReminders();
             startPolling();
             if (state.view === 'history') {
                 loadHistory();
@@ -1721,11 +1968,21 @@
         async function initAuth() {
             try {
                 const res = await fetch('/api/token');
-                const data = await res.json();
-                window.CE_TOKEN = data.token;
-                state.token = data.token; // compatibility with rest of codebase
+                if (res.ok) {
+                    const data = await res.json();
+                    window.CE_TOKEN = data.token;
+                    state.token = data.token; // compatibility with rest of codebase
+                    localStorage.setItem('session_token', data.token);
+                } else {
+                    const stored = localStorage.getItem('session_token') || '';
+                    window.CE_TOKEN = stored;
+                    state.token = stored;
+                }
             } catch(e) {
                 console.error('Failed to get session token:', e);
+                const stored = localStorage.getItem('session_token') || '';
+                window.CE_TOKEN = stored;
+                state.token = stored;
             }
         }
 
@@ -1758,6 +2015,10 @@
                 if (res.status === 401) { 
                     showToast("Session expired", "error"); 
                     return null; 
+                }
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `Request failed with status ${res.status}`);
                 }
                 return res.json();
             } catch(e) {
@@ -1807,6 +2068,16 @@
                 Object.keys(state.tabs).forEach(k => {
                     if (!state.tabs[k].text) state.tabs[k].text = draft.variations[k] || '';
                     state.tabs[k].shots = draft.payload.screenshots.map(s => ({...s, status: 'pending'}));
+                    state.draftPostMeta[k] = {
+                        id: draft.post_ids?.[k] || draft.ids?.[k] || draft.variation_ids?.[k] || `${draft.timestamp || draft.payload?.timestamp || Date.now()}-${k}`,
+                        format_key: k,
+                        platform: detectPlatform(k),
+                        post_text: draft.variations[k] || '',
+                        timestamp: draft.timestamp || draft.payload?.timestamp || new Date().toISOString()
+                    };
+                    if ((draft.variations[k] || '').trim() && !String(draft.variations[k]).startsWith('[Error]')) {
+                        storeLocalGeneratedPost(state.draftPostMeta[k]);
+                    }
                 });
             }
         }
@@ -1884,9 +2155,34 @@
 
             // Screenshots - Handled exclusively in GALLERY now
             renderScreenshots();
+            renderDraftVerifyRow();
             
             // Preview
             updatePreview();
+        }
+
+        function renderDraftVerifyRow() {
+            const slot = document.getElementById('draft-verify-slot');
+            if (!slot) return;
+            if (state.view !== 'draft') {
+                slot.innerHTML = '';
+                return;
+            }
+            const text = (state.tabs[state.tab]?.text || '').trim();
+            if (!text) {
+                slot.innerHTML = '';
+                return;
+            }
+            const meta = state.draftPostMeta[state.tab] || {
+                id: `draft-${state.tab}-${String(text).length}`,
+                format_key: state.tab,
+                platform: detectPlatform(state.tab),
+                post_text: text,
+                timestamp: new Date().toISOString()
+            };
+            meta.post_text = text;
+            state.draftPostMeta[state.tab] = meta;
+            slot.innerHTML = renderVerifyRow(meta.id, meta.format_key);
         }
 
         function renderScreenshots() {
@@ -1949,7 +2245,7 @@
             }
 
             // Custom Brutalist dynamic char limits warn color logic
-            const limit = (state.tab === 'deep_tech' || state.tab === 'quick_win') ? 280 : 3000;
+            const limit = editorCharLimit();
             const current = text.length;
             const el = document.getElementById('char-count');
             if (el) {
@@ -1964,6 +2260,14 @@
                     el.style.color = 'var(--text-secondary)';
                 }
             }
+        }
+
+        function editorCharLimit() {
+            if (state.view === 'article') return 20000;
+            if (state.tab === 'deep_tech' || state.tab === 'quick_win') return 280;
+            if (state.tab === 'linkedin') return 3000;
+            if (state.tab === 'pr_generator') return 12000;
+            return 3000;
         }
 
         function renderArticleStats(text) {
@@ -2394,6 +2698,7 @@
                 showToast("Please enter a token", "error");
                 return;
             }
+            window.CE_TOKEN = val;
             state.token = val;
             localStorage.setItem('session_token', val);
             showToast("Token saved! Re-syncing...", "info");
@@ -2425,7 +2730,7 @@
         function renderApiKeyRows() {
             return KEY_PROVIDERS.map(provider => {
                 const guide = state.keyGuide[provider] || {};
-                const active = !!state.keys[provider];
+                const active = !!state.keys[provider]?.configured;
                 const status = active ? '[ACTIVE ✓]' : '[NOT_CONFIGURED]';
                 const statusClass = active ? 'active' : 'missing';
                 const preview = active ? '[●●●●●●●●...set]' : '[no_key_saved]';
@@ -2544,15 +2849,6 @@
             return impressions > 0 ? (engagement / impressions) * 100 : 0;
         }
 
-        function metricPlatform(postIdValue) {
-            return state.metricPlatforms[postIdValue] || 'X_TWITTER';
-        }
-
-        function saveMetricPlatform(postIdValue, platform) {
-            state.metricPlatforms[postIdValue] = platform;
-            localStorage.setItem('metric_platforms', JSON.stringify(state.metricPlatforms));
-        }
-
         function updateHistoryDot(hasUnverified) {
             if (hasUnverified !== undefined) {
                 state.unverifiedCount = hasUnverified ? 1 : 0;
@@ -2593,17 +2889,26 @@
             if (!container) return;
             container.innerHTML = renderLoadingBox('POST_HISTORY');
 
-            // fetch all posts
-            const res = await apiFetch('/api/history');
-            const data = await res.json();
-            const posts = data.posts || data.history || [];
-            
-            // fetch unverified post IDs
-            const uvRes = await apiFetch('/api/posts/unverified');
-            const uvData = await uvRes.json();
-            const unverifiedIds = new Set(
-                (uvData.posts || []).map(p => p.id || p.timestamp)
-            );
+            let posts = [];
+            let unverifiedIds = new Set();
+            try {
+                const [res, uvRes] = await Promise.all([
+                    apiFetch('/api/history'),
+                    apiFetch('/api/posts/unverified')
+                ]);
+                const data = await res.json();
+                const uvData = await uvRes.json();
+                posts = mergeLocalGeneratedPosts(data.posts || data.history || []);
+                state.historyPosts = posts;
+                unverifiedIds = new Set([
+                    ...(uvData.posts || []).map(p => p.id || p.timestamp),
+                    ...loadLocalGeneratedPosts().filter(p => !p.posted_verified && !p.posted_declined).map(p => p.id)
+                ]);
+            } catch (e) {
+                posts = mergeLocalGeneratedPosts([]);
+                state.historyPosts = posts;
+                unverifiedIds = new Set(posts.filter(p => !p.posted_verified && !p.posted_declined).map(p => p.id));
+            }
             
             container.innerHTML = '';
             
@@ -2629,42 +2934,34 @@
         }
 
         function buildHistoryCard(post, unverifiedIds) {
-            const isUnverified = unverifiedIds.has(post.id)
-                || unverifiedIds.has(post.timestamp);
+            const id = postId(post);
             const isVerified = post.posted_verified === true;
             const isDeclined = post.posted_verified === 'declined'
                 || post.declined === true
                 || post.posted_declined === true;
+            const isUnverified = !isVerified && !isDeclined && (
+                unverifiedIds.has(post.id)
+                || unverifiedIds.has(post.timestamp)
+                || unverifiedIds.has(id)
+                || post.posted_verified === false
+            );
 
             const card = document.createElement('div');
             card.className = 'history-card';
-            card.id = 'history-' + encodeURIComponent(post.id || post.timestamp);
+            card.id = 'history-' + encodeURIComponent(id);
 
-            // Styling and classes
             if (isVerified) {
                 card.classList.add('verified');
-                card.style.borderColor = 'rgba(0, 255, 136, 0.55)';
             } else if (isDeclined) {
                 card.classList.add('declined');
-                card.style.opacity = '0.4';
             } else if (isUnverified) {
                 card.classList.add('pending');
-                card.style.borderColor = 'rgba(255, 184, 0, 0.45)';
             }
 
-            // Header Section
             const header = document.createElement('div');
             header.className = 'history-meta';
-            header.style.display = 'flex';
-            header.style.justifyContent = 'space-between';
-            header.style.gap = '12px';
-            header.style.color = 'var(--text-secondary)';
-            header.style.fontSize = '11px';
-            header.style.textTransform = 'uppercase';
-
-            const fmtKey = (post.format_key || 'POST').toUpperCase();
+            const fmtKey = (post.format_key || post.platform || 'POST').toUpperCase();
             const timeStr = formatDateTime(post.timestamp);
-
             const titleSpan = document.createElement('span');
             titleSpan.innerText = `${fmtKey} · ${timeStr}`;
             header.appendChild(titleSpan);
@@ -2672,276 +2969,606 @@
             if (isVerified) {
                 const badge = document.createElement('span');
                 badge.className = 'verified-badge';
-                badge.style.color = '#00ff88';
-                badge.style.fontSize = '11px';
-                badge.innerText = '── [POSTED ✓]';
+                badge.innerText = `[POSTED ✓] ${formatDateTime(post.verified_at) || ''}`;
                 header.appendChild(badge);
             } else if (isDeclined) {
                 const badge = document.createElement('span');
                 badge.className = 'skipped-badge';
-                badge.style.color = '#ff4444';
-                badge.style.fontSize = '11px';
-                badge.innerText = '── [SKIPPED ✗]';
+                badge.innerText = '[SKIPPED ✗]';
                 header.appendChild(badge);
             }
             card.appendChild(header);
 
-            // Preview Section
             const preview = document.createElement('div');
             preview.className = 'history-preview';
-            preview.style.fontSize = '13px';
-            preview.style.whiteSpace = 'pre-wrap';
-            preview.style.wordBreak = 'break-word';
             const textPreview = (post.post_text || '').slice(0, 120) + ((post.post_text || '').length > 120 ? '...' : '');
             preview.innerText = `"${textPreview}"`;
             card.appendChild(preview);
 
-            if (!isDeclined) {
-                // Details Section
-                const details = document.createElement('div');
-                details.className = 'history-detail-line';
-                details.style.fontSize = '11px';
-                details.style.color = 'var(--text-secondary)';
-                const prov = post.provider_used || post.provider || 'local';
-                if (isVerified) {
-                    details.innerText = `format: ${post.format_key || 'POST'} · provider: ${prov}`;
-                } else if (isUnverified) {
-                    details.innerText = `format: ${post.format_key || 'POST'}  provider: ${prov}`;
+            const details = document.createElement('div');
+            details.className = 'history-detail-line';
+            details.innerText = `format: ${post.format_key || 'POST'} · provider: ${post.provider_used || post.provider || 'local'}`;
+            card.appendChild(details);
+
+            if (isVerified) {
+                const postedRow = document.createElement('div');
+                postedRow.className = 'history-detail-line';
+                postedRow.innerText = `posted: ${formatDateTime(post.verified_at || post.timestamp)}`;
+                if (post.post_url) {
+                    const link = document.createElement('a');
+                    link.href = post.post_url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.style.color = 'var(--accent-blue)';
+                    link.style.marginLeft = '8px';
+                    link.innerText = 'view post ->';
+                    postedRow.appendChild(link);
                 }
-                card.appendChild(details);
-
-                if (isVerified) {
-                    // Posted Date / URL
-                    const postedRow = document.createElement('div');
-                    postedRow.className = 'history-detail-line';
-                    postedRow.style.fontSize = '11px';
-                    postedRow.style.color = 'var(--text-secondary)';
-                    const vTime = formatDateTime(post.verified_at || post.timestamp);
-                    postedRow.innerText = `posted: ${vTime}`;
-
-                    if (post.post_url) {
-                        const link = document.createElement('a');
-                        link.href = post.post_url;
-                        link.target = '_blank';
-                        link.style.color = 'var(--accent-blue)';
-                        link.style.marginLeft = '8px';
-                        link.innerText = 'view post ↗';
-                        postedRow.appendChild(link);
-                    }
-                    card.appendChild(postedRow);
-
-                    // Metrics Summary
-                    if (post.metrics) {
-                        const summary = document.createElement('div');
-                        summary.innerHTML = renderMetricsSummary(post, post.metrics);
-                        card.appendChild(summary);
-                    } else {
-                        // [ADD_METRICS →] Button and Form container
-                        const addMetricsBtn = document.createElement('button');
-                        addMetricsBtn.className = 'btn-brutalist';
-                        addMetricsBtn.style.border = '1px solid #ffb800';
-                        addMetricsBtn.style.color = '#ffb800';
-                        addMetricsBtn.style.background = 'transparent';
-                        addMetricsBtn.style.padding = '4px 10px';
-                        addMetricsBtn.style.fontSize = '11px';
-                        addMetricsBtn.style.cursor = 'pointer';
-                        addMetricsBtn.style.alignSelf = 'flex-start';
-                        addMetricsBtn.style.marginTop = '8px';
-                        addMetricsBtn.innerText = '[ADD_METRICS →]';
-
-                        const metricsContainer = document.createElement('div');
-                        metricsContainer.className = 'hidden';
-                        metricsContainer.innerHTML = renderMetricsForm(post);
-
-                        addMetricsBtn.onclick = () => {
-                            metricsContainer.classList.toggle('hidden');
-                        };
-
-                        card.appendChild(addMetricsBtn);
-                        card.appendChild(metricsContainer);
-                    }
+                card.appendChild(postedRow);
+                if (post.metrics) {
+                    const summary = document.createElement('div');
+                    summary.innerHTML = renderMetricsSummary(post, post.metrics);
+                    card.appendChild(summary);
+                } else if (metricsAvailable(post)) {
+                    const addMetricsBtn = document.createElement('button');
+                    addMetricsBtn.className = 'btn-verify-later';
+                    addMetricsBtn.style.alignSelf = 'flex-start';
+                    addMetricsBtn.innerText = '[ADD_METRICS ->]';
+                    addMetricsBtn.onclick = () => openMetricsReview([{ ...pendingItemFromPost(post), reminder_at: new Date(0).toISOString() }]);
+                    card.appendChild(addMetricsBtn);
                 }
-
-                if (isUnverified) {
-                    // Verification Prompt Section
-                    const unverifiedPanel = document.createElement('div');
-                    unverifiedPanel.className = 'terminal-panel';
-                    unverifiedPanel.style.border = '1px solid #2a2a2a';
-                    unverifiedPanel.style.padding = '10px 14px';
-                    unverifiedPanel.style.marginTop = '10px';
-
-                    const panelTitle = document.createElement('div');
-                    panelTitle.style.color = '#666666';
-                    panelTitle.style.textTransform = 'uppercase';
-                    panelTitle.style.fontSize = '11px';
-                    panelTitle.style.fontFamily = 'JetBrains Mono, monospace';
-                    panelTitle.innerText = '┌─ DID_YOU_POST_THIS?';
-                    unverifiedPanel.appendChild(panelTitle);
-
-                    const actionsRow = document.createElement('div');
-                    actionsRow.className = 'history-actions';
-                    actionsRow.style.display = 'grid';
-                    actionsRow.style.gridTemplateColumns = '1fr 1fr';
-                    actionsRow.style.gap = '8px';
-                    actionsRow.style.marginTop = '8px';
-
-                    const yesBtn = document.createElement('button');
-                    yesBtn.className = 'btn-brutalist';
-                    yesBtn.style.background = 'transparent';
-                    yesBtn.style.border = '1px solid #00ff88';
-                    yesBtn.style.color = '#00ff88';
-                    yesBtn.style.fontFamily = 'JetBrains Mono, monospace';
-                    yesBtn.style.fontSize = '12px';
-                    yesBtn.style.padding = '6px 14px';
-                    yesBtn.style.cursor = 'pointer';
-                    yesBtn.innerText = '[YES, I POSTED IT ✓]';
-
-                    // Hover effects
-                    yesBtn.onmouseenter = () => {
-                        yesBtn.style.background = '#00ff88';
-                        yesBtn.style.color = '#0a0a0a';
-                    };
-                    yesBtn.onmouseleave = () => {
-                        yesBtn.style.background = 'transparent';
-                        yesBtn.style.color = '#00ff88';
-                    };
-
-                    const noBtn = document.createElement('button');
-                    noBtn.className = 'btn-brutalist';
-                    noBtn.style.background = 'transparent';
-                    noBtn.style.border = '1px solid #ff4444';
-                    noBtn.style.color = '#ff4444';
-                    noBtn.style.fontFamily = 'JetBrains Mono, monospace';
-                    noBtn.style.fontSize = '12px';
-                    noBtn.style.padding = '6px 14px';
-                    noBtn.style.cursor = 'pointer';
-                    noBtn.innerText = '[NO, I SKIPPED IT ✗]';
-
-                    // Hover effects
-                    noBtn.onmouseenter = () => {
-                        noBtn.style.background = '#ff4444';
-                        noBtn.style.color = '#0a0a0a';
-                    };
-                    noBtn.onmouseleave = () => {
-                        noBtn.style.background = 'transparent';
-                        noBtn.style.color = '#ff4444';
-                    };
-
-                    actionsRow.appendChild(yesBtn);
-                    actionsRow.appendChild(noBtn);
-                    unverifiedPanel.appendChild(actionsRow);
-
-                    // YES, I POSTED IT handler
-                    yesBtn.onclick = () => {
-                        actionsRow.remove();
-
-                        const urlContainer = document.createElement('div');
-                        urlContainer.className = 'verify-url-row';
-                        urlContainer.style.display = 'grid';
-                        urlContainer.style.gridTemplateColumns = '1fr auto auto';
-                        urlContainer.style.gap = '8px';
-                        urlContainer.style.marginTop = '8px';
-
-                        const urlInput = document.createElement('input');
-                        urlInput.className = 'input-brutalist';
-                        urlInput.placeholder = '> paste post URL (optional)_';
-                        urlInput.style.width = '100%';
-                        urlInput.style.background = 'var(--bg-root)';
-                        urlInput.style.border = '1px solid var(--border)';
-                        urlInput.style.color = 'var(--text-primary)';
-                        urlInput.style.padding = '8px';
-                        urlInput.style.fontSize = '13px';
-                        urlInput.style.outline = 'none';
-
-                        urlInput.onfocus = () => {
-                            urlInput.style.borderColor = 'var(--accent-green)';
-                        };
-                        urlInput.onblur = () => {
-                            urlInput.style.borderColor = 'var(--border)';
-                        };
-
-                        const confirmBtn = document.createElement('button');
-                        confirmBtn.className = 'btn-brutalist btn-primary-brutalist';
-                        confirmBtn.style.fontFamily = 'JetBrains Mono, monospace';
-                        confirmBtn.style.fontSize = '12px';
-                        confirmBtn.style.padding = '6px 14px';
-                        confirmBtn.style.cursor = 'pointer';
-                        confirmBtn.innerText = '[CONFIRM ✓]';
-
-                        const skipBtn = document.createElement('button');
-                        skipBtn.className = 'btn-brutalist';
-                        skipBtn.style.fontFamily = 'JetBrains Mono, monospace';
-                        skipBtn.style.fontSize = '12px';
-                        skipBtn.style.padding = '6px 14px';
-                        skipBtn.style.cursor = 'pointer';
-                        skipBtn.innerText = '[SKIP URL]';
-
-                        urlContainer.appendChild(urlInput);
-                        urlContainer.appendChild(confirmBtn);
-                        urlContainer.appendChild(skipBtn);
-                        unverifiedPanel.appendChild(urlContainer);
-
-                        urlInput.focus();
-
-                        confirmBtn.onclick = () => {
-                            verifyPost(post.id || post.timestamp, card, urlInput.value.trim());
-                        };
-
-                        skipBtn.onclick = () => {
-                            verifyPost(post.id || post.timestamp, card, '');
-                        };
-                    };
-
-                    noBtn.onclick = () => {
-                        declinePost(post.id || post.timestamp, card);
-                    };
-
-                    card.appendChild(unverifiedPanel);
-                }
-
-                // USE AS DRAFT Button
-                const reuseBtn = document.createElement('button');
-                reuseBtn.className = 'btn-brutalist';
-                reuseBtn.style.fontSize = '11px';
-                reuseBtn.style.alignSelf = 'flex-start';
-                reuseBtn.style.marginTop = '8px';
-                reuseBtn.innerText = '[USE_AS_DRAFT]';
-                reuseBtn.onclick = () => {
-                    reuseHistory(post.post_text || '');
-                };
-                card.appendChild(reuseBtn);
+            } else if (isDeclined) {
+                const skipped = document.createElement('div');
+                skipped.className = 'history-detail-line skipped-badge';
+                skipped.innerText = '[SKIPPED ✗]';
+                card.appendChild(skipped);
+            } else if (isUnverified) {
+                const wrap = document.createElement('div');
+                wrap.innerHTML = renderVerifyRow(id, post.format_key || detectFormatFromPlatform(post.platform));
+                card.appendChild(wrap.firstElementChild);
             }
+
+            const reuseBtn = document.createElement('button');
+            reuseBtn.className = 'btn-brutalist';
+            reuseBtn.style.fontSize = '11px';
+            reuseBtn.style.alignSelf = 'flex-start';
+            reuseBtn.style.marginTop = '8px';
+            reuseBtn.innerText = '[USE_AS_DRAFT]';
+            reuseBtn.onclick = () => reuseHistory(post.post_text || '');
+            card.appendChild(reuseBtn);
 
             return card;
         }
 
-        async function verifyPost(postId, cardElement, url = '') {
+        function detectPlatform(formatKey) {
+            const key = String(formatKey || '').toLowerCase();
+            if (key === 'linkedin') return 'linkedin';
+            if (key === 'pr_generator' || key === 'pr') return 'pr';
+            return 'twitter';
+        }
+
+        function detectFormatFromPlatform(platform) {
+            if (platform === 'linkedin') return 'linkedin';
+            if (platform === 'pr') return 'pr_generator';
+            return 'deep_tech';
+        }
+
+        function loadLocalGeneratedPosts() {
+            try {
+                return JSON.parse(localStorage.getItem('sl_generated_posts') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalGeneratedPosts(posts) {
+            localStorage.setItem('sl_generated_posts', JSON.stringify(posts.slice(-100)));
+        }
+
+        function storeLocalGeneratedPost(meta) {
+            const id = String(meta.id || '');
+            if (!id || !String(meta.post_text || '').trim()) return;
+            const posts = loadLocalGeneratedPosts();
+            const existingIndex = posts.findIndex(post => post.id === id);
+            const existing = existingIndex >= 0 ? posts[existingIndex] : {};
+            const next = {
+                id,
+                timestamp: meta.timestamp || existing.timestamp || new Date().toISOString(),
+                post_text: meta.post_text,
+                format_key: meta.format_key || existing.format_key || 'deep_tech',
+                provider_used: existing.provider_used || 'generated',
+                posted_verified: existing.posted_verified === true,
+                posted_declined: existing.posted_declined === true,
+                post_url: existing.post_url || '',
+                verified_at: existing.verified_at || '',
+                platform: meta.platform || existing.platform || detectPlatform(meta.format_key)
+            };
+            if (existingIndex >= 0) posts[existingIndex] = next;
+            else posts.push(next);
+            saveLocalGeneratedPosts(posts);
+        }
+
+        function patchLocalGeneratedPost(postIdValue, patch) {
+            const id = String(postIdValue);
+            const posts = loadLocalGeneratedPosts();
+            const index = posts.findIndex(post => post.id === id || post.timestamp === id);
+            if (index === -1) return false;
+            posts[index] = { ...posts[index], ...patch };
+            saveLocalGeneratedPosts(posts);
+            return true;
+        }
+
+        function hasLocalGeneratedPost(postIdValue) {
+            const id = String(postIdValue);
+            return loadLocalGeneratedPosts().some(post => post.id === id || post.timestamp === id);
+        }
+
+        function mergeLocalGeneratedPosts(serverPosts) {
+            const byId = new Map();
+            serverPosts.forEach(post => byId.set(postId(post), post));
+            loadLocalGeneratedPosts().forEach(post => {
+                if (!byId.has(postId(post))) byId.set(postId(post), post);
+            });
+            return Array.from(byId.values()).sort((a, b) => String(a.timestamp || '').localeCompare(String(b.timestamp || '')));
+        }
+
+        function renderVerifyRow(postId, formatKey) {
+            const safeId = encodeURIComponent(String(postId));
+            const postArg = inlineJsString(postId);
+            const formatArg = inlineJsString(formatKey || 'deep_tech');
+            return `
+                <div class="verify-row" id="verify-${safeId}">
+                    <span class="verify-label">// did you post this?</span>
+                    <button onclick="markPosted('${postArg}', '${formatArg}')" class="btn-verify-yes">YES ✓</button>
+                    <button onclick="markNotYet('${postArg}')" class="btn-verify-later">NOT YET</button>
+                    <button onclick="markSkipped('${postArg}')" class="btn-verify-no">SKIP ✗</button>
+                </div>
+            `;
+        }
+
+        function findVerifyRow(postId) {
+            return document.getElementById(`verify-${encodeURIComponent(String(postId))}`);
+        }
+
+        function markPosted(postId, formatKey) {
+            const verifyRow = findVerifyRow(postId);
+            if (!verifyRow) return;
+            verifyRow.dataset.formatKey = formatKey || '';
+            const safeId = encodeURIComponent(String(postId));
+            const postArg = inlineJsString(postId);
+            verifyRow.innerHTML = `
+                <span class="verify-label">// paste URL (optional):</span>
+                <input type="text" placeholder="> https://..." id="url-input-${safeId}" class="url-input">
+                <button onclick="confirmPosted('${postArg}')" class="btn-verify-yes">CONFIRM ✓</button>
+                <button onclick="confirmPosted('${postArg}', true)" class="btn-verify-later">SKIP URL</button>
+            `;
+            const input = document.getElementById(`url-input-${safeId}`);
+            if (input) input.focus();
+        }
+
+        async function confirmPosted(postId, skipUrl = false) {
+            const verifyRow = findVerifyRow(postId);
+            if (!verifyRow) return;
+            const input = document.getElementById(`url-input-${encodeURIComponent(String(postId))}`);
+            const url = skipUrl ? '' : (input ? input.value.trim() : '');
             const res = await apiFetch('/api/posts/verify', {
                 method: 'POST',
                 body: JSON.stringify({ post_id: postId, post_url: url })
             });
-            if (res.ok) {
-                showToast("Post verified", "success");
-                await loadHistory();
-            } else {
+            const localHandled = !res.ok && hasLocalGeneratedPost(postId);
+            if (!res.ok && !localHandled) {
                 showToast("Verification failed", "error");
+                return;
             }
+            patchLocalGeneratedPost(postId, {
+                posted_verified: true,
+                posted_declined: false,
+                verified_at: new Date().toISOString(),
+                post_url: url
+            });
+            verifyRow.innerHTML = '<span class="verified-badge">[POSTED ✓] ' + new Date().toLocaleTimeString() + '</span>';
+            refreshUnverifiedCount();
+            const formatKey = verifyRow.dataset.formatKey || state.draftPostMeta[state.tab]?.format_key || 'deep_tech';
+            let platform = detectPlatform(formatKey);
+            if (url.includes('twitter.com') || url.includes('x.com')) {
+                const tweetId = url.split('/').pop().split('?')[0];
+                platform = 'twitter';
+                scheduleMetricsFetch(postId, tweetId, platform);
+            } else if (url.includes('linkedin.com')) {
+                platform = 'linkedin';
+                scheduleMetricsFetch(postId, null, platform);
+            } else {
+                scheduleMetricsFetch(postId, null, platform);
+            }
+            showToast("[OK] post verified", "success");
+            if (state.view === 'history') loadHistory();
         }
 
-        async function declinePost(postId, cardElement) {
+        function markNotYet(postId) {
+            const verifyRow = findVerifyRow(postId);
+            if (!verifyRow) return;
+            verifyRow.style.opacity = '0.5';
+            const label = verifyRow.querySelector('.verify-label');
+            if (label) label.textContent = '// saved - check history to confirm later';
+            setTimeout(() => verifyRow.remove(), 2000);
+        }
+
+        async function markSkipped(postId) {
+            const verifyRow = findVerifyRow(postId);
             const res = await apiFetch('/api/posts/decline', {
                 method: 'POST',
                 body: JSON.stringify({ post_id: postId })
             });
-            if (res.ok) {
-                showToast("Marked skipped", "info");
-                if (cardElement) {
-                    cardElement.style.opacity = '0.4';
-                }
-                await loadHistory();
-            } else {
+            const localHandled = !res.ok && hasLocalGeneratedPost(postId);
+            if (!res.ok && !localHandled) {
                 showToast("Operation failed", "error");
+                return;
             }
+            patchLocalGeneratedPost(postId, {
+                posted_declined: true,
+                posted_verified: false
+            });
+            if (verifyRow) {
+                verifyRow.innerHTML = '<span style="color:#666666;font-size:11px">// skipped</span>';
+            }
+            refreshUnverifiedCount();
+            showToast("// skipped", "info");
+            if (state.view === 'history') loadHistory();
+        }
+
+        async function refreshUnverifiedCount() {
+            try {
+                const uvRes = await apiFetch('/api/posts/unverified');
+                const uvData = await uvRes.json();
+                const localPending = loadLocalGeneratedPosts().some(p => !p.posted_verified && !p.posted_declined);
+                updateHistoryDot((uvData.posts || []).length > 0 || localPending);
+            } catch (e) {
+                updateHistoryDot(loadLocalGeneratedPosts().some(p => !p.posted_verified && !p.posted_declined));
+            }
+        }
+
+        function pendingItemFromPost(post) {
+            return {
+                post_id: postId(post),
+                tweet_id: post.tweet_id || null,
+                platform: post.platform || detectPlatform(post.format_key),
+                posted_at: post.verified_at || post.timestamp || new Date().toISOString(),
+                post_text: post.post_text || '',
+                format_key: post.format_key || detectFormatFromPlatform(post.platform),
+                reminder_at: new Date().toISOString()
+            };
+        }
+
+        function scheduleMetricsFetch(postId, tweetId, platform) {
+            const pending = getPendingMetrics();
+            const formatKey = state.draftPostMeta[state.tab]?.format_key || detectFormatFromPlatform(platform);
+            const existingIndex = pending.findIndex(p => p.post_id === postId);
+            const item = {
+                post_id: postId,
+                tweet_id: tweetId,
+                platform,
+                format_key: formatKey,
+                post_text: state.draftPostMeta[formatKey]?.post_text || state.tabs[formatKey]?.text || '',
+                posted_at: new Date().toISOString(),
+                reminder_at: new Date(Date.now() + (platform === 'linkedin' ? 7 : (platform === 'pr' ? 3 : 1)) * 24 * 60 * 60 * 1000).toISOString()
+            };
+            if (existingIndex >= 0) pending[existingIndex] = { ...pending[existingIndex], ...item, metrics_saved: false };
+            else pending.push(item);
+            localStorage.setItem('sl_pending_metrics', JSON.stringify(pending));
+        }
+
+        function getPendingMetrics() {
+            try {
+                return JSON.parse(localStorage.getItem('sl_pending_metrics') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function savePendingMetrics(items) {
+            localStorage.setItem('sl_pending_metrics', JSON.stringify(items));
+        }
+
+        function checkPendingReminders() {
+            document.querySelectorAll('.reminder-banner').forEach(b => b.remove());
+            const pending = getPendingMetrics();
+            const now = new Date();
+            const due = pending.filter(p => new Date(p.reminder_at) <= now && !p.metrics_saved);
+            if (due.length === 0) return;
+            const banner = document.createElement('div');
+            banner.className = 'reminder-banner';
+            banner.innerHTML = `
+                <span class="reminder-icon">●</span>
+                <span class="reminder-text">${due.length} post${due.length > 1 ? 's' : ''} need${due.length === 1 ? 's' : ''} performance data</span>
+                <button onclick="openMetricsReview()" class="btn-reminder">REVIEW -></button>
+                <button onclick="dismissReminder(this)" class="btn-dismiss">✗</button>
+            `;
+            const target = document.getElementById('main-content') || document.getElementById('main-container');
+            if (target) target.prepend(banner);
+        }
+
+        function dismissReminder(btn) {
+            const banner = btn.closest('.reminder-banner');
+            if (banner) banner.remove();
+        }
+
+        function openMetricsReview(items = null) {
+            const due = items || getPendingMetrics().filter(p => new Date(p.reminder_at) <= new Date() && !p.metrics_saved);
+            if (due.length === 0) return;
+            state.metricsReviewItems = due;
+            state.metricsReviewIndex = 0;
+            renderMetricsOverlay();
+        }
+
+        function closeMetricsOverlay() {
+            const overlay = document.getElementById('metrics-overlay');
+            if (overlay) overlay.remove();
+            checkPendingReminders();
+        }
+
+        function renderMetricsOverlay() {
+            const items = state.metricsReviewItems || [];
+            const item = items[state.metricsReviewIndex || 0];
+            if (!item) {
+                closeMetricsOverlay();
+                return;
+            }
+            const existing = document.getElementById('metrics-overlay');
+            if (existing) existing.remove();
+            const overlay = document.createElement('div');
+            overlay.className = 'metrics-overlay';
+            overlay.id = 'metrics-overlay';
+            overlay.innerHTML = item.platform === 'pr' ? renderPrMetricsModal(item) : renderSocialMetricsModal(item);
+            document.body.appendChild(overlay);
+            initMetricsHashtagState(item);
+        }
+
+        function daysSincePosted(item) {
+            const date = parsePostDate(item.posted_at);
+            if (!date) return item.platform === 'linkedin' ? 7 : (item.platform === 'pr' ? 3 : 1);
+            return Math.max(1, Math.floor((new Date() - date) / (1000 * 60 * 60 * 24)));
+        }
+
+        function renderSocialMetricsModal(item) {
+            const id = encodeURIComponent(String(item.post_id));
+            const isLinkedIn = item.platform === 'linkedin';
+            const platformLabel = isLinkedIn ? 'LINKEDIN' : 'X_TWITTER';
+            const preview = escapeHtml((item.post_text || findPostText(item.post_id) || '').slice(0, 80));
+            return `
+                <div class="metrics-modal">
+                    <div class="metrics-modal-header">
+                        <div class="metrics-modal-title">┌─ POST_PERFORMANCE · ${platformLabel} ──────────────────────┐</div>
+                        <button class="metrics-close" onclick="closeMetricsOverlay()">[X]</button>
+                    </div>
+                    <div class="history-detail-line">posted ${daysSincePosted(item)} day${daysSincePosted(item) === 1 ? '' : 's'} ago</div>
+                    <div class="metrics-modal-preview">"${preview}${preview.length >= 80 ? '...' : ''}"</div>
+                    <div class="history-detail-line">// ${isLinkedIn ? 'go to linkedin -> your post -> view analytics' : 'open twitter analytics or check your tweet'}</div>
+                    <div class="metrics-form-grid">
+                        <label>IMPRESSIONS <input class="metrics-number" type="number" min="0" step="1" id="metric-impressions-${id}" value="0"></label>
+                        <label>${isLinkedIn ? 'REACTIONS' : 'LIKES'} <input class="metrics-number" type="number" min="0" step="1" id="metric-likes-${id}" value="0"></label>
+                        <label>${isLinkedIn ? 'COMMENTS' : 'REPLIES'} <input class="metrics-number" type="number" min="0" step="1" id="metric-comments-${id}" value="0"></label>
+                        <label>REPOSTS <input class="metrics-number" type="number" min="0" step="1" id="metric-reposts-${id}" value="0"></label>
+                        ${isLinkedIn ? '' : `
+                            <label>PROFILE CLICKS <input class="metrics-number" type="number" min="0" step="1" id="metric-profile-clicks-${id}" value="0"></label>
+                            <label>LINK CLICKS <input class="metrics-number" type="number" min="0" step="1" id="metric-link-clicks-${id}" value="0"></label>
+                        `}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary);">HASHTAGS:</div>
+                    <div class="hashtag-chip-row" id="modal-hashtag-row-${id}"></div>
+                    <input class="metrics-text-input" id="modal-hashtag-input-${id}" placeholder="[+ add]" onkeydown="handleModalHashtagKey(event, '${inlineJsString(id)}')">
+                    <div class="metrics-actions">
+                        <button class="metrics-action green" onclick="saveReviewMetrics('${inlineJsString(id)}')">[SAVE_METRICS ✓]</button>
+                        <button class="metrics-action amber" onclick="remindMetricsLater('${inlineJsString(id)}', ${isLinkedIn ? 3 : 1})">[${isLinkedIn ? 'REMIND_IN_3_DAYS' : 'REMIND_TOMORROW'} ->]</button>
+                        <button class="metrics-action gray" onclick="skipMetricsItem('${inlineJsString(id)}')">[SKIP ->]</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPrMetricsModal(item) {
+            const id = encodeURIComponent(String(item.post_id));
+            const preview = escapeHtml((item.post_text || findPostText(item.post_id) || '').slice(0, 80));
+            return `
+                <div class="metrics-modal">
+                    <div class="metrics-modal-header">
+                        <div class="metrics-modal-title">┌─ PR_STATUS ─────────────────────────────────────────┐</div>
+                        <button class="metrics-close" onclick="closeMetricsOverlay()">[X]</button>
+                    </div>
+                    <div class="history-detail-line">you generated a PR description ${daysSincePosted(item)} days ago</div>
+                    <div class="metrics-modal-preview">"${preview}${preview.length >= 80 ? '...' : ''}"</div>
+                    <div>what happened to this PR?</div>
+                    <div class="metrics-actions">
+                        <button class="metrics-action green" onclick="savePrStatus('${inlineJsString(id)}', 'merged')">[MERGED ✓]</button>
+                        <button class="metrics-action amber" onclick="savePrStatus('${inlineJsString(id)}', 'open')">[STILL OPEN]</button>
+                        <button class="metrics-action red" onclick="savePrStatus('${inlineJsString(id)}', 'closed')">[CLOSED ✗]</button>
+                    </div>
+                    <div class="pr-status-row">
+                        <label>optional - PR URL: <input class="metrics-text-input" id="metric-pr-url-${id}" placeholder="> https://..."></label>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initMetricsHashtagState(item) {
+            const id = encodeURIComponent(item.post_id);
+            if (!state.metricForms[id]) state.metricForms[id] = { hashtags: extractHashtags(item.post_text || findPostText(item.post_id) || []) };
+            renderModalHashtags(id);
+        }
+
+        function extractHashtags(text) {
+            return Array.from(new Set(String(text || '').match(/#[A-Za-z0-9_]+/g) || []));
+        }
+
+        function renderModalHashtags(encodedId) {
+            const row = document.getElementById(`modal-hashtag-row-${encodedId}`);
+            if (!row) return;
+            const form = state.metricForms[encodedId] || { hashtags: [] };
+            row.innerHTML = form.hashtags.map(tag => `<button class="hashtag-chip" onclick="removeModalHashtag('${inlineJsString(encodedId)}', '${inlineJsString(tag)}')">${escapeHtml(tag)} ✗</button>`).join('');
+        }
+
+        function handleModalHashtagKey(event, encodedId) {
+            if (event.key !== 'Enter' && event.key !== ',') return;
+            event.preventDefault();
+            const input = event.target;
+            const raw = input.value.trim().replace(/,$/, '');
+            if (!raw) return;
+            const tag = raw.startsWith('#') ? raw : `#${raw}`;
+            const form = state.metricForms[encodedId] || { hashtags: [] };
+            if (!form.hashtags.includes(tag)) form.hashtags.push(tag);
+            state.metricForms[encodedId] = form;
+            input.value = '';
+            renderModalHashtags(encodedId);
+        }
+
+        function removeModalHashtag(encodedId, tag) {
+            const form = state.metricForms[encodedId] || { hashtags: [] };
+            form.hashtags = form.hashtags.filter(t => t !== tag);
+            state.metricForms[encodedId] = form;
+            renderModalHashtags(encodedId);
+        }
+
+        function currentReviewItem(encodedId) {
+            const id = decodeURIComponent(encodedId);
+            return (state.metricsReviewItems || []).find(item => item.post_id === id);
+        }
+
+        function metricNumber(encodedId, name) {
+            const input = document.getElementById(`metric-${name}-${encodedId}`);
+            const value = input ? input.value : '';
+            if (value === '' || !/^\d+$/.test(value) || Number(value) < 0) return null;
+            return Number(value);
+        }
+
+        async function saveReviewMetrics(encodedId) {
+            const item = currentReviewItem(encodedId);
+            if (!item) return;
+            const values = {
+                impressions: metricNumber(encodedId, 'impressions'),
+                likes: metricNumber(encodedId, 'likes'),
+                comments: metricNumber(encodedId, 'comments'),
+                reposts: metricNumber(encodedId, 'reposts')
+            };
+            if (Object.values(values).some(value => value === null)) {
+                showToast("Metrics must be whole numbers >= 0", "error");
+                return;
+            }
+            const form = state.metricForms[encodedId] || { hashtags: [] };
+            const payload = {
+                post_id: item.post_id,
+                ...values,
+                hashtags: form.hashtags.slice(0, 10),
+                days_after_post: daysSincePosted(item),
+                platform: item.platform
+            };
+            const res = await apiFetch('/api/metrics/save', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                showToast("Metrics save failed", "error");
+                return;
+            }
+            applySavedMetrics(item, payload);
+            markPendingSaved(item.post_id);
+            showToast("[OK] metrics saved - insights updated", "success");
+            nextMetricsItem();
+        }
+
+        async function savePrStatus(encodedId, status) {
+            const item = currentReviewItem(encodedId);
+            if (!item) return;
+            const urlInput = document.getElementById(`metric-pr-url-${encodedId}`);
+            const payload = {
+                post_id: item.post_id,
+                impressions: status === 'merged' ? 1 : 0,
+                likes: 0,
+                comments: 0,
+                reposts: 0,
+                hashtags: urlInput?.value ? [urlInput.value.trim()] : [],
+                days_after_post: daysSincePosted(item),
+                platform: 'pr'
+            };
+            const res = await apiFetch('/api/metrics/save', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                showToast("PR status save failed", "error");
+                return;
+            }
+            applySavedMetrics(item, payload);
+            markPendingSaved(item.post_id);
+            showToast("[OK] metrics saved - insights updated", "success");
+            nextMetricsItem();
+        }
+
+        function applySavedMetrics(item, payload) {
+            const metrics = {
+                post_id: item.post_id,
+                impressions: payload.impressions,
+                likes: payload.likes,
+                comments: payload.comments,
+                reposts: payload.reposts,
+                hashtags: payload.hashtags || [],
+                days_after_post: payload.days_after_post,
+                platform: payload.platform,
+                measured_at: new Date().toISOString()
+            };
+            const patch = { metrics };
+            patchLocalGeneratedPost(item.post_id, patch);
+            const index = state.historyPosts.findIndex(post => postId(post) === item.post_id);
+            if (index >= 0) {
+                state.historyPosts[index] = { ...state.historyPosts[index], ...patch };
+                replaceHistoryCard(state.historyPosts[index]);
+            }
+            if (state.view === 'insights') loadInsights();
+        }
+
+        function markPendingSaved(postIdValue) {
+            const pending = getPendingMetrics().map(item => item.post_id === postIdValue ? { ...item, metrics_saved: true } : item);
+            savePendingMetrics(pending);
+        }
+
+        function remindMetricsLater(encodedId, days) {
+            const item = currentReviewItem(encodedId);
+            if (!item) return;
+            const pending = getPendingMetrics();
+            const idx = pending.findIndex(p => p.post_id === item.post_id);
+            const updated = { ...item, reminder_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() };
+            if (idx >= 0) pending[idx] = { ...pending[idx], ...updated };
+            else pending.push(updated);
+            savePendingMetrics(pending);
+            nextMetricsItem();
+        }
+
+        function skipMetricsItem(encodedId) {
+            const item = currentReviewItem(encodedId);
+            if (item) markPendingSaved(item.post_id);
+            nextMetricsItem();
+        }
+
+        function nextMetricsItem() {
+            state.metricsReviewIndex = (state.metricsReviewIndex || 0) + 1;
+            if (state.metricsReviewIndex >= (state.metricsReviewItems || []).length) {
+                closeMetricsOverlay();
+            } else {
+                renderMetricsOverlay();
+            }
+        }
+
+        function metricsAvailable(post) {
+            const platform = post.platform || detectPlatform(post.format_key);
+            const date = parsePostDate(post.verified_at || post.timestamp);
+            if (!date) return true;
+            const days = (new Date() - date) / (1000 * 60 * 60 * 24);
+            if (platform === 'linkedin') return days >= 7;
+            if (platform === 'pr') return days >= 3;
+            return days >= 1;
+        }
+
+        function findPostText(postIdValue) {
+            const found = state.historyPosts.find(post => postId(post) === postIdValue);
+            return found?.post_text || '';
         }
 
         function replaceHistoryCard(post) {
@@ -2950,61 +3577,6 @@
                 const newCard = buildHistoryCard(post, new Set());
                 card.replaceWith(newCard);
             }
-        }
-
-        function renderMetricsAvailability(post) {
-            const date = parsePostDate(post.timestamp);
-            if (!date) return '';
-            const now = new Date();
-            const daysSince = (now - date) / (1000 * 60 * 60 * 24);
-            const daysRemaining = Math.max(0, 7 - Math.floor(daysSince));
-            const availableDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-            if (daysRemaining > 0) {
-                return `
-                    <div class="metrics-panel">
-                        <div class="terminal-panel-title">┌─ PERFORMANCE_METRICS</div>
-                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// metrics available in ${daysRemaining} days</div>
-                        <div style="color:var(--text-secondary); font-size:var(--text-xs);">// come back on ${formatDateOnly(availableDate)} to log performance</div>
-                    </div>
-                `;
-            }
-            const id = encodedPostId(post);
-            return `
-                <button class="btn-brutalist" style="border-color:var(--accent-amber); color:var(--accent-amber); align-self:flex-start;" onclick="document.getElementById('metrics-panel-${id}')?.scrollIntoView({block:'center'})">[ADD_METRICS →]</button>
-                ${renderMetricsForm(post)}
-            `;
-        }
-
-        function renderMetricsForm(post) {
-            const id = encodedPostId(post);
-            const form = state.metricForms[id] || { hashtags: [], platform: metricPlatform(postId(post)) };
-            state.metricForms[id] = form;
-            return `
-                <div class="metrics-panel" id="metrics-panel-${id}">
-                    <div class="terminal-panel-title">┌─ LOG_PERFORMANCE</div>
-                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// 7 days have passed - how did this post do?</div>
-                    <div style="color:var(--text-secondary); font-size:var(--text-xs);">// this data trains SL to write better posts</div>
-                    <div class="metrics-grid">
-                        <label class="metric-field">IMPRESSIONS <input class="input-brutalist" type="number" min="0" step="1" id="m-impressions-${id}" value="0"></label>
-                        <label class="metric-field">LIKES <input class="input-brutalist" type="number" min="0" step="1" id="m-likes-${id}" value="0"></label>
-                        <label class="metric-field">COMMENTS <input class="input-brutalist" type="number" min="0" step="1" id="m-comments-${id}" value="0"></label>
-                        <label class="metric-field">REPOSTS <input class="input-brutalist" type="number" min="0" step="1" id="m-reposts-${id}" value="0"></label>
-                    </div>
-                    <div style="font-size:var(--text-xs); color:var(--text-secondary);">HASHTAGS_USED:</div>
-                    <div class="hashtag-chip-row" id="hashtag-row-${id}">
-                        ${renderHashtagChips(id)}
-                        <input class="input-brutalist" style="max-width:180px;" id="m-hashtag-input-${id}" placeholder="[+ type to add]" onkeydown="handleHashtagKey(event, '${id}')">
-                    </div>
-                    <div style="font-size:var(--text-xs); color:var(--text-secondary);">PLATFORM:</div>
-                    <div class="platform-row" id="platform-row-${id}">
-                        ${['X_TWITTER', 'LINKEDIN', 'BOTH'].map(platform => `<button class="platform-chip ${form.platform === platform ? 'active' : ''}" onclick="setMetricPlatform('${id}', '${platform}')">[${platform}${form.platform === platform ? ' ●' : ''}]</button>`).join('')}
-                    </div>
-                    <div class="history-actions">
-                        <button class="btn-brutalist btn-primary-brutalist" onclick="saveMetrics('${id}')">[SAVE_METRICS ✓]</button>
-                        <button class="btn-brutalist" onclick="document.getElementById('metrics-panel-${id}').classList.add('hidden')">[REMIND_ME_LATER →]</button>
-                    </div>
-                </div>
-            `;
         }
 
         function showNotification(msg, type = 'info') {
@@ -3045,65 +3617,16 @@
             }).catch(() => {});
         }
 
-        function updateStoredPost(encodedId, patch) {
-            const id = decodeURIComponent(encodedId);
-            const index = state.historyPosts.findIndex(post => postId(post) === id);
-            if (index === -1) return null;
-            state.historyPosts[index] = { ...state.historyPosts[index], ...patch };
-            return state.historyPosts[index];
-        }
-
-        function validMetricValue(encodedId, name) {
-            const input = document.getElementById(`m-${name}-${encodedId}`);
-            const value = input ? input.value : '';
-            if (value === '' || !/^\d+$/.test(value) || Number(value) < 0) return null;
-            return Number(value);
-        }
-
-        async function saveMetrics(encodedId) {
-            const values = {
-                impressions: validMetricValue(encodedId, 'impressions'),
-                likes: validMetricValue(encodedId, 'likes'),
-                comments: validMetricValue(encodedId, 'comments'),
-                reposts: validMetricValue(encodedId, 'reposts')
-            };
-            if (Object.values(values).some(value => value === null)) {
-                showToast("Metrics must be whole numbers >= 0", "error");
-                return;
-            }
-            const form = state.metricForms[encodedId] || { hashtags: [], platform: 'X_TWITTER' };
-            const post_id = decodeURIComponent(encodedId);
-            const res = await api('/api/metrics/save', 'POST', {
-                post_id,
-                ...values,
-                hashtags: form.hashtags.slice(0, 10),
-                days_after_post: 7
-            });
-            if (res && res.success) {
-                saveMetricPlatform(post_id, form.platform || 'X_TWITTER');
-                const metrics = { post_id, ...values, hashtags: form.hashtags.slice(0, 10), days_after_post: 7 };
-                const post = updateStoredPost(encodedId, { metrics });
-                if (post) replaceHistoryCard(post);
-                showToast("Metrics saved", "success");
-            }
-        }
-
         function renderMetricsSummary(post, metrics) {
             const rate = engagementRate(metrics).toFixed(1);
-            const platform = metricPlatform(postId(post));
+            const platform = metrics.platform || post.platform || detectPlatform(post.format_key);
             const hashtags = (metrics.hashtags || []).join(' ') || '// none';
             return `
                 <div class="metrics-panel">
                     <div class="terminal-panel-title">┌─ PERFORMANCE_SUMMARY</div>
-                    <div class="metrics-summary-grid">
-                        <div class="metric-summary-cell">IMPRESSIONS <strong>${Number(metrics.impressions || 0).toLocaleString()}</strong></div>
-                        <div class="metric-summary-cell">LIKES <strong>${Number(metrics.likes || 0).toLocaleString()}</strong></div>
-                        <div class="metric-summary-cell">COMMENTS <strong>${Number(metrics.comments || 0).toLocaleString()}</strong></div>
-                        <div class="metric-summary-cell">REPOSTS <strong>${Number(metrics.reposts || 0).toLocaleString()}</strong></div>
-                        <div class="metric-summary-cell">ENGAGEMENT <strong>${rate}%</strong></div>
-                        <div class="metric-summary-cell">PLATFORM <strong>${escapeHtml(platform)}</strong></div>
-                    </div>
+                    <div class="performance-badge">${Number(metrics.impressions || 0).toLocaleString()} impressions · ${Number(metrics.likes || 0).toLocaleString()} likes · ${rate}% engagement</div>
                     <div class="history-detail-line">HASHTAGS ${escapeHtml(hashtags)}</div>
+                    <div class="history-detail-line">PLATFORM ${escapeHtml(platform)}</div>
                     <button class="btn-brutalist" style="align-self:flex-start;" onclick="setView('insights')">[VIEW_INSIGHTS →]</button>
                 </div>
             `;
@@ -3122,7 +3645,7 @@
                 api('/api/insights'),
                 api('/api/history')
             ]);
-            const posts = (historyData?.history || []).filter(post => !post.posted_declined);
+            const posts = mergeLocalGeneratedPosts(historyData?.history || historyData?.posts || []).filter(post => !post.posted_declined);
             const rows = buildInsightRows(posts);
             const overview = data?.overview || {};
             const streak = computeStreakStats(posts);
@@ -3474,7 +3997,7 @@
             if (state.logSource) state.logSource.close();
             const status = document.getElementById('logs-connection');
             try {
-                state.logSource = new EventSource('/api/logs/stream');
+                state.logSource = new EventSource('/api/logs/stream?token=' + encodeURIComponent(window.CE_TOKEN || ''));
                 state.logSource.onopen = () => {
                     if (status) {
                         status.innerText = '[LIVE]';
@@ -3553,6 +4076,18 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value);
+        }
+
+        function inlineJsString(value) {
+            return escapeAttr(String(value)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, '')
+                .replace(/\n/g, '\\n'));
         }
 
         function parseMarkdown(md) {

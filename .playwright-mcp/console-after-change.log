@@ -1,0 +1,10 @@
+Total messages: 3 (Errors: 3, Warnings: 0)
+Returning 7 messages for level "error"
+
+[ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/token:0
+[ERROR] Failed to get session token: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ http://127.0.0.1:8000/app:1727
+[ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/logs/stream:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/favicon.ico:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/token:0
+[ERROR] Failed to get session token: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ http://127.0.0.1:8000/app:1727
+[ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/logs/stream:0

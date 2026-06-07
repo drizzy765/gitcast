@@ -1,0 +1,3 @@
+[    2234ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/token:0
+[    2279ms] [ERROR] Failed to get session token: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ http://127.0.0.1:8000/app?verify-check=1:1951
+[    2499ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:8000/api/logs/stream:0
