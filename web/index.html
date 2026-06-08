@@ -78,11 +78,197 @@
         .boot-screen.hidden {
             display: none !important;
         }
-        .boot-log-container {
-            max-width: 800px;
-            white-space: pre-wrap;
-            font-size: var(--text-sm);
-        }
+	        .boot-log-container {
+	            max-width: 800px;
+	            white-space: pre-wrap;
+	            font-size: var(--text-sm);
+	        }
+
+	        /* --- Auth Gate --- */
+	        .auth-screen {
+	            position: fixed;
+	            inset: 0;
+	            min-height: 100vh;
+	            background: var(--bg-root);
+	            z-index: 9000;
+	            display: flex;
+	            align-items: center;
+	            justify-content: center;
+	            padding: 24px;
+	            overflow-y: auto;
+	        }
+	        .auth-shell {
+	            width: 560px;
+	            max-width: 100%;
+	            border: 1px solid var(--border);
+	            background: var(--bg-root);
+	            padding: 32px;
+	            display: flex;
+	            flex-direction: column;
+	            gap: 22px;
+	        }
+	        .auth-title {
+	            color: var(--accent-green);
+	            font-size: var(--text-xl);
+	            font-weight: 700;
+	        }
+	        .auth-brand,
+	        .auth-box-body,
+	        .onboarding-box-body {
+	            display: flex;
+	            flex-direction: column;
+	            gap: 16px;
+	        }
+	        .auth-version,
+	        .auth-copy,
+	        .auth-footer,
+	        .auth-hint {
+	            color: var(--text-secondary);
+	            font-size: var(--text-sm);
+	        }
+	        .auth-box-header,
+	        .onboarding-box-header {
+	            display: flex;
+	            align-items: center;
+	            font-size: var(--text-xs);
+	            height: 18px;
+	            color: var(--text-secondary);
+	            user-select: none;
+	        }
+	        .auth-box-title,
+	        .onboarding-box-title {
+	            padding-right: 4px;
+	            white-space: nowrap;
+	            color: var(--accent-green);
+	            font-weight: 700;
+	        }
+	        .auth-box-line,
+	        .onboarding-box-line {
+	            flex: 1;
+	            border-bottom: 1px solid var(--border);
+	            height: 9px;
+	        }
+	        .auth-box-limit,
+	        .onboarding-box-limit {
+	            padding-left: 4px;
+	            white-space: nowrap;
+	        }
+	        .auth-box-body,
+	        .onboarding-box-body {
+	            border-left: 1px solid var(--border);
+	            border-right: 1px solid var(--border);
+	            border-bottom: 1px solid var(--border);
+	            background: var(--bg-surface);
+	            padding: 18px;
+	        }
+	        .auth-label,
+	        .onboarding-label {
+	            color: var(--accent-green);
+	            font-size: var(--text-sm);
+	            text-transform: uppercase;
+	        }
+	        .auth-input,
+	        .onboarding-input,
+	        .onboarding-textarea {
+	            width: 100%;
+	            background: var(--bg-root);
+	            color: var(--text-primary);
+	            border: 1px solid var(--border);
+	            outline: none;
+	            padding: 10px 12px;
+	            font-family: 'JetBrains Mono', monospace;
+	            font-size: var(--text-sm);
+	            caret-color: var(--accent-green);
+	            border-radius: 0;
+	        }
+	        .auth-input:focus,
+	        .onboarding-input:focus,
+	        .onboarding-textarea:focus,
+	        .otp-box:focus {
+	            border-color: var(--accent-green);
+	        }
+	        .onboarding-textarea {
+	            min-height: 92px;
+	            resize: vertical;
+	        }
+	        .auth-btn,
+	        .onboarding-btn,
+	        .logout-btn {
+	            background: transparent;
+	            color: var(--text-primary);
+	            border: 1px solid var(--border);
+	            padding: 9px 12px;
+	            font-family: 'JetBrains Mono', monospace;
+	            font-size: var(--text-sm);
+	            text-align: center;
+	            cursor: pointer;
+	            text-transform: uppercase;
+	            border-radius: 0;
+	        }
+	        .auth-btn:hover,
+	        .onboarding-btn:hover {
+	            border-color: var(--accent-green);
+	            color: var(--accent-green);
+	        }
+	        .auth-btn.primary,
+	        .onboarding-btn.primary {
+	            color: var(--accent-green);
+	            border-color: var(--accent-green);
+	        }
+	        .auth-btn:disabled,
+	        .onboarding-btn:disabled {
+	            color: var(--text-dim);
+	            border-color: var(--border);
+	            cursor: wait;
+	        }
+	        .auth-divider {
+	            color: var(--text-secondary);
+	            text-align: center;
+	            font-size: var(--text-sm);
+	        }
+	        .auth-status {
+	            min-height: 20px;
+	            color: var(--accent-red);
+	            font-size: var(--text-sm);
+	            word-break: break-word;
+	        }
+	        .auth-status.ok {
+	            color: var(--accent-green);
+	        }
+	        .otp-row {
+	            display: grid;
+	            grid-template-columns: repeat(6, 1fr);
+	            gap: 8px;
+	        }
+	        .otp-box {
+	            width: 100%;
+	            height: 42px;
+	            background: var(--bg-root);
+	            border: 1px solid var(--border);
+	            color: var(--accent-green);
+	            font-family: 'JetBrains Mono', monospace;
+	            font-size: var(--text-xl);
+	            text-align: center;
+	            outline: none;
+	            caret-color: var(--accent-green);
+	            border-radius: 0;
+	        }
+	        .auth-link-btn,
+	        .onboarding-link-btn {
+	            background: transparent;
+	            border: none;
+	            color: var(--text-secondary);
+	            font-family: 'JetBrains Mono', monospace;
+	            font-size: var(--text-sm);
+	            text-align: left;
+	            cursor: pointer;
+	            padding: 0;
+	            text-transform: uppercase;
+	        }
+	        .auth-link-btn:hover,
+	        .onboarding-link-btn:hover {
+	            color: var(--accent-green);
+	        }
 
         /* --- Toast System Redesigned as Brutalist Banners --- */
         .toast-brutalist {
@@ -1461,26 +1647,105 @@
             color: var(--accent-green);
             border-color: var(--accent-green);
         }
-        .viral-score {
-            color: var(--accent-green);
-            font-size: var(--text-2xl);
-            font-weight: bold;
-            text-align: center;
-            padding: 12px 0;
-        }
-        @media (max-width: 900px) {
-            .insight-grid,
-            .metrics-grid,
-            .metrics-form-grid,
+	        .viral-score {
+	            color: var(--accent-green);
+	            font-size: var(--text-2xl);
+	            font-weight: bold;
+	            text-align: center;
+	            padding: 12px 0;
+	        }
+	        .sidebar-spacer {
+	            flex: 1;
+	        }
+	        .sidebar-auth-container {
+	            padding: 16px;
+	            border-top: 1px solid var(--border);
+	        }
+	        .logout-btn {
+	            width: 100%;
+	            color: var(--text-secondary);
+	            font-size: var(--text-xs);
+	            padding: 8px;
+	        }
+	        .logout-btn:hover {
+	            color: var(--accent-red);
+	            border-color: var(--accent-red);
+	        }
+	        .status-auth {
+	            color: var(--accent-green);
+	        }
+	        .onboarding-overlay {
+	            position: fixed;
+	            inset: 0;
+	            z-index: 8500;
+	            background: rgba(10, 10, 10, 0.92);
+	            display: flex;
+	            align-items: center;
+	            justify-content: center;
+	            padding: 24px;
+	            overflow-y: auto;
+	        }
+	        .onboarding-shell {
+	            width: 640px;
+	            max-width: 100%;
+	        }
+	        .onboarding-actions {
+	            display: flex;
+	            gap: 12px;
+	            flex-wrap: wrap;
+	        }
+	        .onboarding-actions .onboarding-btn {
+	            flex: 1;
+	            min-width: 190px;
+	        }
+	        .onboarding-list {
+	            padding-left: 20px;
+	            color: var(--text-primary);
+	            font-size: var(--text-sm);
+	        }
+	        .onboarding-link {
+	            color: var(--accent-green);
+	            text-decoration: none;
+	        }
+	        @media (max-width: 900px) {
+	            .insight-grid,
+	            .metrics-grid,
+	            .metrics-form-grid,
             .history-actions,
             .verify-url-row {
                 grid-template-columns: 1fr;
             }
-        }
-        @media (max-width: 768px) {
-            .app-wrapper {
-                flex-direction: column;
-                height: auto;
+	        }
+	        @media (max-width: 768px) {
+	            .auth-screen,
+	            .onboarding-overlay {
+	                align-items: flex-start;
+	                padding: 12px;
+	            }
+	            .auth-shell {
+	                padding: 18px;
+	            }
+	            .auth-box-body,
+	            .onboarding-box-body {
+	                padding: 14px;
+	            }
+	            .otp-row {
+	                gap: 6px;
+	            }
+	            .otp-box {
+	                height: 38px;
+	                font-size: var(--text-lg);
+	            }
+	            .onboarding-actions {
+	                flex-direction: column;
+	            }
+	            .onboarding-actions .onboarding-btn {
+	                width: 100%;
+	                min-width: 0;
+	            }
+	            .app-wrapper {
+	                flex-direction: column;
+	                height: auto;
                 overflow-y: auto;
             }
             body {
@@ -1549,23 +1814,58 @@
 <body>
 
     <!-- Terminal Boot Sequence Overlay -->
-    <div id="boot-overlay" class="boot-screen">
-        <div id="boot-log" class="boot-log-container"></div>
-    </div>
+	    <div id="boot-overlay" class="boot-screen hidden">
+	        <div id="boot-log" class="boot-log-container"></div>
+	    </div>
 
     <!-- Brutalist Banner Toast Banners -->
-    <div id="toast" class="toast-brutalist hidden">
-        <div class="toast-header">
-            <span class="toast-title" id="toast-title">┌─ SUCCESS</span>
+	    <div id="toast" class="toast-brutalist hidden">
+	        <div class="toast-header">
+	            <span class="toast-title" id="toast-title">┌─ SUCCESS</span>
             <span class="toast-line"></span>
             <span class="toast-limit">─┐</span>
         </div>
         <div class="toast-body" id="toast-body">
             [OK] Published successfully!
-        </div>
-    </div>
+	        </div>
+	    </div>
 
-    <div class="app-wrapper">
+	    <section id="auth-screen" class="auth-screen hidden">
+	        <div class="auth-shell">
+	            <div class="auth-brand">
+	                <div class="auth-title">&gt; SHIPLOG</div>
+	                <div class="auth-version">v1.0 [BETA]</div>
+	            </div>
+	            <div class="auth-copy">// every ship deserves a log.</div>
+	            <div class="auth-box">
+	                <div class="auth-box-header">
+	                    <span class="auth-box-title" id="auth-box-title">┌─ LOGIN</span>
+	                    <span class="auth-box-line"></span>
+	                    <span class="auth-box-limit">─┐</span>
+	                </div>
+	                <div class="auth-box-body" id="auth-box-body"></div>
+	            </div>
+	            <div class="auth-footer">
+	                <div>// open source · free · BYOK</div>
+	                <div>// github.com/drizzy765/shiplog</div>
+	            </div>
+	        </div>
+	    </section>
+
+	    <section id="onboarding-overlay" class="onboarding-overlay hidden">
+	        <div class="onboarding-shell">
+	            <div class="onboarding-box">
+	                <div class="onboarding-box-header">
+	                    <span class="onboarding-box-title" id="onboarding-title">┌─ WELCOME_TO_SHIPLOG</span>
+	                    <span class="onboarding-box-line"></span>
+	                    <span class="onboarding-box-limit">─┐</span>
+	                </div>
+	                <div class="onboarding-box-body" id="onboarding-body"></div>
+	            </div>
+	        </div>
+	    </section>
+
+	    <div class="app-wrapper hidden" id="app-wrapper">
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
@@ -1630,9 +1930,14 @@
                         <span class="provider-name">OPENROUTER</span>
                         <span class="provider-status" id="status-openrouter">[ACTIVE]</span>
                     </div>
-                </div>
-            </div>
-        </aside>
+	                </div>
+	            </div>
+
+	            <div class="sidebar-spacer"></div>
+	            <div class="sidebar-auth-container">
+	                <button class="logout-btn" onclick="logout()">[LOGOUT →]</button>
+	            </div>
+	        </aside>
 
         <!-- Main Workspace (Center & Right) -->
         <main class="main-content" id="main-container">
@@ -1775,7 +2080,7 @@
         </main>
     </div>
 
-    <section class="logs-drawer collapsed" id="logs-drawer">
+	    <section class="logs-drawer collapsed hidden" id="logs-drawer">
         <div class="logs-header">
             <span class="logs-toggle" id="logs-toggle" onclick="toggleLogs()">[LOGS ▼]</span>
             <div class="logs-actions">
@@ -1787,13 +2092,14 @@
     </section>
 
     <!-- Vim-Style Bottom Status Bar -->
-    <footer class="vim-status-bar">
-        <div class="status-left">
-            <span class="status-brand" style="background: var(--accent-green); color: var(--bg-root); font-weight: bold; padding: 0 4px; margin-right: 4px;">[SHIPLOG]</span>
-            <span class="status-mode" id="status-bar-view">[DRAFT_ROOM]</span>
-            <span class="status-channel" id="status-bar-tab">[X_POST]</span>
-            <span class="status-provider" id="status-bar-providers">[NO_AI]</span>
-        </div>
+	    <footer class="vim-status-bar hidden" id="status-footer">
+	        <div class="status-left">
+	            <span class="status-brand" style="background: var(--accent-green); color: var(--bg-root); font-weight: bold; padding: 0 4px; margin-right: 4px;">[SHIPLOG]</span>
+	            <span class="status-mode" id="status-bar-view">[DRAFT_ROOM]</span>
+	            <span class="status-channel" id="status-bar-tab">[X_POST]</span>
+	            <span class="status-provider" id="status-bar-providers">[NO_AI]</span>
+	            <span class="status-auth" id="status-bar-auth">[logged in ✓]</span>
+	        </div>
         <div class="status-center" id="status-bar-ai">
             <!-- Active AI responses generating spinners go here -->
         </div>
@@ -1808,7 +2114,7 @@
         const state = {
             view: 'draft', // draft, article, history, insights, settings, gallery, prompts, byok
             tab: 'deep_tech',
-            token: localStorage.getItem('session_token') || '',
+	            token: localStorage.getItem('sl_token') || '',
             draft: null,
             tabs: {
                 deep_tech: { text: '', undo: [], shots: [] },
@@ -1817,7 +2123,7 @@
                 quick_win: { text: '', undo: [], shots: [] }
             },
             article: { text: '', undo: [], includeCodebase: false },
-            settings: { narrative: '', sprint: false },
+	            settings: { narrative: '', sprint: false, onboardingComplete: false },
             keys: {},
             keyGuide: {},
             unverifiedCount: 0,
@@ -1825,9 +2131,12 @@
             draftPostMeta: {},
             metricForms: {},
             metricPlatforms: loadMetricPlatforms(),
-            logs: [],
-            logsOpen: false,
-            logSource: null
+	            logs: [],
+	            logsOpen: false,
+	            logSource: null,
+	            pendingAuthEmail: '',
+	            initialized: false,
+	            pollingTimer: null
         };
 
         const KEY_PROVIDERS = ['groq', 'deepseek', 'gemini', 'kimi', 'cerebras', 'openrouter'];
@@ -1872,10 +2181,14 @@
             "> ready. press ctrl+shift+p to begin."
         ];
 
-        function runBootSequence() {
-            const overlay = document.getElementById('boot-overlay');
-            const log = document.getElementById('boot-log');
-            if (!overlay || !log) return;
+	        function runBootSequence() {
+	            const overlay = document.getElementById('boot-overlay');
+	            const log = document.getElementById('boot-log');
+	            if (!overlay || !log) return;
+	            overlay.classList.remove('hidden');
+	            overlay.style.opacity = '1';
+	            overlay.style.transition = '';
+	            log.innerHTML = '';
 
             let lineIndex = 0;
             
@@ -1913,18 +2226,12 @@
             addLine();
         }
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
-            runBootSequence();
-            if (!state.token) { 
-                setView('settings'); 
-            } else { 
-                init(); 
-            }
-            setupListeners();
-            connectLogStream();
-        });
+	        // --- Initialization ---
+	        document.addEventListener('DOMContentLoaded', async () => {
+	            setupListeners();
+	            renderLoginEmailState();
+	            await authGate();
+	        });
 
         async function init() {
             await syncSettings();
@@ -1933,11 +2240,12 @@
             updateVimStats();
             updateHistoryDot();
             checkPendingReminders();
-            startPolling();
-            if (state.view === 'history') {
-                loadHistory();
-            }
-        }
+	            startPolling();
+	            if (state.view === 'history') {
+	                loadHistory();
+	            }
+	            state.initialized = true;
+	        }
 
         function setupListeners() {
             document.querySelectorAll('.tab').forEach(t => {
@@ -1964,46 +2272,268 @@
             };
         }
 
-        // --- API Calls ---
-        async function initAuth() {
-            try {
-                const res = await fetch('/api/token');
-                if (res.ok) {
-                    const data = await res.json();
-                    window.CE_TOKEN = data.token;
-                    state.token = data.token; // compatibility with rest of codebase
-                    localStorage.setItem('session_token', data.token);
-                } else {
-                    const stored = localStorage.getItem('session_token') || '';
-                    window.CE_TOKEN = stored;
-                    state.token = stored;
-                }
-            } catch(e) {
-                console.error('Failed to get session token:', e);
-                const stored = localStorage.getItem('session_token') || '';
-                window.CE_TOKEN = stored;
-                state.token = stored;
-            }
-        }
+	        // --- Auth Gate ---
+	        function setAuthToken(token, userId = '') {
+	            state.token = token || '';
+	            window.CE_TOKEN = state.token;
+	            if (state.token) localStorage.setItem('sl_token', state.token);
+	            if (userId) localStorage.setItem('sl_user', userId);
+	        }
 
-        async function apiFetch(url, options = {}) {
-            const headers = {
-                'Content-Type': 'application/json',
-                'X-Session-Token': window.CE_TOKEN || '',
-                ...(options.headers || {})
-            };
-            const res = await fetch(url, { ...options, headers });
-            if (res.status === 401) {
-                console.error('Auth failed — token may have expired');
-                await initAuth();  // refresh token and retry once
-                const headers2 = {
-                    'Content-Type': 'application/json',
-                    'X-Session-Token': window.CE_TOKEN || ''
-                };
-                return fetch(url, { ...options, headers: headers2 });
-            }
-            return res;
-        }
+	        function clearAuthToken() {
+	            state.token = '';
+	            window.CE_TOKEN = '';
+	            localStorage.removeItem('sl_token');
+	            localStorage.removeItem('sl_user');
+	            localStorage.removeItem('session_token');
+	        }
+
+	        function readAuthHash() {
+	            const raw = window.location.hash.replace(/^#/, '');
+	            if (!raw) return null;
+	            const params = new URLSearchParams(raw);
+	            const token = params.get('token') || params.get('access_token') || '';
+	            const userId = params.get('user_id') || '';
+	            return token ? { token, userId } : null;
+	        }
+
+	        async function authGate() {
+	            document.getElementById('boot-overlay')?.classList.add('hidden');
+	            const hashAuth = readAuthHash();
+	            if (hashAuth) {
+	                setAuthToken(hashAuth.token, hashAuth.userId);
+	                window.history.replaceState({}, '', '/app');
+	                await showDashboard(true);
+	                return;
+	            }
+
+	            const token = localStorage.getItem('sl_token') || '';
+	            if (!token) {
+	                showLogin();
+	                return;
+	            }
+
+	            setAuthToken(token, localStorage.getItem('sl_user') || '');
+	            const valid = await verifyStoredToken(token);
+	            if (valid) {
+	                await showDashboard(false);
+	            } else {
+	                clearAuthToken();
+	                showLogin();
+	            }
+	        }
+
+	        async function verifyStoredToken(token) {
+	            try {
+	                const res = await fetch('/api/keys/status', {
+	                    headers: { 'Authorization': `Bearer ${token}` }
+	                });
+	                return res.status === 200;
+	            } catch (e) {
+	                console.error('Token verification failed:', e);
+	                return false;
+	            }
+	        }
+
+	        function showLogin() {
+	            document.getElementById('auth-screen')?.classList.remove('hidden');
+	            document.getElementById('app-wrapper')?.classList.add('hidden');
+	            document.getElementById('logs-drawer')?.classList.add('hidden');
+	            document.getElementById('status-footer')?.classList.add('hidden');
+	            document.getElementById('boot-overlay')?.classList.add('hidden');
+	            document.getElementById('onboarding-overlay')?.classList.add('hidden');
+	            renderLoginEmailState();
+	        }
+
+	        async function showDashboard(fromLogin = false) {
+	            document.getElementById('auth-screen')?.classList.add('hidden');
+	            document.getElementById('app-wrapper')?.classList.remove('hidden');
+	            document.getElementById('logs-drawer')?.classList.remove('hidden');
+	            document.getElementById('status-footer')?.classList.remove('hidden');
+	            const authStatus = document.getElementById('status-bar-auth');
+	            if (authStatus) authStatus.innerText = '[logged in ✓]';
+	            await init();
+	            connectLogStream();
+	            if (fromLogin) runBootSequence();
+	            if (!state.settings.onboardingComplete) {
+	                showOnboarding(0);
+	            }
+	        }
+
+	        function renderLoginEmailState(error = '') {
+	            const body = document.getElementById('auth-box-body');
+	            const title = document.getElementById('auth-box-title');
+	            if (!body || !title) return;
+	            title.innerText = '┌─ LOGIN';
+	            body.innerHTML = `
+	                <label class="auth-label" for="auth-email">&gt; enter your email_</label>
+	                <input class="auth-input" id="auth-email" type="email" autocomplete="email" spellcheck="false">
+	                <button class="auth-btn primary" id="magic-link-btn" onclick="sendMagicLink()">[SEND_MAGIC_LINK ↗]</button>
+	                <div class="auth-divider">── or ──</div>
+	                <button class="auth-btn" onclick="continueWithGithub()">[CONTINUE_WITH_GITHUB ↗]</button>
+	                <div class="auth-status" id="auth-status">${error ? `[!!] ${escapeHtml(error)}` : ''}</div>
+	            `;
+	            setTimeout(() => document.getElementById('auth-email')?.focus(), 0);
+	        }
+
+	        function renderLoginOtpState(email, error = '') {
+	            const body = document.getElementById('auth-box-body');
+	            const title = document.getElementById('auth-box-title');
+	            if (!body || !title) return;
+	            state.pendingAuthEmail = email;
+	            title.innerText = '┌─ CHECK_YOUR_EMAIL';
+	            body.innerHTML = `
+	                <div class="auth-status ok">[OK] magic link sent to ${escapeHtml(email)}</div>
+	                <div class="auth-hint">// check your inbox and click the link</div>
+	                <div class="auth-hint">// or enter the 6-digit code below</div>
+	                <div class="auth-label">&gt; enter code:</div>
+	                <div class="otp-row" id="otp-row">
+	                    ${Array.from({ length: 6 }).map((_, i) => `<input class="otp-box" inputmode="numeric" maxlength="1" data-idx="${i}" aria-label="OTP digit ${i + 1}">`).join('')}
+	                </div>
+	                <button class="auth-btn primary" id="verify-otp-btn" onclick="verifyOtp()">[VERIFY_CODE ✓]</button>
+	                <button class="auth-link-btn" onclick="renderLoginEmailState()">[← use different email]</button>
+	                <div class="auth-status" id="auth-status">${error ? `[!!] ${escapeHtml(error)}` : ''}</div>
+	            `;
+	            setupOtpInputs(email);
+	        }
+
+	        async function sendMagicLink() {
+	            const email = (document.getElementById('auth-email')?.value || '').trim().toLowerCase();
+	            const status = document.getElementById('auth-status');
+	            const btn = document.getElementById('magic-link-btn');
+	            if (!email) {
+	                if (status) status.innerText = '[!!] enter an email address';
+	                return;
+	            }
+	            if (btn) {
+	                btn.disabled = true;
+	                btn.innerText = '[SENDING...]';
+	            }
+	            if (status) status.innerText = '';
+	            try {
+	                const res = await fetch('/auth/magic-link', {
+	                    method: 'POST',
+	                    headers: { 'Content-Type': 'application/json' },
+	                    body: JSON.stringify({ email })
+	                });
+	                const data = await res.json().catch(() => ({}));
+	                if (!res.ok || data.success === false) {
+	                    throw new Error(data.error || data.detail || 'magic link failed');
+	                }
+	                renderLoginOtpState(email);
+	            } catch (e) {
+	                renderLoginEmailState(e.message || 'magic link failed');
+	            }
+	        }
+
+	        function setupOtpInputs(email) {
+	            const boxes = Array.from(document.querySelectorAll('.otp-box'));
+	            boxes.forEach((box, idx) => {
+	                box.addEventListener('input', () => {
+	                    box.value = box.value.replace(/\D/g, '').slice(0, 1);
+	                    if (box.value && boxes[idx + 1]) boxes[idx + 1].focus();
+	                    const token = boxes.map(input => input.value).join('');
+	                    if (token.length === 6) verifyOtp();
+	                });
+	                box.addEventListener('keydown', (e) => {
+	                    if (e.key === 'Backspace' && !box.value && boxes[idx - 1]) boxes[idx - 1].focus();
+	                });
+	                box.addEventListener('paste', (e) => {
+	                    e.preventDefault();
+	                    const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+	                    digits.split('').forEach((digit, digitIdx) => {
+	                        if (boxes[digitIdx]) boxes[digitIdx].value = digit;
+	                    });
+	                    if (digits.length === 6) verifyOtp();
+	                });
+	            });
+	            setTimeout(() => boxes[0]?.focus(), 0);
+	        }
+
+	        async function verifyOtp(email = state.pendingAuthEmail) {
+	            const boxes = Array.from(document.querySelectorAll('.otp-box'));
+	            const token = boxes.map(input => input.value).join('');
+	            const status = document.getElementById('auth-status');
+	            const btn = document.getElementById('verify-otp-btn');
+	            if (token.length !== 6) {
+	                if (status) status.innerText = '[!!] enter the 6-digit code';
+	                return;
+	            }
+	            if (btn) {
+	                btn.disabled = true;
+	                btn.innerText = '[VERIFYING...]';
+	            }
+	            try {
+	                const res = await fetch('/auth/verify-otp', {
+	                    method: 'POST',
+	                    headers: { 'Content-Type': 'application/json' },
+	                    body: JSON.stringify({ email, token })
+	                });
+	                const data = await res.json().catch(() => ({}));
+	                if (!res.ok || !data.access_token) {
+	                    throw new Error(data.detail || 'invalid code — check your email');
+	                }
+	                setAuthToken(data.access_token, data.user_id || '');
+	                await showDashboard(true);
+	            } catch (e) {
+	                boxes.forEach(input => input.value = '');
+	                if (status) status.innerText = '[!!] invalid code — check your email';
+	                boxes[0]?.focus();
+	            } finally {
+	                if (btn) {
+	                    btn.disabled = false;
+	                    btn.innerText = '[VERIFY_CODE ✓]';
+	                }
+	            }
+	        }
+
+	        function continueWithGithub() {
+	            window.location.href = '/auth/github';
+	        }
+
+	        async function logout() {
+	            const token = localStorage.getItem('sl_token') || '';
+	            try {
+	                if (token) {
+	                    await fetch('/auth/logout', {
+	                        method: 'POST',
+	                        headers: {
+	                            'Authorization': `Bearer ${token}`,
+	                            'Content-Type': 'application/json'
+	                        }
+	                    });
+	                }
+	            } catch (e) {
+	                console.error('Logout failed:', e);
+	            }
+	            if (state.logSource) {
+	                state.logSource.close();
+	                state.logSource = null;
+	            }
+	            if (state.pollingTimer) {
+	                clearInterval(state.pollingTimer);
+	                state.pollingTimer = null;
+	            }
+	            state.initialized = false;
+	            clearAuthToken();
+	            showLogin();
+	        }
+
+	        async function apiFetch(url, options = {}) {
+	            const token = localStorage.getItem('sl_token') || state.token || '';
+	            const headers = {
+	                'Authorization': `Bearer ${token}`,
+	                'Content-Type': 'application/json',
+	                ...(options.headers || {})
+	            };
+	            const res = await fetch(url, { ...options, headers });
+	            if (res.status === 401) {
+	                clearAuthToken();
+	                showToast("Session expired", "error");
+	                showLogin();
+	            }
+	            return res;
+	        }
 
         async function api(path, method = 'GET', body = null) {
             const options = {
@@ -2027,14 +2557,15 @@
             }
         }
 
-        async function syncSettings() {
-            const data = await api('/api/settings');
-            if (data) {
-                state.settings.narrative = data.project_narrative;
-                state.settings.sprint = data.sprint_mode;
-                document.getElementById('side-narrative').innerText = data.project_narrative || "No narrative defined.";
-                updateSprintUI(data.sprint_mode);
-            }
+	        async function syncSettings() {
+	            const data = await api('/api/settings');
+	            if (data) {
+	                state.settings.narrative = data.project_narrative;
+	                state.settings.sprint = data.sprint_mode;
+	                state.settings.onboardingComplete = !!data.onboarding_complete;
+	                document.getElementById('side-narrative').innerText = data.project_narrative || "No narrative defined.";
+	                updateSprintUI(data.sprint_mode);
+	            }
             const keys = await api('/api/keys/status');
             if (keys) {
                 state.keys = keys;
@@ -2057,11 +2588,204 @@
             }
             const guide = await api('/api/keys/guide');
             if (guide) {
-                state.keyGuide = guide;
-            }
-        }
+	                state.keyGuide = guide;
+	            }
+	        }
 
-        async function fetchDraft() {
+	        function showOnboarding(step = 0) {
+	            const overlay = document.getElementById('onboarding-overlay');
+	            if (!overlay) return;
+	            overlay.classList.remove('hidden');
+	            renderOnboardingStep(step);
+	        }
+
+	        function hideOnboarding() {
+	            document.getElementById('onboarding-overlay')?.classList.add('hidden');
+	        }
+
+	        function renderOnboardingStep(step) {
+	            const title = document.getElementById('onboarding-title');
+	            const body = document.getElementById('onboarding-body');
+	            if (!title || !body) return;
+
+	            if (step === 0) {
+	                title.innerText = '┌─ WELCOME_TO_SHIPLOG';
+	                body.innerHTML = `
+	                    <div>&gt; every ship deserves a log.</div>
+	                    <div class="auth-hint">// you're in. let's get you set up in 4 steps.</div>
+	                    <div class="auth-hint">// takes about 2 minutes.</div>
+	                    <div class="onboarding-actions">
+	                        <button class="onboarding-btn primary" onclick="renderOnboardingStep(1)">[LET'S GO →]</button>
+	                    </div>
+	                    <div class="auth-status" id="onboarding-status"></div>
+	                `;
+	                return;
+	            }
+
+	            if (step === 1) {
+	                title.innerText = '┌─ STEP_1/4 · ADD_YOUR_FIRST_API_KEY';
+	                body.innerHTML = `
+	                    <div class="auth-hint">// Shiplog uses your own AI provider keys.</div>
+	                    <div class="auth-hint">// this keeps your data private and costs zero.</div>
+	                    <div>get a free Groq key (takes 2 minutes):</div>
+	                    <a class="onboarding-link" href="https://console.groq.com" target="_blank" rel="noopener">→ console.groq.com</a>
+	                    <label class="onboarding-label" for="onboarding-groq-key">GROQ_API_KEY:</label>
+	                    <input class="onboarding-input" id="onboarding-groq-key" type="password" placeholder="> paste key here_" autocomplete="off" spellcheck="false">
+	                    <div class="onboarding-actions">
+	                        <button class="onboarding-btn primary" id="onboarding-save-key" onclick="saveOnboardingGroqKey()">[SAVE_AND_CONTINUE →]</button>
+	                        <button class="onboarding-btn" onclick="renderOnboardingStep(2)">[SKIP FOR NOW →]</button>
+	                    </div>
+	                    <div class="auth-status" id="onboarding-status"></div>
+	                `;
+	                setTimeout(() => document.getElementById('onboarding-groq-key')?.focus(), 0);
+	                return;
+	            }
+
+	            if (step === 2) {
+	                title.innerText = '┌─ STEP_2/4 · WHAT_ARE_YOU_BUILDING?';
+	                body.innerHTML = `
+	                    <div class="auth-hint">// this context makes every post smarter.</div>
+	                    <div class="auth-hint">// it tells the AI what your mission is.</div>
+	                    <label class="onboarding-label" for="onboarding-narrative">NARRATIVE:</label>
+	                    <textarea class="onboarding-textarea" id="onboarding-narrative" placeholder='> e.g. "building an AI tool for developers to document their coding wins"_'>${escapeHtml(state.settings.narrative || '')}</textarea>
+	                    <div class="onboarding-actions">
+	                        <button class="onboarding-btn primary" id="onboarding-save-narrative" onclick="saveOnboardingNarrative()">[SAVE_AND_CONTINUE →]</button>
+	                        <button class="onboarding-btn" onclick="renderOnboardingStep(3)">[SKIP FOR NOW →]</button>
+	                    </div>
+	                    <div class="auth-status" id="onboarding-status"></div>
+	                `;
+	                setTimeout(() => document.getElementById('onboarding-narrative')?.focus(), 0);
+	                return;
+	            }
+
+	            if (step === 3) {
+	                title.innerText = '┌─ STEP_3/4 · TAKE_YOUR_FIRST_CAPTURE';
+	                body.innerHTML = `
+	                    <div class="auth-hint">// you're ready. here's how it works:</div>
+	                    <ol class="onboarding-list">
+	                        <li>press Ctrl+Shift+P while coding</li>
+	                        <li>type what you just built or fixed</li>
+	                        <li>review the generated post</li>
+	                        <li>publish or copy</li>
+	                    </ol>
+	                    <div class="auth-hint">// try it now — switch to your code editor</div>
+	                    <div class="auth-hint">// and press Ctrl+Shift+P</div>
+	                    <div class="onboarding-actions">
+	                        <button class="onboarding-btn primary" onclick="renderOnboardingStep(4)">[I'LL TRY IT NOW →]</button>
+	                        <button class="onboarding-btn" onclick="renderOnboardingStep(4)">[SHOW ME THE DASHBOARD →]</button>
+	                    </div>
+	                    <div class="auth-status" id="onboarding-status"></div>
+	                `;
+	                return;
+	            }
+
+	            title.innerText = "┌─ STEP_4/4 · YOU'RE_ALL_SET";
+	            body.innerHTML = `
+	                <div style="color:var(--accent-green);">[OK] Shiplog is ready.</div>
+	                <div class="auth-hint">// press Ctrl+Shift+P anytime to capture a win.</div>
+	                <div class="auth-hint">// your posts appear in Draft Room.</div>
+	                <div class="auth-hint">// track performance in Insights.</div>
+	                <div class="onboarding-actions">
+	                    <button class="onboarding-btn primary" id="onboarding-complete-btn" onclick="completeOnboarding()">[OPEN_DASHBOARD →]</button>
+	                </div>
+	                <div class="auth-status" id="onboarding-status"></div>
+	            `;
+	        }
+
+	        async function saveOnboardingGroqKey() {
+	            const input = document.getElementById('onboarding-groq-key');
+	            const status = document.getElementById('onboarding-status');
+	            const btn = document.getElementById('onboarding-save-key');
+	            const key = (input?.value || '').trim();
+	            if (!key) {
+	                if (status) status.innerText = '[!!] paste a Groq API key or skip for now';
+	                return;
+	            }
+	            if (btn) {
+	                btn.disabled = true;
+	                btn.innerText = '[SAVING...]';
+	            }
+	            try {
+	                const res = await api('/api/keys/update', 'POST', { provider: 'groq', key });
+	                if (!res || res.success === false) throw new Error(res?.error || 'key save failed');
+	                input.value = '';
+	                await syncSettings();
+	                renderOnboardingStep(2);
+	            } catch (e) {
+	                if (status) status.innerText = `[!!] ${e.message || 'key save failed'}`;
+	            } finally {
+	                if (btn) {
+	                    btn.disabled = false;
+	                    btn.innerText = '[SAVE_AND_CONTINUE →]';
+	                }
+	            }
+	        }
+
+	        async function saveOnboardingNarrative() {
+	            const textarea = document.getElementById('onboarding-narrative');
+	            const status = document.getElementById('onboarding-status');
+	            const btn = document.getElementById('onboarding-save-narrative');
+	            const narrative = (textarea?.value || '').trim();
+	            if (!narrative) {
+	                if (status) status.innerText = '[!!] enter a narrative or skip for now';
+	                return;
+	            }
+	            if (btn) {
+	                btn.disabled = true;
+	                btn.innerText = '[SAVING...]';
+	            }
+	            const res = await api('/api/settings', 'POST', { project_narrative: narrative });
+	            if (res) {
+	                state.settings.narrative = narrative;
+	                document.getElementById('side-narrative').innerText = narrative;
+	                renderOnboardingStep(3);
+	            } else if (status) {
+	                status.innerText = '[!!] narrative save failed';
+	            }
+	            if (btn) {
+	                btn.disabled = false;
+	                btn.innerText = '[SAVE_AND_CONTINUE →]';
+	            }
+	        }
+
+	        async function completeOnboarding() {
+	            const status = document.getElementById('onboarding-status');
+	            const btn = document.getElementById('onboarding-complete-btn');
+	            if (btn) {
+	                btn.disabled = true;
+	                btn.innerText = '[SAVING...]';
+	            }
+	            const payload = { onboarding_complete: true };
+	            let ok = false;
+	            try {
+	                let res = await apiFetch('/api/settings', {
+	                    method: 'PATCH',
+	                    body: JSON.stringify(payload)
+	                });
+	                if (res.status === 405 || res.status === 404) {
+	                    res = await apiFetch('/api/settings', {
+	                        method: 'POST',
+	                        body: JSON.stringify(payload)
+	                    });
+	                }
+	                ok = res.ok;
+	            } catch (e) {
+	                ok = false;
+	            }
+	            if (ok) {
+	                state.settings.onboardingComplete = true;
+	                hideOnboarding();
+	                showToast('Onboarding complete', 'success');
+	            } else {
+	                if (status) status.innerText = '[!!] onboarding save failed';
+	                if (btn) {
+	                    btn.disabled = false;
+	                    btn.innerText = '[OPEN_DASHBOARD →]';
+	                }
+	            }
+	        }
+
+	        async function fetchDraft() {
             const draft = await api('/api/draft');
             if (draft && draft.status === 'ready') {
                 state.draft = draft;
@@ -2617,31 +3341,24 @@
             }
         }
 
-        // --- Settings & Session Subview Rendering ---
-        async function renderSettings() {
-            const view = document.getElementById('settings-view');
-            view.innerHTML = `
-                <div class="ascii-box">
-                    <div class="ascii-box-header">
-                        <span class="ascii-box-title">┌─ SETTINGS_AND_SESSION</span>
-                        <span class="ascii-box-line"></span>
-                        <span class="ascii-box-limit">─┐</span>
-                    </div>
-                    <div class="ascii-box-body settings-container" style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="prompt-input-group">
-                            <label>SESSION_TOKEN</label>
-                            <div style="display:flex; gap:12px;">
-                                <input type="text" id="token-input" value="${state.token}" placeholder="Paste session token from terminal...▋" 
-                                    class="prompt-field" style="flex:1;">
-                                <button class="btn-brutalist btn-primary-brutalist" style="padding:0 24px;" onclick="saveToken()">[SAVE_TOKEN]</button>
-                            </div>
-                            <p style="font-size:var(--text-xs); color:var(--text-secondary); line-height:1.4; margin-top:4px;">
-                                The session token is generated each time the server starts. <br>
-                                Look for <strong>[Auth] Session Token: ...</strong> in your terminal output.
-                            </p>
-                        </div>
+	        // --- Settings Subview Rendering ---
+	        async function renderSettings() {
+	            const view = document.getElementById('settings-view');
+	            view.innerHTML = `
+	                <div class="ascii-box">
+	                    <div class="ascii-box-header">
+	                        <span class="ascii-box-title">┌─ SETTINGS</span>
+	                        <span class="ascii-box-line"></span>
+	                        <span class="ascii-box-limit">─┐</span>
+	                    </div>
+	                    <div class="ascii-box-body settings-container" style="display:flex; flex-direction:column; gap:16px;">
+	                        <div class="prompt-input-group">
+	                            <label>ACCOUNT</label>
+	                            <div style="color:var(--accent-green);">[logged in ✓]</div>
+	                            <p style="font-size:var(--text-xs); color:var(--text-secondary); line-height:1.4; margin-top:4px;">Auth token is stored locally as sl_token. Raw API keys are never stored in localStorage.</p>
+	                        </div>
 
-                        <div class="prompt-input-group" style="border-top: 1px dashed var(--border); padding-top: 16px;">
+	                        <div class="prompt-input-group" style="border-top: 1px dashed var(--border); padding-top: 16px;">
                             <label>PROJECT_NARRATIVE</label>
                             <p style="font-size:var(--text-xs); color:var(--text-secondary); margin-bottom: 8px;">This context is sent to the AI to help it understand what you're building.</p>
                             <textarea id="narrative-input" class="prompt-field prompt-area" style="min-height:150px;">${state.settings.narrative}</textarea>
@@ -2692,16 +3409,14 @@
             `;
         }
 
-        async function saveToken() {
-            const val = document.getElementById('token-input').value.trim();
-            if (!val) {
-                showToast("Please enter a token", "error");
-                return;
-            }
-            window.CE_TOKEN = val;
-            state.token = val;
-            localStorage.setItem('session_token', val);
-            showToast("Token saved! Re-syncing...", "info");
+	        async function saveToken() {
+	            const val = document.getElementById('token-input')?.value.trim();
+	            if (!val) {
+	                showToast("Please enter a token", "error");
+	                return;
+	            }
+	            setAuthToken(val);
+	            showToast("Token saved! Re-syncing...", "info");
             
             const data = await api('/api/settings');
             if (data) {
@@ -3981,11 +4696,12 @@
             }, 4000);
         }
 
-        function startPolling() {
-            setInterval(async () => {
-                if (state.token && state.view === 'draft') {
-                    const draft = await api('/api/draft');
-                    if (draft && draft.timestamp !== state.draft?.timestamp) {
+	        function startPolling() {
+	            if (state.pollingTimer) return;
+	            state.pollingTimer = setInterval(async () => {
+	                if (state.token && state.view === 'draft') {
+	                    const draft = await api('/api/draft');
+	                    if (draft && draft.timestamp !== state.draft?.timestamp) {
                         state.draft = draft;
                         fetchDraft();
                     }
@@ -3993,11 +4709,11 @@
             }, 8000);
         }
 
-        function connectLogStream() {
-            if (state.logSource) state.logSource.close();
-            const status = document.getElementById('logs-connection');
-            try {
-                state.logSource = new EventSource('/api/logs/stream?token=' + encodeURIComponent(window.CE_TOKEN || ''));
+	        function connectLogStream() {
+	            if (state.logSource) state.logSource.close();
+	            const status = document.getElementById('logs-connection');
+	            try {
+	                state.logSource = new EventSource('/api/logs/stream?token=' + encodeURIComponent(localStorage.getItem('sl_token') || state.token || ''));
                 state.logSource.onopen = () => {
                     if (status) {
                         status.innerText = '[LIVE]';
