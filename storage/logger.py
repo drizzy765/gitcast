@@ -1,7 +1,16 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from uuid import UUID
 
 from storage.supabase_client import get_client
+
+
+def _is_supabase_user(user_id: Optional[str]) -> bool:
+    try:
+        UUID(str(user_id))
+        return True
+    except (TypeError, ValueError):
+        return False
 
 
 def _normalize_entry(entry: dict) -> dict:
@@ -45,6 +54,9 @@ def log_post(
 ) -> Optional[str]:
     if not user_id:
         raise ValueError("user_id is required")
+    if not _is_supabase_user(user_id):
+        print("[Logger] Local user detected; skipping Supabase post log")
+        return None
 
     payload = {
         "user_id": user_id,
@@ -69,6 +81,9 @@ def log_post(
 
 
 def load_posts(user_id: str) -> list:
+    if not _is_supabase_user(user_id):
+        return []
+
     try:
         response = (
             get_client()
@@ -87,6 +102,8 @@ def load_posts(user_id: str) -> list:
 def verify_post(post_id: str, post_url: str = "", user_id: Optional[str] = None) -> dict:
     if not user_id:
         return {"success": False, "error": "user_id is required"}
+    if not _is_supabase_user(user_id):
+        return {"success": False, "error": "local history is not backed by Supabase"}
 
     payload = {
         "posted_verified": True,
@@ -112,6 +129,8 @@ def verify_post(post_id: str, post_url: str = "", user_id: Optional[str] = None)
 def decline_post(post_id: str, user_id: Optional[str] = None) -> dict:
     if not user_id:
         return {"success": False, "error": "user_id is required"}
+    if not _is_supabase_user(user_id):
+        return {"success": False, "error": "local history is not backed by Supabase"}
 
     response = (
         get_client()

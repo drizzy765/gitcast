@@ -286,6 +286,9 @@ def _settings_for_user(user_id: str) -> dict:
         settings = load_settings()
         return {**DEFAULTS, **settings, "user_id": user_id}
 
+    if _is_local_user(user_id):
+        return local_settings()
+
     try:
         client = get_client()
     except RuntimeError as exc:
@@ -322,6 +325,9 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
     if not payload:
         return _settings_for_user(user_id)
     payload["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    if _is_local_user(user_id):
+        return save_local_settings(payload)
+
     try:
         client = get_client()
     except RuntimeError as exc:

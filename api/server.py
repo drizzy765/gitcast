@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -62,9 +62,12 @@ try:
 except Exception:
     pass
 
-# Serve storage directory for images
-# We mount 'storage' folder which contains 'data/screenshots'
-app.mount("/storage", StaticFiles(directory=str(BASE_DIR / "storage")), name="storage")
+# Serve captured images without exposing local data files or Python modules.
+app.mount(
+    "/storage/data/screenshots",
+    StaticFiles(directory=str(STORAGE_DIR / "screenshots")),
+    name="screenshots",
+)
 
 # register routes
 app.include_router(router, prefix="/api")
@@ -84,6 +87,11 @@ async def read_landing_alias():
 @app.get("/app")
 async def read_app():
     return FileResponse(BASE_DIR / "web" / "index.html")
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(status_code=204)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import asyncio
 import httpx
+import uuid
 from datetime import datetime
 from ai.prompts import get_all_prompts, sprint_summary_prompt
 from core.log_stream import stream_log
@@ -57,11 +58,19 @@ _client = httpx.AsyncClient(timeout=TIMEOUT)
 _last_call_meta = {"provider_used": "", "used_fallback": False}
 
 
+def _is_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
 def _load_user_provider_keys(user_id: str) -> dict:
     from storage.key_manager import decrypt_key
     from storage.supabase_client import get_client
 
-    if not user_id:
+    if not user_id or not _is_uuid(user_id):
         return {}
 
     response = (

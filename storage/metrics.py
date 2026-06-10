@@ -1,7 +1,16 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from storage.supabase_client import get_client
+
+
+def _is_supabase_user(user_id: Optional[str]) -> bool:
+    try:
+        UUID(str(user_id))
+        return True
+    except (TypeError, ValueError):
+        return False
 
 
 def _normalise_metrics(post_id: str, metrics: dict) -> dict:
@@ -21,6 +30,8 @@ def _normalise_metrics(post_id: str, metrics: dict) -> dict:
 def save_metrics(post_id: str, metrics: dict, user_id: Optional[str] = None) -> dict:
     if not user_id:
         return {"success": False, "error": "user_id is required"}
+    if not _is_supabase_user(user_id):
+        return {"success": False, "error": "local metrics are not backed by Supabase"}
 
     entry = _normalise_metrics(post_id, metrics)
     payload = {
@@ -48,7 +59,7 @@ def save_metrics(post_id: str, metrics: dict, user_id: Optional[str] = None) -> 
 
 
 def get_all_metrics(user_id: Optional[str] = None) -> list:
-    if not user_id:
+    if not user_id or not _is_supabase_user(user_id):
         return []
 
     response = (
@@ -76,7 +87,7 @@ def get_all_metrics(user_id: Optional[str] = None) -> list:
 
 
 def get_metrics(post_id: str, user_id: Optional[str] = None) -> dict:
-    if not user_id:
+    if not user_id or not _is_supabase_user(user_id):
         return {}
 
     response = (

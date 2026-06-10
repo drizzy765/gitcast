@@ -325,7 +325,7 @@
 
         /* --- Sidebar (Left) --- */
         aside.sidebar {
-            width: 220px;
+            width: 292px;
             background: var(--bg-surface);
             border-right: 1px solid var(--border);
             display: flex;
@@ -337,33 +337,41 @@
         }
 
         .sidebar-logo-container {
-            padding: 16px;
+            padding: 24px 18px 22px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 12px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-surface);
             overflow: hidden;
         }
         .brand-mark {
-            font-size: var(--text-base);
-            line-height: 1.1;
+            font-size: 5px;
+            line-height: 1.12;
             color: var(--accent-green);
-            font-weight: 700;
-            overflow-wrap: anywhere;
-            word-break: break-word;
+            font-weight: 500;
+            white-space: pre;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            max-width: 100%;
+            min-height: 35px;
+            margin: 0;
+            text-rendering: geometricPrecision;
+            user-select: none;
         }
         .brand-subtitle {
             font-size: var(--text-xs);
             color: var(--text-secondary);
+            line-height: 1.5;
+            padding-top: 2px;
             user-select: none;
         }
 
         .nav-group {
-            padding: 16px 0;
+            padding: 18px 0 20px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
         .nav-item {
             font-size: var(--text-sm);
@@ -371,27 +379,29 @@
             border: none;
             color: var(--text-secondary);
             text-align: left;
-            padding: 8px 16px;
+            padding: 9px 18px;
             width: 100%;
             cursor: pointer;
             outline: none;
             border-left: 2px solid transparent;
-            transition: color 0.1s, border-color 0.1s;
+            transition: color 0.1s, border-color 0.1s, background-color 0.1s;
         }
         .nav-item:hover {
             color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
         }
         .nav-item.active {
             border-left: 2px solid var(--accent-green);
             color: var(--accent-green);
             font-weight: bold;
+            background: rgba(0, 255, 136, 0.035);
         }
 
         .sidebar-narrative-container {
-            padding: 16px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         .sidebar-section-label {
             font-size: var(--text-xs);
@@ -403,9 +413,9 @@
         .narrative-box {
             background: var(--bg-surface);
             border: 1px solid var(--border);
-            padding: 8px;
+            padding: 12px;
             cursor: pointer;
-            min-height: 52px;
+            min-height: 68px;
             display: flex;
             align-items: flex-start;
         }
@@ -428,13 +438,13 @@
         }
 
         .sidebar-sprint-container {
-            padding: 0 16px 16px 16px;
+            padding: 0 18px 18px 18px;
         }
         .sprint-mode-btn {
             font-size: var(--text-xs);
             color: var(--text-primary);
             border: 1px solid var(--border);
-            padding: 8px;
+            padding: 10px 12px;
             text-align: center;
             cursor: pointer;
             user-select: none;
@@ -450,7 +460,7 @@
         }
 
         .sidebar-providers-container {
-            padding: 16px;
+            padding: 18px;
             margin-top: auto;
             border-top: 1px solid var(--border);
             background: var(--bg-surface);
@@ -1743,14 +1753,24 @@
 	                width: 100%;
 	                min-width: 0;
 	            }
-	            .app-wrapper {
-	                flex-direction: column;
-	                height: auto;
+            .app-wrapper {
+                flex-direction: column;
+                height: auto;
                 overflow-y: auto;
+                overflow-x: hidden;
             }
             body {
                 overflow: auto;
                 height: auto;
+            }
+            main.main-content,
+            .content-area,
+            .editor-section,
+            .preview-panel,
+            .vim-status-bar,
+            .logs-drawer {
+                min-width: 0;
+                max-width: 100vw;
             }
             aside.sidebar {
                 width: 100%;
@@ -1779,6 +1799,25 @@
             .vim-status-bar {
                 position: sticky;
                 bottom: 0;
+                flex-wrap: wrap;
+                height: auto;
+                min-height: 24px;
+                row-gap: 2px;
+                white-space: normal;
+                overflow: hidden;
+            }
+            .status-left,
+            .status-right {
+                min-width: 0;
+                flex-wrap: wrap;
+            }
+            .status-center {
+                display: none;
+            }
+            .logs-header,
+            .logs-actions {
+                min-width: 0;
+                flex-wrap: wrap;
             }
             .verify-row,
             .reminder-banner,
@@ -1869,8 +1908,13 @@
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-                <div class="brand-mark">SHIPLOG</div>
-                <div class="brand-subtitle">v1.0 [BETA]</div>
+                <pre class="brand-mark">███████╗██╗  ██╗██╗██████╗ ██╗      ██████╗  ██████╗
+██╔════╝██║  ██║██║██╔══██╗██║     ██╔═══██╗██╔════╝
+███████╗███████║██║██████╔╝██║     ██║   ██║██║  ███╗
+╚════██║██╔══██║██║██╔═══╝ ██║     ██║   ██║██║   ██║
+███████║██║  ██║██║██║     ███████╗╚██████╔╝╚██████╔╝
+╚══════╝╚═╝  ╚═╝╚═╝╚═╝     ╚══════╝ ╚═════╝  ╚═════╝ </pre>
+                <div class="brand-subtitle">v1.0 [BETA] · LOCAL BUILD LOG</div>
             </div>
             
             <nav class="nav-group">
@@ -2326,7 +2370,10 @@
 	        async function verifyStoredToken(token) {
 	            try {
 	                const res = await fetch('/api/keys/status', {
-	                    headers: { 'Authorization': `Bearer ${token}` }
+	                    headers: {
+	                        'Authorization': `Bearer ${token}`,
+	                        'X-Session-Token': token
+	                    }
 	                });
 	                return res.status === 200;
 	            } catch (e) {
@@ -2499,6 +2546,7 @@
 	                        method: 'POST',
 	                        headers: {
 	                            'Authorization': `Bearer ${token}`,
+	                            'X-Session-Token': token,
 	                            'Content-Type': 'application/json'
 	                        }
 	                    });
@@ -2523,6 +2571,7 @@
 	            const token = localStorage.getItem('sl_token') || state.token || '';
 	            const headers = {
 	                'Authorization': `Bearer ${token}`,
+	                'X-Session-Token': token,
 	                'Content-Type': 'application/json',
 	                ...(options.headers || {})
 	            };
@@ -2789,17 +2838,20 @@
             const draft = await api('/api/draft');
             if (draft && draft.status === 'ready') {
                 state.draft = draft;
+                const variations = draft.variations || {};
+                const payload = draft.payload || {};
+                const screenshots = Array.isArray(payload.screenshots) ? payload.screenshots : [];
                 Object.keys(state.tabs).forEach(k => {
-                    if (!state.tabs[k].text) state.tabs[k].text = draft.variations[k] || '';
-                    state.tabs[k].shots = draft.payload.screenshots.map(s => ({...s, status: 'pending'}));
+                    if (!state.tabs[k].text) state.tabs[k].text = variations[k] || '';
+                    state.tabs[k].shots = screenshots.map(s => ({...s, status: 'pending'}));
                     state.draftPostMeta[k] = {
-                        id: draft.post_ids?.[k] || draft.ids?.[k] || draft.variation_ids?.[k] || `${draft.timestamp || draft.payload?.timestamp || Date.now()}-${k}`,
+                        id: draft.post_ids?.[k] || draft.ids?.[k] || draft.variation_ids?.[k] || `${draft.timestamp || payload.timestamp || Date.now()}-${k}`,
                         format_key: k,
                         platform: detectPlatform(k),
-                        post_text: draft.variations[k] || '',
-                        timestamp: draft.timestamp || draft.payload?.timestamp || new Date().toISOString()
+                        post_text: variations[k] || '',
+                        timestamp: draft.timestamp || payload.timestamp || new Date().toISOString()
                     };
-                    if ((draft.variations[k] || '').trim() && !String(draft.variations[k]).startsWith('[Error]')) {
+                    if ((variations[k] || '').trim() && !String(variations[k]).startsWith('[Error]')) {
                         storeLocalGeneratedPost(state.draftPostMeta[k]);
                     }
                 });
