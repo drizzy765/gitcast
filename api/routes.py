@@ -794,7 +794,17 @@ async def ui_trigger_capture(request: CaptureTriggerRequest, user_id: str = Depe
         with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
             json.dump(draft_data, f, indent=4)
             
-        return {"success": True, "timestamp": draft_data["timestamp"]}
+        errors = {
+            key: value
+            for key, value in variations.items()
+            if isinstance(value, str) and value.startswith("[Error]")
+        }
+        return {
+            "success": len(errors) < len(variations),
+            "timestamp": draft_data["timestamp"],
+            "errors": errors,
+            "error": "AI generation failed for all formats" if errors and len(errors) == len(variations) else "",
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

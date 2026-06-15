@@ -47,6 +47,12 @@ MOONSHOT_API_KEY = ""
 GEMINI_API_KEY = ""
 CEREBRAS_API_KEY = ""
 OPENROUTER_API_KEY = ""
+GROQ_MODEL = ""
+DEEPSEEK_MODEL = ""
+MOONSHOT_MODEL = ""
+GEMINI_MODEL = ""
+CEREBRAS_MODEL = ""
+OPENROUTER_MODEL = ""
 
 
 def reload_api_keys() -> None:
@@ -56,6 +62,12 @@ def reload_api_keys() -> None:
     global GEMINI_API_KEY
     global CEREBRAS_API_KEY
     global OPENROUTER_API_KEY
+    global GROQ_MODEL
+    global DEEPSEEK_MODEL
+    global MOONSHOT_MODEL
+    global GEMINI_MODEL
+    global CEREBRAS_MODEL
+    global OPENROUTER_MODEL
 
     load_dotenv(BASE_DIR / ".env", override=True)
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -64,6 +76,12 @@ def reload_api_keys() -> None:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-128k")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "llama-3.3-70b")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
 
 
 reload_api_keys()

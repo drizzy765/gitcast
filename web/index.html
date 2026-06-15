@@ -23,6 +23,8 @@
             --accent-red: #ff4444;     /* errors, reject */
             --accent-blue: #4488ff;    /* links, secondary actions */
             --accent-purple: #8866ff;  /* AI responses only */
+            --sidebar-width: 292px;
+            --scrollbar-reserve: 16px;
 
             /* Strict Monospace Sizing */
             --text-xs: 11px;
@@ -321,29 +323,33 @@
             flex: 1;
             overflow: hidden;
             height: calc(100vh - 24px);
+            min-width: 0;
         }
 
         /* --- Sidebar (Left) --- */
         aside.sidebar {
-            width: 292px;
+            width: var(--sidebar-width);
+            flex: 0 0 var(--sidebar-width);
             background: var(--bg-surface);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
             z-index: 50;
             overflow-y: auto;
             overflow-x: hidden;
+            scrollbar-gutter: stable;
+            position: relative;
         }
 
         .sidebar-logo-container {
-            padding: 24px 18px 22px;
+            padding: 24px calc(18px + var(--scrollbar-reserve)) 22px 18px;
             display: flex;
             flex-direction: column;
             gap: 12px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-surface);
             overflow: hidden;
+            flex-shrink: 0;
         }
         .brand-mark {
             font-size: 5px;
@@ -358,6 +364,7 @@
             margin: 0;
             text-rendering: geometricPrecision;
             user-select: none;
+            display: block;
         }
         .brand-subtitle {
             font-size: var(--text-xs);
@@ -495,6 +502,7 @@
         /* --- Main Content Section --- */
         main.main-content {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -547,6 +555,7 @@
 
         .content-area {
             flex: 1;
+            min-width: 0;
             display: flex;
             overflow: hidden;
         }
@@ -591,11 +600,13 @@
         /* --- Post Editor Workspace --- */
         .editor-section {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             padding: 24px;
             gap: 16px;
             overflow-y: auto;
+            scrollbar-gutter: stable;
             width: 100%;
         }
 
@@ -1774,6 +1785,7 @@
             }
             aside.sidebar {
                 width: 100%;
+                flex: 0 0 auto;
                 max-height: none;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
@@ -2837,12 +2849,14 @@
 	        async function fetchDraft() {
             const draft = await api('/api/draft');
             if (draft && draft.status === 'ready') {
+                const isNewDraft = draft.timestamp !== state.draft?.timestamp;
                 state.draft = draft;
                 const variations = draft.variations || {};
                 const payload = draft.payload || {};
                 const screenshots = Array.isArray(payload.screenshots) ? payload.screenshots : [];
+                const errors = [];
                 Object.keys(state.tabs).forEach(k => {
-                    if (!state.tabs[k].text) state.tabs[k].text = variations[k] || '';
+                    if (isNewDraft || !state.tabs[k].text) state.tabs[k].text = variations[k] || '';
                     state.tabs[k].shots = screenshots.map(s => ({...s, status: 'pending'}));
                     state.draftPostMeta[k] = {
                         id: draft.post_ids?.[k] || draft.ids?.[k] || draft.variation_ids?.[k] || `${draft.timestamp || payload.timestamp || Date.now()}-${k}`,
@@ -2853,8 +2867,11 @@
                     };
                     if ((variations[k] || '').trim() && !String(variations[k]).startsWith('[Error]')) {
                         storeLocalGeneratedPost(state.draftPostMeta[k]);
+                    } else if (String(variations[k] || '').startsWith('[Error]')) {
+                        errors.push(k);
                     }
                 });
+                if (errors.length) showToast(`Generation failed for ${errors.join(', ')}`, 'error');
             }
         }
 
@@ -3144,8 +3161,19 @@
 
         async function triggerCapture() {
             showToast("Capture starting in 5s...", "info");
-            await api('/api/capture/trigger', 'POST', { delay: 5 });
-            setTimeout(fetchDraft, 6000);
+            startAISpinner();
+            try {
+                const res = await api('/api/capture/trigger', 'POST', { delay: 5 });
+                if (!res || res.success === false) {
+                    showToast((res && res.error) || "Generation failed", "error");
+                    return;
+                }
+                await fetchDraft();
+                render();
+                showToast("Generation complete", "success");
+            } finally {
+                stopAISpinner();
+            }
         }
 
         async function handlePrimaryAction() {

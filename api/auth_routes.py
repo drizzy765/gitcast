@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from api.auth_middleware import get_current_user
+from api.auth_middleware import get_current_user, register_session, unregister_session
 from config.settings import APP_BASE_URL
 from storage.supabase_client import get_client
 
@@ -43,6 +43,7 @@ def verify_otp(body: VerifyOtpRequest):
         user_id = getattr(user, "id", "")
         if not access_token or not user_id:
             raise HTTPException(status_code=401, detail="Invalid OTP")
+        register_session(access_token, str(user_id))
         return {"access_token": access_token, "user_id": str(user_id)}
     except HTTPException:
         raise
@@ -86,6 +87,7 @@ def auth_callback(request: Request):
         if not access_token:
             raise HTTPException(status_code=401, detail="OAuth exchange failed")
 
+        register_session(access_token, str(user_id))
         fragment = f"access_token={access_token}&refresh_token={refresh_token}&user_id={user_id}"
         return RedirectResponse(f"/app#{fragment}")
     except HTTPException:
@@ -102,6 +104,7 @@ def logout(
 ):
     try:
         _, _, token = (authorization or "").partition(" ")
+        unregister_session(token)
         if token:
             get_client().auth.admin.sign_out(token, "global")
         return {"success": True}

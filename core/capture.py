@@ -10,6 +10,15 @@ BASE_DIR = STORAGE_DIR.parent.parent
 from .framing import add_programming_frame
 
 
+GIT_DIFF_EXCLUDES = [
+    ":(exclude)config/session_token.txt",
+    ":(exclude)storage/data/**",
+    ":(exclude).playwright-mcp/**",
+    ":(exclude)memory.md",
+    ":(exclude)*shiplog-app*.png",
+]
+
+
 # ── Screenshot capture ────────────────────────────────────────────────────────
 
 def capture_active_window(delay: float = 5.0) -> dict:
@@ -85,8 +94,9 @@ def get_git_diff(cwd: str = None) -> dict:
     target_dir = cwd or str(Path.home())
 
     try:
+        diff_cmd = ["git", "diff", "HEAD", "--", ".", *GIT_DIFF_EXCLUDES]
         result = subprocess.run(
-            ["git", "diff", "HEAD"],
+            diff_cmd,
             cwd=target_dir,
             capture_output=True,
             text=True,
@@ -108,7 +118,7 @@ def get_git_diff(cwd: str = None) -> dict:
         if not diff_text:
             # try staged changes if working tree diff is empty
             staged = subprocess.run(
-                ["git", "diff", "--cached"],
+                ["git", "diff", "--cached", "--", ".", *GIT_DIFF_EXCLUDES],
                 cwd=target_dir,
                 capture_output=True,
                 text=True,

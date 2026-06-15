@@ -11,7 +11,13 @@ from config.settings import (
     DEEPSEEK_API_KEY, 
     MOONSHOT_API_KEY,
     CEREBRAS_API_KEY,
-    OPENROUTER_API_KEY
+    OPENROUTER_API_KEY,
+    GROQ_MODEL,
+    DEEPSEEK_MODEL,
+    MOONSHOT_MODEL,
+    GEMINI_MODEL,
+    CEREBRAS_MODEL,
+    OPENROUTER_MODEL,
 )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -20,42 +26,49 @@ PROVIDERS = {
     "groq": {
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": GROQ_API_KEY,
-        "model": "llama-3.3-70b-versatile",
+        "model": GROQ_MODEL,
         "tasks": ["quick_win", "struggle", "linkedin"]
     },
     "deepseek": {
         "base_url": "https://api.deepseek.com/v1", 
         "api_key": DEEPSEEK_API_KEY,
-        "model": "deepseek-chat",
+        "model": DEEPSEEK_MODEL,
         "tasks": ["deep_tech", "pr_generator"]
     },
     "kimi": {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key": MOONSHOT_API_KEY,
-        "model": "moonshot-v1-128k",
+        "model": MOONSHOT_MODEL,
         "tasks": ["article", "sprint_summary"]
     },
     "cerebras": {
         "base_url": "https://api.cerebras.ai/v1",
         "api_key": CEREBRAS_API_KEY,
-        "model": "llama3.3-70b",
+        "model": CEREBRAS_MODEL,
         "tasks": []  # fallback only
     },
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",
         "api_key": OPENROUTER_API_KEY,
-        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        "model": OPENROUTER_MODEL,
         "tasks": []  # fallback only
     }
 }
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 MAX_TOKENS = 4096 
 TIMEOUT = 60
 
 # Shared client to prevent SSL/Concurrency overhead
 _client = httpx.AsyncClient(timeout=TIMEOUT)
 _last_call_meta = {"provider_used": "", "used_fallback": False}
+
+
+class ProviderUnavailable(Exception):
+    def __init__(self, provider: str, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.provider = provider
+        self.status_code = status_code
 
 
 def _is_uuid(value: str) -> bool:
@@ -111,9 +124,16 @@ def refresh_provider_keys(user_id: str = "") -> None:
     PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
     PROVIDERS["cerebras"]["api_key"] = settings.CEREBRAS_API_KEY
     PROVIDERS["openrouter"]["api_key"] = settings.OPENROUTER_API_KEY
+    PROVIDERS["groq"]["model"] = settings.GROQ_MODEL
+    PROVIDERS["deepseek"]["model"] = settings.DEEPSEEK_MODEL
+    PROVIDERS["kimi"]["model"] = settings.MOONSHOT_MODEL
+    PROVIDERS["cerebras"]["model"] = settings.CEREBRAS_MODEL
+    PROVIDERS["openrouter"]["model"] = settings.OPENROUTER_MODEL
 
     global GEMINI_API_KEY
+    global GEMINI_URL
     GEMINI_API_KEY = settings.GEMINI_API_KEY
+    GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent"
     for provider, api_key in user_keys.items():
         if provider == "gemini":
             GEMINI_API_KEY = api_key
@@ -138,6 +158,7 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
     selected_prompts = {k: v for k, v in prompts.items() if k in format_keys}
 
     output = {}
+    unavailable: dict[str, str] = {}
     for format_key, system_prompt in selected_prompts.items():
         stream_log("Generator", "AI", f"thinking about {format_key}")
         started = asyncio.get_event_loop().time()
@@ -166,7 +187,13 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
                 _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
             else:
                 # Automatic task-based routing with fallback
-                result = await _ai_call(format_key, system_prompt, active_user_message, user_id=user_id)
+                result = await _ai_call(
+                    format_key,
+                    system_prompt,
+                    active_user_message,
+                    user_id=user_id,
+                    unavailable=unavailable,
+                )
 
             output[format_key] = result
             elapsed = asyncio.get_event_loop().time() - started
@@ -182,6 +209,10 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
             delay = 2.0 if "article" in format_key else 1.2
             if format_key != list(selected_prompts.keys())[-1]:
                 await asyncio.sleep(delay)
+        except ProviderUnavailable as e:
+            unavailable[e.provider] = str(e)
+            stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
+            output[format_key] = f"[Error] {str(e)}"
         except Exception as e:
             stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
             output[format_key] = f"[Error] {str(e)}"
@@ -211,11 +242,18 @@ async def generate_sprint_summary(entries: list, narrative: str = "", user_id: s
 
 # ── Provider Routing & Fallback ────────────────────────────────────────────────
 
-async def _ai_call(format_key: str, system_prompt: str, user_message: str, user_id: str = "") -> str:
+async def _ai_call(
+    format_key: str,
+    system_prompt: str,
+    user_message: str,
+    user_id: str = "",
+    unavailable: dict[str, str] | None = None,
+) -> str:
     """
     Identifies primary provider for a task and falls back through available providers.
     """
     refresh_provider_keys(user_id)
+    unavailable = unavailable if unavailable is not None else {}
 
     # 1. Identify primary provider
     primary = "groq" # default
@@ -235,6 +273,10 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str, user_
     last_error = None
     stream_log("ROUTER", "ROUTER", f"{format_key} -> {primary}")
     for provider_name in chain:
+        if provider_name in unavailable:
+            stream_log("ROUTER", "WARN", f"{provider_name} skipped: {unavailable[provider_name]}")
+            last_error = unavailable[provider_name]
+            continue
         try:
             if provider_name != primary:
                 stream_log("ROUTER", "ROUTER", f"{format_key} -> {provider_name} fallback")
@@ -244,13 +286,18 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str, user_
                 "used_fallback": provider_name != primary,
             })
             return result
+        except ProviderUnavailable as e:
+            last_error = str(e)
+            unavailable[e.provider] = str(e)
+            stream_log("ROUTER", "WARN", f"{provider_name} unavailable: {e}")
+            continue
         except Exception as e:
             last_error = str(e)
             stream_log("ROUTER", "WARN", f"{provider_name} failed: {e}")
             continue
             
     # 4. Final attempt with Gemini
-    if GEMINI_API_KEY:
+    if GEMINI_API_KEY and "gemini" not in unavailable:
         stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
         try:
             result = await _gemini_text_call(system_prompt, user_message)
@@ -258,6 +305,9 @@ async def _ai_call(format_key: str, system_prompt: str, user_message: str, user_
             return result
         except Exception as e:
             last_error = f"Gemini also failed: {e}"
+            unavailable["gemini"] = last_error
+    elif "gemini" in unavailable:
+        last_error = unavailable["gemini"]
 
     raise Exception(f"AI chain exhausted. Last error: {last_error}")
 
@@ -296,10 +346,17 @@ async def _call_provider(provider_name: str, system_prompt: str, user_message: s
                     wait = 2 + (attempt * 2)
                     await asyncio.sleep(wait)
                     continue
-                raise Exception(f"Rate limit exceeded (429)")
+                raise ProviderUnavailable(provider_name, "Rate limit exceeded (429)", 429)
+
+            if response.status_code in {402, 404}:
+                raise ProviderUnavailable(
+                    provider_name,
+                    f"API Error {response.status_code}: {response.text[:180]}",
+                    response.status_code,
+                )
 
             if response.status_code != 200:
-                raise Exception(f"API Error {response.status_code}: {response.text[:100]}")
+                raise Exception(f"API Error {response.status_code}: {response.text[:180]}")
 
             data = response.json()
             content = data["choices"][0]["message"]["content"].strip()
@@ -353,8 +410,11 @@ async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
         stream_log("Gemini", "AI", "calling gemini text fallback")
         response = await _client.post(url, headers=headers, json=body)
         if response.status_code != 200:
-            stream_log("Gemini", "ERROR", f"text call failed with {response.status_code}")
-            response.raise_for_status()
+            detail = response.text[:240]
+            stream_log("Gemini", "ERROR", f"text call failed with {response.status_code}: {detail}")
+            if response.status_code in {400, 401, 403, 404, 429}:
+                raise ProviderUnavailable("gemini", f"Gemini API Error {response.status_code}: {detail}", response.status_code)
+            raise Exception(f"Gemini API Error {response.status_code}: {detail}")
 
         data = response.json()
         stream_log("Gemini", "OK", "text fallback complete")
