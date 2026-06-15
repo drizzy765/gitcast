@@ -1,0 +1,431 @@
+[ 1017102ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1017117ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1025086ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1025087ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1033079ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1033079ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1041066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1041066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1049122ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1049123ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1057066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1057066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1065066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1065066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1073067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1073067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1081065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1081065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1089066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1089066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1097066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1097066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1105068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1105068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1113078ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1113078ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1121129ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1121130ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1129101ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1129102ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1137079ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1137080ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1145086ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1145086ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1153067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1153067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1161067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1161068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1169066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1169066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1177068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1177068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1185066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1185067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1193068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1193069ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1201065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1201066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1209066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1209066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1217065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1217066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1225067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1225067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1233065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1233065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1241064ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1241065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1249065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1249065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1257067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1257068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1265067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1265067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1273067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1273068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1281067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1281067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1289066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1289066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1297068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1297069ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1305065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1305065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1313067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1313067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1321066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1321066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1329067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1329068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1337065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1337065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1345065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1345065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1353067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1353067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1361076ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1361076ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1369066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1369066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1377065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1377065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1381584ms] [ERROR] Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1384538ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1385127ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1385127ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1387543ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1390550ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1393070ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1393070ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1393567ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1396573ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1399579ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1401069ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1401070ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1402585ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1405596ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1408603ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1409066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1409066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1411608ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1414613ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1417065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1417065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1417617ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1420623ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1423628ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1425065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1425065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1426634ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1429638ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1432645ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1433065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1433065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1435653ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1438659ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1441067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1441068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1441666ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1444671ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1447685ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1449069ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1449069ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1450690ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1453696ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1456701ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1457063ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1457064ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1459707ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1462712ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1465066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1465067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1465717ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1468723ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1471736ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1473081ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1473083ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1474743ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1477749ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1480763ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1481072ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1481072ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1483770ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1486782ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1489068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1489068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1489788ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1492794ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1495801ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1497065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1497065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1498809ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1501815ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1504819ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1505065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1505065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1507824ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1510831ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1513066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1513066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1513835ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1516842ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1519847ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1521068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1521068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1522853ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1525862ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1528866ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1529066ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1529066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1531872ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1534887ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1537065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1537065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1537893ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1540911ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1543918ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1545065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1545065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1546922ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1549927ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1552931ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1553068ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1553068ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1555936ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1558941ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1561065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1561065ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1561947ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1564953ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1567959ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1569067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1569067ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1570965ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1573970ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1576975ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1577064ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1577064ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1579981ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1582988ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1585065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/draft:0
+[ 1585066ms] [ERROR] API Call Failed: TypeError: Failed to fetch
+    at apiFetch (http://127.0.0.1:8001/app?v=20260611-auth:2578:32)
+    at api (http://127.0.0.1:8001/app?v=20260611-auth:2593:35)
+    at http://127.0.0.1:8001/app?v=20260611-auth:4755:42 @ http://127.0.0.1:8001/app?v=20260611-auth:2603
+[ 1585992ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1588998ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0
+[ 1592004ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8001/api/logs/stream?token=41493fa2-7f67-4ed5-8ab8-df973c318f49:0

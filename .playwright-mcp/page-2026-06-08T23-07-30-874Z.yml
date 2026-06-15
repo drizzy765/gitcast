@@ -1,0 +1,18 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]: "> SHIPLOG"
+    - generic [ref=e6]: v1.0 [BETA]
+  - generic [ref=e7]: // every ship deserves a log.
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]: ┌─ LOGIN
+      - generic [ref=e12]: ─┐
+    - generic [ref=e13]:
+      - generic [ref=e14]: "> enter your email_"
+      - textbox "> enter your email_" [active] [ref=e15]
+      - button "[SEND_MAGIC_LINK ↗]" [ref=e16] [cursor=pointer]
+      - generic [ref=e17]: ── or ──
+      - button "[CONTINUE_WITH_GITHUB ↗]" [ref=e18] [cursor=pointer]
+  - generic [ref=e20]:
+    - generic [ref=e21]: // open source · free · BYOK
+    - generic [ref=e22]: // github.com/drizzy765/shiplog

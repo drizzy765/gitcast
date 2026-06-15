@@ -1,0 +1,8 @@
+[    3485ms] TypeError: Cannot read properties of undefined (reading 'map')
+    at http://127.0.0.1:8001/app:2814:69
+    at Array.forEach (<anonymous>)
+    at fetchDraft (http://127.0.0.1:8001/app:2812:41)
+    at async init (http://127.0.0.1:8001/app:2253:13)
+    at async showDashboard (http://127.0.0.1:8001/app:2373:14)
+    at async authGate (http://127.0.0.1:8001/app:2334:18)
+    at async HTMLDocument.<anonymous> (http://127.0.0.1:8001/app:2248:14)
