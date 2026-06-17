@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from config.settings import (
-    GROQ_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY, 
+    GROQ_API_KEY, GEMINI_API_KEY,
     MOONSHOT_API_KEY, CEREBRAS_API_KEY, OPENROUTER_API_KEY
 )
 
@@ -47,12 +47,12 @@ async def main():
         {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
     )
 
-    # 2. DeepSeek
+    # 2. OpenRouter
     await test_provider(
-        "DeepSeek", 
-        "https://api.deepseek.com/v1/chat/completions",
-        {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"},
-        {"model": "deepseek-chat", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
+        "OpenRouter",
+        "https://openrouter.ai/api/v1/chat/completions",
+        {"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
+        {"model": "qwen/qwen3-coder:free", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
     )
 
     # 3. Kimi (Moonshot)

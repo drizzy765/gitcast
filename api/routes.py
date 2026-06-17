@@ -27,7 +27,6 @@ from config.settings import (
     validate_api_keys,
     CURRENT_DRAFT,
     SPRINT_LOG,
-    AI_ROUTING_MAP,
     API_KEY_ENV_MAP,
     BASE_DIR,
     WAITLIST_FILE,
@@ -216,13 +215,6 @@ KEY_GUIDE = {
         "best_for": "quick_win, struggle, linkedin",
         "required": True,
     },
-    "deepseek": {
-        "name": "DeepSeek",
-        "url": "https://platform.deepseek.com",
-        "free_tier": "$5 credit on signup",
-        "best_for": "deep_tech, pr_generator",
-        "required": False,
-    },
     "gemini": {
         "name": "Gemini",
         "url": "https://aistudio.google.com",
@@ -248,7 +240,7 @@ KEY_GUIDE = {
         "name": "OpenRouter",
         "url": "https://openrouter.ai",
         "free_tier": "free models available",
-        "best_for": "fallback generation",
+        "best_for": "final fallback via qwen/qwen3-coder:free",
         "required": False,
     },
 }

@@ -34,7 +34,6 @@ STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 API_KEY_ENV_MAP = {
     "groq": "GROQ_API_KEY",
-    "deepseek": "DEEPSEEK_API_KEY",
     "gemini": "GEMINI_API_KEY",
     "kimi": "MOONSHOT_API_KEY",
     "cerebras": "CEREBRAS_API_KEY",
@@ -42,13 +41,11 @@ API_KEY_ENV_MAP = {
 }
 
 GROQ_API_KEY = ""
-DEEPSEEK_API_KEY = ""
 MOONSHOT_API_KEY = ""
 GEMINI_API_KEY = ""
 CEREBRAS_API_KEY = ""
 OPENROUTER_API_KEY = ""
 GROQ_MODEL = ""
-DEEPSEEK_MODEL = ""
 MOONSHOT_MODEL = ""
 GEMINI_MODEL = ""
 CEREBRAS_MODEL = ""
@@ -57,13 +54,11 @@ OPENROUTER_MODEL = ""
 
 def reload_api_keys() -> None:
     global GROQ_API_KEY
-    global DEEPSEEK_API_KEY
     global MOONSHOT_API_KEY
     global GEMINI_API_KEY
     global CEREBRAS_API_KEY
     global OPENROUTER_API_KEY
     global GROQ_MODEL
-    global DEEPSEEK_MODEL
     global MOONSHOT_MODEL
     global GEMINI_MODEL
     global CEREBRAS_MODEL
@@ -71,17 +66,15 @@ def reload_api_keys() -> None:
 
     load_dotenv(BASE_DIR / ".env", override=True)
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
     MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-    DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
     MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-128k")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "llama-3.3-70b")
-    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
 
 
 reload_api_keys()
@@ -89,13 +82,13 @@ reload_api_keys()
 # ── AI Provider Routing ───────────────────────────────────────────────────────
 
 # Maps format_key -> preferred provider alias
-# Providers: 'groq', 'deepseek', 'moonshot', 'gemini'
+# Providers: 'groq', 'kimi', 'gemini', 'cerebras', 'openrouter'
 AI_ROUTING_MAP = {
-    "article": "moonshot",    # Better for long context
-    "linkedin": "deepseek",   # Good reasoning
-    "deep_tech": "deepseek",
+    "article": "kimi",        # Better for long context
+    "linkedin": "groq",       # Fast
+    "deep_tech": "kimi",      # Long-context reasoning
     "shitpost": "groq",       # Fast
-    "sprint_summary": "moonshot",
+    "sprint_summary": "kimi",
     "default": "groq"
 }
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY", "")
@@ -197,7 +190,6 @@ def set_twitter_plan(plan: str) -> None:
 def validate_api_keys() -> dict:
     return {
         "groq": bool(GROQ_API_KEY),
-        "deepseek": bool(DEEPSEEK_API_KEY),
         "kimi": bool(MOONSHOT_API_KEY),
         "gemini": bool(GEMINI_API_KEY),
         "cerebras": bool(CEREBRAS_API_KEY),

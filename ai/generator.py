@@ -8,12 +8,10 @@ from api.analytics import track
 from config.settings import (
     GROQ_API_KEY,
     GEMINI_API_KEY,
-    DEEPSEEK_API_KEY, 
     MOONSHOT_API_KEY,
     CEREBRAS_API_KEY,
     OPENROUTER_API_KEY,
     GROQ_MODEL,
-    DEEPSEEK_MODEL,
     MOONSHOT_MODEL,
     GEMINI_MODEL,
     CEREBRAS_MODEL,
@@ -29,17 +27,11 @@ PROVIDERS = {
         "model": GROQ_MODEL,
         "tasks": ["quick_win", "struggle", "linkedin"]
     },
-    "deepseek": {
-        "base_url": "https://api.deepseek.com/v1", 
-        "api_key": DEEPSEEK_API_KEY,
-        "model": DEEPSEEK_MODEL,
-        "tasks": ["deep_tech", "pr_generator"]
-    },
     "kimi": {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key": MOONSHOT_API_KEY,
         "model": MOONSHOT_MODEL,
-        "tasks": ["article", "sprint_summary"]
+        "tasks": ["article", "deep_tech", "pr_generator", "sprint_summary"]
     },
     "cerebras": {
         "base_url": "https://api.cerebras.ai/v1",
@@ -120,12 +112,10 @@ def refresh_provider_keys(user_id: str = "") -> None:
     settings.reload_api_keys()
     user_keys = _load_user_provider_keys(user_id) if user_id else {}
     PROVIDERS["groq"]["api_key"] = settings.GROQ_API_KEY
-    PROVIDERS["deepseek"]["api_key"] = settings.DEEPSEEK_API_KEY
     PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
     PROVIDERS["cerebras"]["api_key"] = settings.CEREBRAS_API_KEY
     PROVIDERS["openrouter"]["api_key"] = settings.OPENROUTER_API_KEY
     PROVIDERS["groq"]["model"] = settings.GROQ_MODEL
-    PROVIDERS["deepseek"]["model"] = settings.DEEPSEEK_MODEL
     PROVIDERS["kimi"]["model"] = settings.MOONSHOT_MODEL
     PROVIDERS["cerebras"]["model"] = settings.CEREBRAS_MODEL
     PROVIDERS["openrouter"]["model"] = settings.OPENROUTER_MODEL
@@ -263,9 +253,9 @@ async def _ai_call(
             break
             
     # 2. Build the fallback chain
-    # Standard order: Primary -> Groq -> Cerebras -> DeepSeek -> Kimi -> OpenRouter -> Gemini
+    # Standard order: Primary -> Groq -> Cerebras -> Kimi -> OpenRouter -> Gemini
     chain = [primary]
-    for fallback in ["groq", "cerebras", "deepseek", "kimi", "openrouter"]:
+    for fallback in ["groq", "cerebras", "kimi", "openrouter"]:
         if fallback not in chain:
             chain.append(fallback)
             
@@ -499,7 +489,7 @@ if __name__ == "__main__":
         capture = run_capture()
         ocr = run_ocr(capture["screenshot"]["path"])
         payload = build_payload(
-            raw_thought="testing the new multi-provider fallback chain with Cerebras and DeepSeek",
+            raw_thought="testing the new multi-provider fallback chain with Cerebras and OpenRouter",
             ocr_result=ocr,
             capture_result=capture,
         )

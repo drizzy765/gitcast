@@ -70,8 +70,6 @@ def validate_api_key(key: str, provider: str) -> bool:
 
     if name == "groq":
         return value.startswith("gsk_") and len(value) >= 40
-    if name == "deepseek":
-        return value.startswith("sk-") and len(value) >= 30
     if name == "gemini":
         return len(value) >= 30
     if name == "openai":
