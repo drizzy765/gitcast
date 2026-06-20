@@ -71,9 +71,9 @@ def reload_api_keys() -> None:
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-    MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-128k")
+    MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-8k")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-    CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "llama-3.3-70b")
+    CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
     OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
 
 

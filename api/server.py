@@ -11,6 +11,7 @@ from api.auth_routes import router as auth_router
 from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR, CONFIG_DIR
 from api.monitoring import init_sentry
 from api.ratelimit import limiter
+from api.auth import get_token
 
 # ── App setup ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +74,17 @@ app.mount(
 app.include_router(router, prefix="/api")
 app.include_router(auth_router, prefix="/auth")
 
-# Serve Frontend
+
+# ── Startup Event ─────────────────────────────────────────────────────────────
+
+@app.on_event("startup")
+def startup_event():
+    print(f"\n[Auth] Session Token: {get_token()}")
+    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
+
+
+# ── Serve Frontend ────────────────────────────────────────────────────────────
+
 @app.get("/")
 async def read_landing():
     return FileResponse(BASE_DIR / "web" / "landing.html")
@@ -107,8 +118,6 @@ def health_check():
 
 
 # ── Auth token retrieval (Localhost only) ───────────────────────────────────────
-
-from api.auth import get_token
 
 @app.get("/api/token")
 def get_session_token(request: Request):

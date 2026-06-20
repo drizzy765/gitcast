@@ -260,8 +260,12 @@ class ScreenshotSession:
                 draft_data["status"] = "ready"
                 with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
                     json.dump(draft_data, f, indent=4)
-            except Exception:
-                pass
+            except Exception as e:
+                from core.log_stream import stream_log
+                stream_log("Generator", "ERROR", f"Hotkey background generation failed: {e}")
+                draft_data["status"] = "failed"
+                with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
+                    json.dump(draft_data, f, indent=4)
 
         threading.Thread(target=run_gen, daemon=True).start()
 

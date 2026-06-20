@@ -49,10 +49,8 @@ PROVIDERS = {
 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 MAX_TOKENS = 4096 
-TIMEOUT = 60
+TIMEOUT = 15
 
-# Shared client to prevent SSL/Concurrency overhead
-_client = httpx.AsyncClient(timeout=TIMEOUT)
 _last_call_meta = {"provider_used": "", "used_fallback": False}
 
 
@@ -134,80 +132,105 @@ def refresh_provider_keys(user_id: str = "") -> None:
 # ── Main generator ────────────────────────────────────────────────────────────
 
 async def generate_posts(payload: dict, user_id: str = "") -> dict:
-    refresh_provider_keys(user_id)
-    prompts = get_all_prompts()
-    format_keys = payload.get("format_keys", list(prompts.keys()))
-    user_message = payload.get("user_message", "")
-    use_vision = payload.get("use_vision_fallback", False)
-    
-    # Handle multiple screenshots for vision
-    screenshots = payload.get("screenshots", [])
-    if not screenshots and payload.get("screenshot_path"):
-        screenshots = [{"path": payload["screenshot_path"]}]
-
-    selected_prompts = {k: v for k, v in prompts.items() if k in format_keys}
-
-    output = {}
-    unavailable: dict[str, str] = {}
-    for format_key, system_prompt in selected_prompts.items():
-        stream_log("Generator", "AI", f"thinking about {format_key}")
-        started = asyncio.get_event_loop().time()
+    async def _generate_all():
+        refresh_provider_keys(user_id)
+        prompts = get_all_prompts()
+        format_keys = payload.get("format_keys", list(prompts.keys()))
+        user_message = payload.get("user_message", "")
+        use_vision = payload.get("use_vision_fallback", False)
         
-        active_user_message = user_message
-        if format_key == "pr_generator":
-            # Strip Screen Context (Tesseract OCR dump) for PR Descriptions
-            if "## Screen context" in active_user_message:
-                parts = active_user_message.split("## Screen context")
-                prefix = parts[0].strip()
-                suffix = parts[1].strip()
-                if "## " in suffix:
-                    next_idx = suffix.find("## ")
-                    active_user_message = prefix + "\n\n" + suffix[next_idx:].strip()
-                else:
-                    active_user_message = prefix
-        
-        try:
-            if use_vision and screenshots and format_key != "pr_generator":
-                stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
-                result = await _gemini_vision_call(
-                    system_prompt=system_prompt,
-                    user_message=active_user_message,
-                    screenshots=screenshots,
-                )
-                _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
-            else:
-                # Automatic task-based routing with fallback
-                result = await _ai_call(
-                    format_key,
-                    system_prompt,
-                    active_user_message,
-                    user_id=user_id,
-                    unavailable=unavailable,
-                )
+        screenshots = payload.get("screenshots", [])
+        if not screenshots and payload.get("screenshot_path"):
+            screenshots = [{"path": payload["screenshot_path"]}]
 
-            output[format_key] = result
-            elapsed = asyncio.get_event_loop().time() - started
-            track("post_generated", {
-                "format_keys": [format_key],
-                "provider_used": _last_call_meta.get("provider_used", ""),
-                "latency_seconds": round(elapsed, 1),
-                "used_fallback": bool(_last_call_meta.get("used_fallback", False)),
-            })
-            stream_log("Generator", "OK", f"{format_key} complete ({elapsed:.1f}s)")
+        selected_prompts = {k: v for k, v in prompts.items() if k in format_keys}
+
+        output = {}
+        unavailable = {}
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            for format_key, system_prompt in selected_prompts.items():
+                stream_log("Generator", "AI", f"thinking about {format_key}")
+                started = asyncio.get_event_loop().time()
+                
+                active_user_message = user_message
+                if format_key == "pr_generator":
+                    if "## Screen context" in active_user_message:
+                        parts = active_user_message.split("## Screen context")
+                        prefix = parts[0].strip()
+                        suffix = parts[1].strip()
+                        if "## " in suffix:
+                            next_idx = suffix.find("## ")
+                            active_user_message = prefix + "\n\n" + suffix[next_idx:].strip()
+                        else:
+                            active_user_message = prefix
+                
+                try:
+                    if use_vision and screenshots and format_key != "pr_generator":
+                        stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
+                        stream_log("GENERATOR", "INFO", f"generating {format_key} via gemini...")
+                        t0 = asyncio.get_event_loop().time()
+                        try:
+                            result = await _gemini_vision_call(
+                                system_prompt=system_prompt,
+                                user_message=active_user_message,
+                                screenshots=screenshots,
+                                client=client,
+                            )
+                            _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
+                            elapsed = asyncio.get_event_loop().time() - t0
+                            stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
+                        except Exception as e:
+                            print(f"[Generator] {format_key} failed on gemini: {e}")
+                            stream_log("GENERATOR", "WARN", f"{format_key} failed on gemini — trying fallback")
+                            raise e
+                    else:
+                        result = await _ai_call(
+                            format_key,
+                            system_prompt,
+                            active_user_message,
+                            user_id=user_id,
+                            unavailable=unavailable,
+                            client=client,
+                        )
+
+                    output[format_key] = result
+                    elapsed = asyncio.get_event_loop().time() - started
+                    track("post_generated", {
+                        "format_keys": [format_key],
+                        "provider_used": _last_call_meta.get("provider_used", ""),
+                        "latency_seconds": round(elapsed, 1),
+                        "used_fallback": bool(_last_call_meta.get("used_fallback", False)),
+                    })
+                    
+                    delay = 2.0 if "article" in format_key else 1.2
+                    if format_key != list(selected_prompts.keys())[-1]:
+                        await asyncio.sleep(delay)
+                except Exception as e:
+                    stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
+                    output[format_key] = f"[Error] {str(e)}"
+                    
+        # Check if all format generation failed
+        all_failed = True
+        for format_key in format_keys:
+            val = output.get(format_key)
+            if val and not val.startswith("[Error]"):
+                all_failed = False
+                break
+                
+        if all_failed:
+            return {"error": "all providers failed — check your API keys"}
             
-            # adaptive delay
-            delay = 2.0 if "article" in format_key else 1.2
-            if format_key != list(selected_prompts.keys())[-1]:
-                await asyncio.sleep(delay)
-        except ProviderUnavailable as e:
-            unavailable[e.provider] = str(e)
-            stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
-            output[format_key] = f"[Error] {str(e)}"
-        except Exception as e:
-            stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
-            output[format_key] = f"[Error] {str(e)}"
+        return output
 
-    return output
+    try:
+        # Add a 30 second total timeout across all calls
+        return await asyncio.wait_for(_generate_all(), timeout=30.0)
+    except asyncio.TimeoutError:
+        stream_log("Generator", "ERROR", "Generation timed out after 30 seconds")
+        return {"error": "all providers failed — check your API keys"}
+    except Exception as e:
+        stream_log("Generator", "ERROR", f"Generation failed: {e}")
+        return {"error": "all providers failed — check your API keys"}
 
 
 # ── Sprint generator ──────────────────────────────────────────────────────────
@@ -220,11 +243,13 @@ async def generate_sprint_summary(entries: list, narrative: str = "", user_id: s
     
     stream_log("Generator", "AI", f"synthesizing {len(entries)} captures into sprint thread")
     
+    refresh_provider_keys(user_id)
     payload = build_sprint_payload(entries)
     system_prompt = sprint_summary_prompt(len(entries))
     
     try:
-        return await _ai_call("sprint_summary", system_prompt, payload["user_message"], user_id=user_id)
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            return await _ai_call("sprint_summary", system_prompt, payload["user_message"], user_id=user_id, client=client)
     except Exception as e:
         stream_log("Generator", "ERROR", f"sprint synthesis failed: {e}")
         return f"[Error] {str(e)}"
@@ -238,11 +263,11 @@ async def _ai_call(
     user_message: str,
     user_id: str = "",
     unavailable: dict[str, str] | None = None,
+    client: httpx.AsyncClient = None,
 ) -> str:
     """
     Identifies primary provider for a task and falls back through available providers.
     """
-    refresh_provider_keys(user_id)
     unavailable = unavailable if unavailable is not None else {}
 
     # 1. Identify primary provider
@@ -262,47 +287,76 @@ async def _ai_call(
     # 3. Walk the chain
     last_error = None
     stream_log("ROUTER", "ROUTER", f"{format_key} -> {primary}")
-    for provider_name in chain:
-        if provider_name in unavailable:
-            stream_log("ROUTER", "WARN", f"{provider_name} skipped: {unavailable[provider_name]}")
-            last_error = unavailable[provider_name]
-            continue
-        try:
-            if provider_name != primary:
-                stream_log("ROUTER", "ROUTER", f"{format_key} -> {provider_name} fallback")
-            result = await _call_provider(provider_name, system_prompt, user_message)
-            _last_call_meta.update({
-                "provider_used": provider_name,
-                "used_fallback": provider_name != primary,
-            })
-            return result
-        except ProviderUnavailable as e:
-            last_error = str(e)
-            unavailable[e.provider] = str(e)
-            stream_log("ROUTER", "WARN", f"{provider_name} unavailable: {e}")
-            continue
-        except Exception as e:
-            last_error = str(e)
-            stream_log("ROUTER", "WARN", f"{provider_name} failed: {e}")
-            continue
+    
+    async def run_chain(active_client: httpx.AsyncClient):
+        nonlocal last_error
+        for provider_name in chain:
+            if provider_name in unavailable:
+                stream_log("ROUTER", "WARN", f"{provider_name} skipped: {unavailable[provider_name]}")
+                last_error = unavailable[provider_name]
+                continue
             
-    # 4. Final attempt with Gemini
-    if GEMINI_API_KEY and "gemini" not in unavailable:
-        stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
-        try:
-            result = await _gemini_text_call(system_prompt, user_message)
-            _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
-            return result
-        except Exception as e:
-            last_error = f"Gemini also failed: {e}"
-            unavailable["gemini"] = last_error
-    elif "gemini" in unavailable:
-        last_error = unavailable["gemini"]
+            stream_log("GENERATOR", "INFO", f"generating {format_key} via {provider_name}...")
+            t0 = asyncio.get_event_loop().time()
+            try:
+                if provider_name != primary:
+                    stream_log("ROUTER", "ROUTER", f"{format_key} -> {provider_name} fallback")
+                result = await _call_provider(provider_name, system_prompt, user_message, client=active_client)
+                _last_call_meta.update({
+                    "provider_used": provider_name,
+                    "used_fallback": provider_name != primary,
+                })
+                elapsed = asyncio.get_event_loop().time() - t0
+                stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
+                return result
+            except ProviderUnavailable as e:
+                last_error = str(e)
+                unavailable[e.provider] = str(e)
+                print(f"[Generator] {format_key} failed on {provider_name}: {e}")
+                stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
+                continue
+            except Exception as e:
+                last_error = str(e)
+                print(f"[Generator] {format_key} failed on {provider_name}: {e}")
+                stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
+                continue
 
-    raise Exception(f"AI chain exhausted. Last error: {last_error}")
+        # 4. Final attempt with Gemini
+        if GEMINI_API_KEY and "gemini" not in unavailable:
+            stream_log("GENERATOR", "INFO", f"generating {format_key} via gemini...")
+            t0 = asyncio.get_event_loop().time()
+            try:
+                if "gemini" != primary:
+                    stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
+                result = await _gemini_text_call(system_prompt, user_message, client=active_client)
+                _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
+                elapsed = asyncio.get_event_loop().time() - t0
+                stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
+                return result
+            except Exception as e:
+                last_error = f"Gemini also failed: {e}"
+                unavailable["gemini"] = last_error
+                print(f"[Generator] {format_key} failed on gemini: {e}")
+                stream_log("GENERATOR", "WARN", f"{format_key} failed on gemini — trying fallback")
+        elif "gemini" in unavailable:
+            last_error = unavailable["gemini"]
+
+        raise Exception(f"AI chain exhausted. Last error: {last_error}")
+
+    if client:
+        return await run_chain(client)
+    else:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as local_client:
+            return await run_chain(local_client)
 
 
-async def _call_provider(provider_name: str, system_prompt: str, user_message: str, retries: int = 1) -> str:
+async def _call_provider(
+    provider_name: str,
+    system_prompt: str,
+    user_message: str,
+    retries: int = 1,
+    client: httpx.AsyncClient = None,
+) -> str:
     """
     Single unified function for calling any OpenAI-compatible provider.
     """
@@ -326,50 +380,62 @@ async def _call_provider(provider_name: str, system_prompt: str, user_message: s
         ],
     }
 
-    for attempt in range(retries + 1):
-        try:
-            stream_log(provider_name, "AI", f"calling {config['model']}")
-            response = await _client.post(url, headers=headers, json=body)
-            
-            if response.status_code == 429:
-                if attempt < retries:
-                    wait = 2 + (attempt * 2)
-                    await asyncio.sleep(wait)
-                    continue
-                raise ProviderUnavailable(provider_name, "Rate limit exceeded (429)", 429)
+    is_local_client = client is None
+    active_client = client if client is not None else httpx.AsyncClient(timeout=TIMEOUT)
+    try:
+        for attempt in range(retries + 1):
+            try:
+                stream_log(provider_name, "AI", f"Calling {config['model']} (timeout={TIMEOUT}s, attempt {attempt + 1}/{retries + 1})")
+                response = await active_client.post(url, headers=headers, json=body, timeout=TIMEOUT)
+                
+                if response.status_code == 429:
+                    if attempt < retries:
+                        wait = 2 + (attempt * 2)
+                        stream_log(provider_name, "WARN", f"Rate limited (429). Retrying in {wait}s...")
+                        await asyncio.sleep(wait)
+                        continue
+                    raise ProviderUnavailable(provider_name, "Rate limit exceeded (429)", 429)
 
-            if response.status_code in {402, 404}:
-                raise ProviderUnavailable(
-                    provider_name,
-                    f"API Error {response.status_code}: {response.text[:180]}",
-                    response.status_code,
-                )
+                if response.status_code in {402, 404}:
+                    raise ProviderUnavailable(
+                        provider_name,
+                        f"API Error {response.status_code}: {response.text[:180]}",
+                        response.status_code,
+                    )
 
-            if response.status_code != 200:
-                raise Exception(f"API Error {response.status_code}: {response.text[:180]}")
+                if response.status_code != 200:
+                    raise Exception(f"API Error {response.status_code}: {response.text[:180]}")
 
-            data = response.json()
-            content = data["choices"][0]["message"]["content"].strip()
-            stream_log(provider_name, "OK", "provider call complete")
-            return content
+                data = response.json()
+                content = data["choices"][0]["message"]["content"].strip()
+                stream_log(provider_name, "OK", "Provider call complete successfully.")
+                return content
 
-        except Exception as e:
-            if attempt == retries:
-                raise e
-            await asyncio.sleep(1)
+            except httpx.TimeoutException as te:
+                stream_log(provider_name, "ERROR", f"Request to {provider_name} timed out after {TIMEOUT}s: {te}")
+                if attempt == retries:
+                    raise ProviderUnavailable(provider_name, f"Request to {provider_name} timed out after {TIMEOUT}s", 408)
+                await asyncio.sleep(1)
+            except Exception as e:
+                stream_log(provider_name, "ERROR", f"Request to {provider_name} failed: {e}")
+                if attempt == retries:
+                    raise e
+                await asyncio.sleep(1)
+    finally:
+        if is_local_client:
+            await active_client.aclose()
 
     raise Exception(f"Provider {provider_name} failed after retries.")
 
 
 # Legacy aliases for backward compatibility with routes
 async def _groq_call(system_prompt: str, user_message: str, retries: int = 2) -> str:
-    # Routes might still call this directly for chat/refinement
     return await _call_provider("groq", system_prompt, user_message, retries=retries)
 
 
 # ── Gemini text call ──────────────────────────────────────────────────────────
 
-async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
+async def _gemini_text_call(system_prompt: str, user_message: str, client: httpx.AsyncClient = None) -> str:
     """
     Fallback text generation using Gemini 1.5 Flash.
     """
@@ -396,22 +462,30 @@ async def _gemini_text_call(system_prompt: str, user_message: str) -> str:
         },
     }
 
+    is_local_client = client is None
+    active_client = client if client is not None else httpx.AsyncClient(timeout=TIMEOUT)
     try:
-        stream_log("Gemini", "AI", "calling gemini text fallback")
-        response = await _client.post(url, headers=headers, json=body)
+        stream_log("Gemini", "AI", f"Calling Gemini text fallback API (timeout={TIMEOUT}s)")
+        response = await active_client.post(url, headers=headers, json=body, timeout=TIMEOUT)
         if response.status_code != 200:
             detail = response.text[:240]
-            stream_log("Gemini", "ERROR", f"text call failed with {response.status_code}: {detail}")
+            stream_log("Gemini", "ERROR", f"Text call failed with {response.status_code}: {detail}")
             if response.status_code in {400, 401, 403, 404, 429}:
                 raise ProviderUnavailable("gemini", f"Gemini API Error {response.status_code}: {detail}", response.status_code)
             raise Exception(f"Gemini API Error {response.status_code}: {detail}")
 
         data = response.json()
-        stream_log("Gemini", "OK", "text fallback complete")
+        stream_log("Gemini", "OK", "Gemini text fallback complete successfully.")
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except httpx.TimeoutException as te:
+        stream_log("Gemini", "ERROR", f"Gemini text fallback call timed out after {TIMEOUT}s: {te}")
+        raise te
     except Exception as e:
-        stream_log("Gemini", "ERROR", f"text fallback failed: {e}")
+        stream_log("Gemini", "ERROR", f"Gemini text fallback failed: {e}")
         raise e
+    finally:
+        if is_local_client:
+            await active_client.aclose()
 
 
 # ── Gemini vision call ────────────────────────────────────────────────────────
@@ -420,6 +494,7 @@ async def _gemini_vision_call(
     system_prompt: str,
     user_message: str,
     screenshots: list,
+    client: httpx.AsyncClient = None,
 ) -> str:
     """
     Calls Gemini 1.5 Flash with multiple screenshots as vision inputs.
@@ -451,17 +526,28 @@ async def _gemini_vision_call(
         },
     }
 
-    stream_log("Gemini", "AI", f"calling vision with {len(parts) - 1} screenshot(s)")
-    response = await _client.post(url, headers=headers, json=body)
-    if response.status_code != 200:
-        raise Exception(f"Gemini Vision Error {response.status_code}: {response.text}")
-
-    data = response.json()
+    is_local_client = client is None
+    active_client = client if client is not None else httpx.AsyncClient(timeout=TIMEOUT)
     try:
-        stream_log("Gemini", "OK", "vision call complete")
+        stream_log("Gemini", "AI", f"Calling Gemini vision with {len(parts) - 1} screenshot(s) (timeout={TIMEOUT}s)")
+        response = await active_client.post(url, headers=headers, json=body, timeout=TIMEOUT)
+        if response.status_code != 200:
+            raise Exception(f"Gemini Vision Error {response.status_code}: {response.text}")
+
+        data = response.json()
+        stream_log("Gemini", "OK", "Gemini vision call complete successfully.")
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except httpx.TimeoutException as te:
+        stream_log("Gemini", "ERROR", f"Gemini vision call timed out after {TIMEOUT}s: {te}")
+        raise te
     except (KeyError, IndexError):
         raise Exception("Gemini response format unexpected")
+    except Exception as e:
+        stream_log("Gemini", "ERROR", f"Gemini vision call failed: {e}")
+        raise e
+    finally:
+        if is_local_client:
+            await active_client.aclose()
 
 
 def _encode_image(image_path: str) -> str:
@@ -490,8 +576,6 @@ if __name__ == "__main__":
         ocr = run_ocr(capture["screenshot"]["path"])
         payload = build_payload(
             raw_thought="testing the new multi-provider fallback chain with Cerebras and OpenRouter",
-            ocr_result=ocr,
-            capture_result=capture,
         )
 
         payload["use_vision_fallback"] = False

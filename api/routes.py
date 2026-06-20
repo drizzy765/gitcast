@@ -1,5 +1,6 @@
 import asyncio
 import time
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -207,6 +208,203 @@ def invalidate_insights_cache() -> None:
     _INSIGHTS_CACHE["timestamp"] = 0.0
     _INSIGHTS_CACHE["data"] = None
 
+
+# ── Local Storage Helpers (Fallback) ──────────────────────────────────────────
+
+def load_local_posts() -> list:
+    from config.settings import POST_LOG
+    if not POST_LOG.exists() or POST_LOG.stat().st_size == 0:
+        return []
+    try:
+        with open(POST_LOG, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                from storage.logger import _normalize_entry
+                return [_normalize_entry(entry) for entry in data]
+            return []
+    except Exception:
+        try:
+            posts = []
+            with open(POST_LOG, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        posts.append(json.loads(line))
+            from storage.logger import _normalize_entry
+            return [_normalize_entry(entry) for entry in posts]
+        except Exception:
+            return []
+
+
+def save_local_posts(posts: list) -> None:
+    from config.settings import POST_LOG
+    try:
+        POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(POST_LOG, "w", encoding="utf-8") as f:
+            json.dump(posts, f, indent=4)
+    except Exception as e:
+        stream_log("Storage", "ERROR", f"Failed to save local posts: {e}")
+
+
+async def safe_get_posts() -> list:
+    try:
+        from storage.supabase_client import get_client
+        client = get_client()
+        result = client.table("posts").select("*").order("timestamp", desc=True).execute()
+        if result.data:
+            from storage.logger import _normalize_entry
+            return [_normalize_entry(entry) for entry in result.data]
+        return []
+    except Exception as e:
+        stream_log("Storage", "WARN", f"Supabase get_posts failed: {e}. Falling back to local JSON.")
+        return load_local_posts()
+
+
+async def safe_save_post(post_data: dict) -> bool:
+    try:
+        from storage.supabase_client import get_client
+        client = get_client()
+        payload = {
+            "post_text": post_data.get("post_text"),
+            "format_key": post_data.get("format_key", "deep_tech"),
+            "tweet_url": post_data.get("tweet_url", "") or post_data.get("post_url", ""),
+            "tweet_id": post_data.get("tweet_id", ""),
+            "provider_used": post_data.get("provider_used", ""),
+            "platform": post_data.get("platform", "twitter"),
+            "user_id": post_data.get("user_id"),
+        }
+        if "timestamp" in post_data and post_data["timestamp"]:
+            payload["timestamp"] = post_data["timestamp"]
+        client.table("posts").insert(payload).execute()
+        return True
+    except Exception as e:
+        stream_log("Storage", "WARN", f"Supabase save_post failed: {e}. Falling back to local JSON.")
+        posts = load_local_posts()
+        from uuid import uuid4
+        new_entry = {
+            "id": post_data.get("id") or str(uuid4()),
+            "post_text": post_data.get("post_text"),
+            "format_key": post_data.get("format_key", "deep_tech"),
+            "screenshot_path": post_data.get("screenshot_path", ""),
+            "tweet_url": post_data.get("tweet_url", "") or post_data.get("post_url", ""),
+            "tweet_id": post_data.get("tweet_id", ""),
+            "fallback": post_data.get("fallback", False),
+            "timestamp": post_data.get("timestamp") or datetime.now().isoformat(),
+            "user_id": post_data.get("user_id", LOCAL_USER_ID),
+            "posted_verified": post_data.get("posted_verified", False),
+            "declined": post_data.get("declined", False) or post_data.get("posted_declined", False),
+            "verified_at": post_data.get("verified_at", ""),
+            "metrics_saved": post_data.get("metrics_saved", False),
+            "metrics_saved_at": post_data.get("metrics_saved_at", ""),
+            "impressions": post_data.get("impressions", 0),
+            "likes": post_data.get("likes", 0),
+            "comments": post_data.get("comments", 0),
+            "reposts": post_data.get("reposts", 0),
+            "hashtags": post_data.get("hashtags", []),
+            "platform": post_data.get("platform", "twitter"),
+            "days_after_post": post_data.get("days_after_post", 0),
+        }
+        posts.append(new_entry)
+        save_local_posts(posts)
+        return True
+
+
+async def safe_update_post(post_id: str, updates: dict) -> bool:
+    try:
+        from storage.supabase_client import get_client
+        client = get_client()
+        result = client.table("posts").update(updates).eq("id", post_id).execute()
+        if result.data:
+            return True
+        raise Exception("Post not found in Supabase")
+    except Exception as e:
+        stream_log("Storage", "WARN", f"Supabase update post failed: {e}. Updating local JSON.")
+        posts = load_local_posts()
+        found = False
+        for post in posts:
+            if post.get("id") == post_id:
+                for k, v in updates.items():
+                    if k == "declined":
+                        post["declined"] = v
+                        post["posted_declined"] = v
+                    elif k == "posted_verified":
+                        post["posted_verified"] = v
+                        post["posted_declined"] = False
+                        post["declined"] = False
+                    else:
+                        post[k] = v
+                found = True
+                break
+        if found:
+            save_local_posts(posts)
+            return True
+        return False
+
+
+async def safe_get_unverified() -> list:
+    posts = await safe_get_posts()
+    unverified = [
+        post for post in posts
+        if not post.get("posted_verified") and not post.get("posted_declined") and not post.get("declined")
+    ]
+    return sorted(unverified, key=lambda item: item.get("timestamp", ""), reverse=True)
+
+
+async def safe_save_metrics(post_id: str, metrics: dict) -> dict:
+    payload = {
+        "impressions": metrics["impressions"],
+        "likes": metrics["likes"],
+        "comments": metrics["comments"],
+        "reposts": metrics["reposts"],
+        "hashtags": metrics["hashtags"],
+        "platform": metrics["platform"] or "twitter",
+        "days_after_post": metrics["days_after_post"],
+        "metrics_saved": True,
+        "metrics_saved_at": datetime.now().isoformat(),
+    }
+    try:
+        from storage.supabase_client import get_client
+        client = get_client()
+        result = client.table("posts").update(payload).eq("id", post_id).execute()
+        if result.data:
+            return {"success": True}
+        raise Exception("Post not found in Supabase")
+    except Exception as e:
+        stream_log("Storage", "WARN", f"Supabase save metrics failed: {e}. Saving to local JSON.")
+        posts = load_local_posts()
+        found = False
+        for post in posts:
+            if post.get("id") == post_id:
+                for k, v in payload.items():
+                    post[k] = v
+                found = True
+                break
+        if found:
+            save_local_posts(posts)
+            from config.settings import METRICS_LOG
+            try:
+                metrics_log = []
+                if METRICS_LOG.exists() and METRICS_LOG.stat().st_size > 0:
+                    with open(METRICS_LOG, "r", encoding="utf-8") as f:
+                        metrics_log = json.load(f)
+                existing = False
+                for m in metrics_log:
+                    if m.get("post_id") == post_id:
+                        m.update(payload)
+                        existing = True
+                        break
+                if not existing:
+                    metrics_log.append({
+                        "post_id": post_id,
+                        **payload
+                    })
+                with open(METRICS_LOG, "w", encoding="utf-8") as f:
+                    json.dump(metrics_log, f, indent=4)
+            except Exception as e_log:
+                stream_log("Storage", "ERROR", f"Failed to save metrics_log: {e_log}")
+            return {"success": True}
+        return {"success": False, "error": "post not found"}
+
+
 KEY_GUIDE = {
     "groq": {
         "name": "Groq",
@@ -342,7 +540,8 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
 
 
 @router.get("/keys/status")
-def get_ai_keys_status(user_id: str = Depends(get_current_user)):
+def get_ai_keys_status():
+    user_id = LOCAL_USER_ID
     if _is_local_user(user_id):
         env_values = dotenv_values(_env_path())
         return {
@@ -426,12 +625,12 @@ def remove_ai_key(request: ProviderKeyRemove, user_id: str = Depends(get_current
 
 
 @router.get("/keys/guide")
-def get_keys_guide(user_id: str = Depends(get_current_user)):
+def get_keys_guide():
     return KEY_GUIDE
 
 
 @router.get("/logs/stream")
-async def stream_logs(user_id: str = Depends(get_current_user)):
+async def stream_logs():
     async def event_generator():
         last_id = max(0, get_latest_log_id() - 50)
         while True:
@@ -466,9 +665,11 @@ def add_to_waitlist(request: WaitlistRequest):
         raise HTTPException(status_code=500, detail=f"Failed to join waitlist: {e}")
 
 
+@router.patch("/settings")
 @router.post("/settings")
-def update_settings(update: SettingsUpdate, user_id: str = Depends(get_current_user)):
+def update_settings(update: SettingsUpdate):
     """Updates user project settings."""
+    user_id = LOCAL_USER_ID
     values = update.dict(exclude_unset=True)
     if "project_narrative" in values and values["project_narrative"] is not None:
         values["project_narrative"] = sanitize_text(values["project_narrative"])
@@ -478,30 +679,31 @@ def update_settings(update: SettingsUpdate, user_id: str = Depends(get_current_u
 
 @router.post("/publish")
 @limiter.limit("10/minute")
-async def publish(request: Request, body: PublishRequest, user_id: str = Depends(get_current_user)):
+async def publish(request: Request, body: PublishRequest):
     """Publishes a post to X (Twitter)."""
+    user_id = LOCAL_USER_ID
     from publisher.twitter import publish_post
     try:
         post_text = sanitize_text(body.post_text)
         screenshot_path = sanitize_path(body.screenshot_path) if body.screenshot_path else None
-        result = publish_post(post_text, screenshot_path)
+        result = await asyncio.to_thread(publish_post, post_text, screenshot_path)
         if result.get("success") or result.get("fallback"):
-            log_post(
-                post_text=post_text,
-                format_key=sanitize_text(body.format_key or "deep_tech"),
-                screenshot_path=body.screenshot_path or "",
-                tweet_url=result.get("tweet_url", ""),
-                tweet_id=result.get("tweet_id", ""),
-                fallback=bool(result.get("fallback")),
-                user_id=user_id,
-            )
+            await safe_save_post({
+                "post_text": post_text,
+                "format_key": sanitize_text(body.format_key or "deep_tech"),
+                "screenshot_path": body.screenshot_path or "",
+                "tweet_url": result.get("tweet_url", ""),
+                "tweet_id": result.get("tweet_id", ""),
+                "fallback": bool(result.get("fallback")),
+                "user_id": user_id,
+            })
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Publishing failed: {e}")
 
 
 @router.delete("/screenshot/{filename}")
-def delete_screenshot(filename: str, user_id: str = Depends(get_current_user)):
+def delete_screenshot(filename: str):
     """Securely deletes a screenshot from disk."""
     from core.security import delete_capture
     from config.settings import STORAGE_DIR
@@ -511,7 +713,7 @@ def delete_screenshot(filename: str, user_id: str = Depends(get_current_user)):
 
 
 @router.get("/screenshot/{filename}/framed")
-async def get_framed_screenshot(filename: str, user_id: str = Depends(get_current_user)):
+async def get_framed_screenshot(filename: str):
     """Applies a macOS-style frame to a screenshot and returns it."""
     from PIL import Image, ImageDraw, ImageFilter
     from config.settings import STORAGE_DIR
@@ -533,19 +735,15 @@ async def get_framed_screenshot(filename: str, user_id: str = Depends(get_curren
         bar_height = 36
         corner_radius = 12
         
-        # Outer bg color #1a1a1a
         bg_color = (26, 26, 26, 255)
         
-        # Window canvas
         window_w = img.width
         window_h = img.height + bar_height
         
-        # New background
         bg_w = window_w + (padding * 2)
         bg_h = window_h + (padding * 2)
         bg = Image.new('RGBA', (bg_w, bg_h), bg_color)
         
-        # Create shadow
         shadow_padding = 20
         shadow = Image.new('RGBA', (window_w + shadow_padding*2, window_h + shadow_padding*2), (0,0,0,0))
         shadow_draw = ImageDraw.Draw(shadow)
@@ -556,30 +754,23 @@ async def get_framed_screenshot(filename: str, user_id: str = Depends(get_curren
         )
         shadow = shadow.filter(ImageFilter.GaussianBlur(15))
         
-        # Paste shadow
         bg.paste(shadow, (padding - shadow_padding, padding - shadow_padding), shadow)
         
-        # Create window with rounded corners
         window = Image.new('RGBA', (window_w, window_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(window)
         draw.rounded_rectangle([0, 0, window_w, window_h], radius=corner_radius, fill=(255, 255, 255, 255))
         
-        # Title bar background (light gray)
         draw.rounded_rectangle([0, 0, window_w, bar_height], radius=corner_radius, fill=(240, 240, 240, 255))
-        # Fill the bottom of the title bar to square the corners that meet the content
         draw.rectangle([0, bar_height//2, window_w, bar_height], fill=(240, 240, 240, 255))
 
-        # Draw dots
         dot_radius = 6
         dot_y = bar_height // 2
-        draw.ellipse([20-dot_radius, dot_y-dot_radius, 20+dot_radius, dot_y+dot_radius], fill=(255, 95, 87, 255)) # Red
-        draw.ellipse([42-dot_radius, dot_y-dot_radius, 42+dot_radius, dot_y+dot_radius], fill=(254, 188, 46, 255)) # Yellow
-        draw.ellipse([64-dot_radius, dot_y-dot_radius, 64+dot_radius, dot_y+dot_radius], fill=(40, 200, 64, 255)) # Green
+        draw.ellipse([20-dot_radius, dot_y-dot_radius, 20+dot_radius, dot_y+dot_radius], fill=(255, 95, 87, 255)) 
+        draw.ellipse([42-dot_radius, dot_y-dot_radius, 42+dot_radius, dot_y+dot_radius], fill=(254, 188, 46, 255)) 
+        draw.ellipse([64-dot_radius, dot_y-dot_radius, 64+dot_radius, dot_y+dot_radius], fill=(40, 200, 64, 255)) 
         
-        # Paste screenshot content
         window.paste(img, (0, bar_height), img)
         
-        # Final paste window on bg
         bg.paste(window, (padding, padding), window)
         
         img_byte_arr = io.BytesIO()
@@ -591,7 +782,8 @@ async def get_framed_screenshot(filename: str, user_id: str = Depends(get_curren
 
 @router.post("/generate", response_model=GenerateResponse)
 @limiter.limit("10/minute")
-async def generate(request: Request, body: GenerateRequest, user_id: str = Depends(get_current_user)):
+async def generate(request: Request, body: GenerateRequest):
+    user_id = LOCAL_USER_ID
     payload = body.dict()
     for key, value in list(payload.items()):
         if isinstance(value, str):
@@ -601,7 +793,6 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
         payload["raw_thought"] = injection.get("sanitized", "")
         payload["user_message"] = sanitize_text(payload.get("user_message", ""))
     
-    # Use all prompts if no specific format keys provided
     if not payload.get("format_keys"):
         definitions = load_prompt_definitions()
         payload["format_keys"] = list(definitions.keys())
@@ -620,16 +811,30 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
 
     definitions = load_prompt_definitions()
     variations = []
-    for format_key, content in results.items():
-        is_error = content.startswith("[Error]")
-        variations.append(PostVariation(
-            format_key=format_key,
-            label=definitions.get(format_key, {}).get("label", format_key),
-            content=content if not is_error else "",
-            char_count=len(content) if not is_error else 0,
-            success=not is_error,
-            error=content if is_error else None,
-        ))
+    
+    # Handle the helper error structure returned from generate_posts if all failed
+    if "error" in results and len(results) == 1:
+        error_msg = results["error"]
+        for format_key in payload["format_keys"]:
+            variations.append(PostVariation(
+                format_key=format_key,
+                label=definitions.get(format_key, {}).get("label", format_key),
+                content="",
+                char_count=0,
+                success=False,
+                error=error_msg,
+            ))
+    else:
+        for format_key, content in results.items():
+            is_error = content.startswith("[Error]")
+            variations.append(PostVariation(
+                format_key=format_key,
+                label=definitions.get(format_key, {}).get("label", format_key),
+                content=content if not is_error else "",
+                char_count=len(content) if not is_error else 0,
+                success=not is_error,
+                error=content if is_error else None,
+            ))
 
     return GenerateResponse(
         success=True,
@@ -640,13 +845,13 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
 
 
 @router.get("/history")
-def get_history(user_id: str = Depends(get_current_user)):
+async def get_history():
     """Returns the full history of published posts."""
-    return {"history": load_posts(user_id)}
+    return {"history": await safe_get_posts()}
 
 
 @router.get("/draft")
-def get_current_draft(user_id: str = Depends(get_current_user)):
+def get_current_draft():
     """Returns the latest captured draft from disk."""
     if not CURRENT_DRAFT.exists():
         return {"status": "empty"}
@@ -660,8 +865,9 @@ def get_current_draft(user_id: str = Depends(get_current_user)):
 
 @router.post("/chat")
 @limiter.limit("20/minute")
-async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depends(get_current_user)):
+async def chat_refine(request: Request, body: ChatRequest):
     """Refines a post variation using AI chat."""
+    user_id = LOCAL_USER_ID
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to refine.")
 
@@ -671,7 +877,6 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 
-    # Build the refinement prompt
     message = sanitize_text(body.message)
     injection = check_prompt_injection(message)
     if not injection["safe"]:
@@ -679,7 +884,6 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
     format_key = sanitize_text(body.format_key)
     current_text = draft["variations"].get(format_key, "")
     
-    # Simple refinement instruction
     refinement_system_prompt = (
         "You are a social media manager helping a developer refine a post. "
         "The user will provide instructions on how to change an existing draft. "
@@ -694,7 +898,6 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
     )
 
     try:
-        # Use routing for the specific format_key
         new_text = await _ai_call(
             format_key,
             refinement_system_prompt,
@@ -702,7 +905,6 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
             user_id=user_id,
         )
         
-        # Update and save
         draft["variations"][format_key] = new_text
         with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
             json.dump(draft, f, indent=4)
@@ -713,16 +915,17 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
 
 
 @router.post("/cli/trigger")
-async def cli_trigger(request: CliTriggerRequest, user_id: str = Depends(get_current_user)):
+async def cli_trigger(request: CliTriggerRequest):
     """Triggers a capture workflow with a specific thought from the CLI."""
+    user_id = LOCAL_USER_ID
     from core.capture import run_capture
     from core.ocr import run_ocr
     from api.payload import build_payload
     from ai.generator import generate_posts
     
     try:
-        capture = run_capture()
-        ocr = run_ocr(capture["screenshot"]["path"])
+        capture = await asyncio.to_thread(run_capture)
+        ocr = await asyncio.to_thread(run_ocr, capture["screenshot"]["path"])
         
         payload = build_payload(
             raw_thought=sanitize_text(request.thought),
@@ -730,13 +933,11 @@ async def cli_trigger(request: CliTriggerRequest, user_id: str = Depends(get_cur
             capture_result=capture,
         )
         
-        # force Groq
         payload["use_vision_fallback"] = False
         payload["screenshot_b64"] = None
         
         variations = await generate_posts(payload, user_id=user_id)
         
-        # Save to CURRENT_DRAFT
         draft_data = {
             "payload": payload,
             "variations": variations,
@@ -752,31 +953,40 @@ async def cli_trigger(request: CliTriggerRequest, user_id: str = Depends(get_cur
 
 
 @router.post("/capture/trigger")
-async def ui_trigger_capture(request: CaptureTriggerRequest, user_id: str = Depends(get_current_user)):
+async def ui_trigger_capture(request: CaptureTriggerRequest):
     """Triggers a capture workflow from the UI."""
+    user_id = LOCAL_USER_ID
     from core.capture import run_capture
     from core.ocr import run_ocr
     from api.payload import build_payload
     from ai.generator import generate_posts
     
+    stream_log("API", "INFO", f"ui_trigger_capture triggered with delay={request.delay}s")
     try:
-        # Use provided delay (0 if UI handled countdown)
-        capture = run_capture(delay=request.delay)
-        ocr = run_ocr(capture["screenshot"]["path"])
+        stream_log("API", "INFO", f"Step 1/4: Running screenshot capture (delay={request.delay}s)...")
+        capture = await asyncio.to_thread(run_capture, delay=request.delay)
+        screenshot_path = capture.get("screenshot", {}).get("path", "unknown")
+        stream_log("API", "INFO", f"Step 1/4: Screenshot captured successfully. Path: {screenshot_path}")
         
+        stream_log("API", "INFO", f"Step 2/4: Running OCR on screenshot ({screenshot_path})...")
+        ocr = await asyncio.to_thread(run_ocr, screenshot_path)
+        detected_text = ocr.get("text", "")
+        stream_log("API", "INFO", f"Step 2/4: OCR completed. Text length: {len(detected_text)} characters.")
+        
+        stream_log("API", "INFO", "Step 3/4: Building payload for AI generation...")
         payload = build_payload(
             raw_thought="",
             ocr_result=ocr,
             capture_result=capture,
         )
         
-        # force Groq
         payload["use_vision_fallback"] = False
         payload["screenshot_b64"] = None
         
+        stream_log("API", "INFO", "Step 4/4: Requesting AI generation from providers...")
         variations = await generate_posts(payload, user_id=user_id)
+        stream_log("API", "INFO", "Step 4/4: AI generation returned.")
         
-        # Save to CURRENT_DRAFT
         draft_data = {
             "payload": payload,
             "variations": variations,
@@ -798,11 +1008,12 @@ async def ui_trigger_capture(request: CaptureTriggerRequest, user_id: str = Depe
             "error": "AI generation failed for all formats" if errors and len(errors) == len(variations) else "",
         }
     except Exception as e:
+        stream_log("API", "ERROR", f"ui_trigger_capture failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/screenshots")
-def list_screenshots(user_id: str = Depends(get_current_user)):
+def list_screenshots():
     """Lists all screenshots available in the storage directory."""
     from config.settings import STORAGE_DIR
     path = STORAGE_DIR / "screenshots"
@@ -818,20 +1029,19 @@ def list_screenshots(user_id: str = Depends(get_current_user)):
                 "timestamp": os.path.getmtime(path / f)
             })
     
-    # Sort by newest first
     files.sort(key=lambda x: x["timestamp"], reverse=True)
     return {"screenshots": files}
 
 
 @router.post("/screenshot/recommend")
-async def recommend_screenshot(request: RecommendRequest, user_id: str = Depends(get_current_user)):
+async def recommend_screenshot(request: RecommendRequest):
     """Uses AI to recommend where to post a specific screenshot."""
+    user_id = LOCAL_USER_ID
     from config.settings import STORAGE_DIR
     path = STORAGE_DIR / "screenshots" / sanitize_text(request.filename)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Screenshot not found")
 
-    # Simple approach: use the filename or associated OCR if we can find it
     system_prompt = (
         "You are a social media strategist for developers. "
         "Analyze the provided context and recommend which platform (X, LinkedIn, or a Technical Article) "
@@ -839,7 +1049,6 @@ async def recommend_screenshot(request: RecommendRequest, user_id: str = Depends
         "Keep it brief: 2-3 sentences max."
     )
     
-    # Try to find associated OCR from current draft if it matches
     ocr_context = "A screenshot of code or a development tool."
     if CURRENT_DRAFT.exists():
         with open(CURRENT_DRAFT, "r") as f:
@@ -857,7 +1066,7 @@ async def recommend_screenshot(request: RecommendRequest, user_id: str = Depends
 
 
 @router.delete("/prompts/{format_key}")
-def delete_prompt(format_key: str, user_id: str = Depends(get_current_user)):
+def delete_prompt(format_key: str):
     """Deletes a prompt definition."""
     definitions = load_prompt_definitions()
     clean_key = sanitize_text(format_key)
@@ -874,13 +1083,13 @@ def delete_prompt(format_key: str, user_id: str = Depends(get_current_user)):
 
 
 @router.get("/prompts")
-def get_prompts(user_id: str = Depends(get_current_user)):
+def get_prompts():
     """Returns all customizable prompt definitions."""
     return load_prompt_definitions()
 
 
 @router.put("/prompts")
-def update_prompt(update: PromptUpdate, user_id: str = Depends(get_current_user)):
+def update_prompt(update: PromptUpdate):
     """Updates a single prompt definition."""
     definitions = load_prompt_definitions()
     definitions[sanitize_text(update.format_key)] = {
@@ -898,7 +1107,7 @@ def update_prompt(update: PromptUpdate, user_id: str = Depends(get_current_user)
 
 
 @router.post("/rate")
-def rate_post(request: RateRequest, user_id: str = Depends(get_current_user)):
+def rate_post(request: RateRequest):
     """Stores a rating for a historical post."""
     save_rating(
         post_text=sanitize_text(request.post_text),
@@ -910,21 +1119,23 @@ def rate_post(request: RateRequest, user_id: str = Depends(get_current_user)):
 
 
 @router.get("/formats")
-def get_formats(user_id: str = Depends(get_current_user)):
+def get_formats():
     """Returns available post format keys and their display labels."""
     definitions = load_prompt_definitions()
     return {"formats": {k: v["label"] for k, v in definitions.items()}}
 
 
 @router.get("/settings/plan")
-def get_plan(user_id: str = Depends(get_current_user)):
+def get_plan():
+    user_id = LOCAL_USER_ID
     settings = _settings_for_user(user_id)
     preferred = settings.get("preferred_providers") or {}
     return {"plan": preferred.get("twitter_plan", get_twitter_plan())}
 
 
 @router.put("/settings/plan")
-def update_plan(update: PlanUpdate, user_id: str = Depends(get_current_user)):
+def update_plan(update: PlanUpdate):
+    user_id = LOCAL_USER_ID
     plan = sanitize_text(update.plan).lower()
     settings = _settings_for_user(user_id)
     preferred = settings.get("preferred_providers") or {}
@@ -934,12 +1145,14 @@ def update_plan(update: PlanUpdate, user_id: str = Depends(get_current_user)):
 
 
 @router.get("/settings")
-def get_all_settings(user_id: str = Depends(get_current_user)):
+def get_all_settings():
+    user_id = LOCAL_USER_ID
     return _settings_for_user(user_id)
 
 
 @router.post("/settings/sprint/toggle")
-def sprint_toggle(user_id: str = Depends(get_current_user)):
+def sprint_toggle():
+    user_id = LOCAL_USER_ID
     settings = _settings_for_user(user_id)
     new_state = not bool(settings.get("sprint_mode"))
     _update_settings_for_user(user_id, {"sprint_mode": new_state})
@@ -947,14 +1160,86 @@ def sprint_toggle(user_id: str = Depends(get_current_user)):
 
 
 @router.get("/settings/keys")
-def get_keys_status(user_id: str = Depends(get_current_user)):
-    return get_ai_keys_status(user_id)
+def get_keys_status():
+    user_id = LOCAL_USER_ID
+    return get_ai_keys_status()
+
+
+@router.get("/diagnose")
+async def diagnose_connectivity():
+    """Diagnoses network and authentication status of all configured AI providers."""
+    user_id = LOCAL_USER_ID
+    import ai.generator
+    import httpx
+    
+    ai.generator.refresh_provider_keys(user_id)
+    
+    results = {}
+    
+    async with httpx.AsyncClient(timeout=10) as client:
+        for provider_name, config in ai.generator.PROVIDERS.items():
+            if not config.get("api_key"):
+                results[provider_name] = {
+                    "configured": False,
+                    "status": "missing_key",
+                    "error": "No API key configured"
+                }
+                continue
+            
+            try:
+                test_prompt = "respond with 'ok'"
+                await ai.generator._call_provider(
+                    provider_name=provider_name,
+                    system_prompt="you are a connectivity tester",
+                    user_message=test_prompt,
+                    retries=0,
+                    client=client
+                )
+                results[provider_name] = {
+                    "configured": True,
+                    "status": "success",
+                    "error": ""
+                }
+            except Exception as e:
+                results[provider_name] = {
+                    "configured": True,
+                    "status": "error",
+                    "error": str(e)
+                }
+        
+        if not ai.generator.GEMINI_API_KEY:
+            results["gemini"] = {
+                "configured": False,
+                "status": "missing_key",
+                "error": "No API key configured"
+            }
+        else:
+            try:
+                await ai.generator._gemini_text_call(
+                    system_prompt="you are a connectivity tester",
+                    user_message="respond with 'ok'",
+                    client=client
+                )
+                results["gemini"] = {
+                    "configured": True,
+                    "status": "success",
+                    "error": ""
+                }
+            except Exception as e:
+                results["gemini"] = {
+                    "configured": True,
+                    "status": "error",
+                    "error": str(e)
+                }
+                
+    return {"results": results}
 
 
 @router.post("/article/generate")
 @limiter.limit("5/minute")
-async def generate_article(request: Request, body: ArticleGenerateRequest, user_id: str = Depends(get_current_user)):
+async def generate_article(request: Request, body: ArticleGenerateRequest):
     """Generates a full technical article from sprint context."""
+    user_id = LOCAL_USER_ID
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to generate article from.")
 
@@ -966,12 +1251,10 @@ async def generate_article(request: Request, body: ArticleGenerateRequest, user_
 
     codebase_summary = ""
     if body.include_codebase:
-        codebase_summary = summarise_for_prompt(sanitize_text(body.repo_path))
+        codebase_summary = await asyncio.to_thread(summarise_for_prompt, sanitize_text(body.repo_path))
 
-    # Use Article prompt
     sys_prompt = article_prompt(codebase_summary)
     
-    # Context from draft and sprint log
     sprint_context = ""
     if SPRINT_LOG.exists():
         with open(SPRINT_LOG, "r", encoding="utf-8") as f:
@@ -992,8 +1275,9 @@ async def generate_article(request: Request, body: ArticleGenerateRequest, user_
 
 
 @router.post("/article/refine")
-async def refine_article(request: ArticleRefineRequest, user_id: str = Depends(get_current_user)):
+async def refine_article(request: ArticleRefineRequest):
     """Refines an article draft based on user instructions."""
+    user_id = LOCAL_USER_ID
     current_article = sanitize_text(request.current_article)
     instruction = sanitize_text(request.instruction)
     injection = check_prompt_injection(instruction)
@@ -1008,44 +1292,52 @@ async def refine_article(request: ArticleRefineRequest, user_id: str = Depends(g
 
 
 @router.get("/patterns")
-def get_patterns(user_id: str = Depends(get_current_user)):
+def get_patterns():
     """Returns all available viral patterns."""
     return get_all_patterns()
 
 
 @router.post("/thread/split")
-def thread_split(request: ThreadSplitRequest, user_id: str = Depends(get_current_user)):
+def thread_split(request: ThreadSplitRequest):
     """Splits a long post into a numbered thread."""
     tweets = split_into_thread(sanitize_text(request.post_text))
     return {"success": True, "tweets": tweets}
 
 
 @router.post("/posts/verify")
-def verify_logged_post(request: PostVerifyRequest, user_id: str = Depends(get_current_user)):
+async def verify_logged_post(request: PostVerifyRequest):
+    user_id = LOCAL_USER_ID
     post_id = sanitize_text(request.post_id)
     post_url = sanitize_text(request.post_url or "")
-    result = verify_post(post_id, post_url, user_id=user_id)
-    if not result.get("success"):
-        raise HTTPException(status_code=404, detail=result.get("error", "post not found"))
+    result = await safe_update_post(post_id, {
+        "posted_verified": True,
+        "declined": False,
+        "verified_at": datetime.now().isoformat(),
+        "tweet_url": post_url,
+    })
+    if not result:
+        raise HTTPException(status_code=404, detail="post not found")
     track("post_verified", {"has_url": bool(post_url)})
     return {"success": True}
 
 
 @router.post("/posts/decline")
-def decline_logged_post(request: PostDeclineRequest, user_id: str = Depends(get_current_user)):
-    result = decline_post(sanitize_text(request.post_id), user_id=user_id)
-    if not result.get("success"):
-        raise HTTPException(status_code=404, detail=result.get("error", "post not found"))
+async def decline_logged_post(request: PostDeclineRequest):
+    user_id = LOCAL_USER_ID
+    result = await safe_update_post(sanitize_text(request.post_id), {"declined": True})
+    if not result:
+        raise HTTPException(status_code=404, detail="post not found")
     return {"success": True}
 
 
 @router.get("/posts/unverified")
-def unverified_posts(user_id: str = Depends(get_current_user)):
-    return {"posts": get_unverified_posts(user_id)}
+async def unverified_posts():
+    return {"posts": await safe_get_unverified()}
 
 
 @router.post("/metrics/save")
-def save_post_metrics(request: MetricsSaveRequest, user_id: str = Depends(get_current_user)):
+async def save_post_metrics(request: MetricsSaveRequest):
+    user_id = LOCAL_USER_ID
     values = {
         "impressions": request.impressions,
         "likes": request.likes,
@@ -1062,14 +1354,13 @@ def save_post_metrics(request: MetricsSaveRequest, user_id: str = Depends(get_cu
     if len(hashtags) > 10:
         raise HTTPException(status_code=400, detail="hashtags cannot exceed 10 items")
 
-    result = save_metrics(
+    result = await safe_save_metrics(
         sanitize_text(request.post_id),
         {
             **values,
             "hashtags": hashtags,
             "platform": sanitize_text(request.platform or ""),
-        },
-        user_id=user_id,
+        }
     )
     invalidate_insights_cache()
     track("metrics_saved", {"days_after": request.days_after_post})
@@ -1077,17 +1368,188 @@ def save_post_metrics(request: MetricsSaveRequest, user_id: str = Depends(get_cu
 
 
 @router.get("/metrics/{post_id}")
-def get_post_metrics(post_id: str, user_id: str = Depends(get_current_user)):
-    return get_metrics(sanitize_text(post_id), user_id=user_id)
+async def get_post_metrics(post_id: str):
+    try:
+        from storage.supabase_client import get_client
+        client = get_client()
+        response = (
+            client.table("posts")
+            .select("id,impressions,likes,comments,reposts,hashtags,platform,metrics_saved_at,days_after_post")
+            .eq("id", post_id)
+            .eq("metrics_saved", True)
+            .execute()
+        )
+        if response.data:
+            row = response.data[0]
+            return {
+                "post_id": row["id"],
+                "impressions": row.get("impressions") or 0,
+                "likes": row.get("likes") or 0,
+                "comments": row.get("comments") or 0,
+                "reposts": row.get("reposts") or 0,
+                "hashtags": row.get("hashtags") or [],
+                "platform": row.get("platform") or "",
+                "measured_at": row.get("metrics_saved_at") or "",
+                "days_after_post": row.get("days_after_post") or 0,
+            }
+        raise Exception("Metrics not found in Supabase")
+    except Exception:
+        posts = load_local_posts()
+        for post in posts:
+            if post.get("id") == post_id and post.get("metrics_saved"):
+                return {
+                    "post_id": post_id,
+                    "impressions": post.get("impressions") or 0,
+                    "likes": post.get("likes") or 0,
+                    "comments": post.get("comments") or 0,
+                    "reposts": post.get("reposts") or 0,
+                    "hashtags": post.get("hashtags") or [],
+                    "platform": post.get("platform") or "",
+                    "measured_at": post.get("metrics_saved_at") or "",
+                    "days_after_post": post.get("days_after_post") or 0,
+                }
+        return {}
 
 
 @router.get("/insights")
-def get_insights(user_id: str = Depends(get_current_user)):
+async def get_insights():
     now = time.time()
-    cache_key = f"data:{user_id}"
+    cache_key = f"data:{LOCAL_USER_ID}"
     if _INSIGHTS_CACHE.get(cache_key) is not None and now - _INSIGHTS_CACHE["timestamp"] < 3600:
         return _INSIGHTS_CACHE[cache_key]
-    data = calculate_insights(user_id)
+    
+    posts = await safe_get_posts()
+    
+    from storage.insights import _row_from_metric, _best_group, _avg
+    from collections import defaultdict
+    
+    rows = []
+    for post in posts:
+        post_id = post.get("id") or post.get("timestamp")
+        metrics = post.get("metrics") or {
+            "impressions": post.get("impressions") or 0,
+            "likes": post.get("likes") or 0,
+            "comments": post.get("comments") or 0,
+            "reposts": post.get("reposts") or 0,
+            "hashtags": post.get("hashtags") or [],
+            "platform": post.get("platform") or "",
+            "measured_at": post.get("metrics_saved_at") or "",
+            "days_after_post": post.get("days_after_post") or 0,
+        }
+        if not post.get("metrics_saved") and not post.get("metrics"):
+            continue
+        rows.append(_row_from_metric(post_id, metrics, post))
+        
+    if len(rows) < 5:
+        data = {"insufficient_data": True, "posts_needed": 5 - len(rows), "posts_with_metrics": len(rows)}
+    else:
+        cutoff = datetime.now() - timedelta(days=30)
+        recent = [row for row in rows if row["dt"] and row["dt"] >= cutoff] or rows
+        
+        def calculate_streak_local(posts_list: list) -> dict:
+            active_posts = [p for p in posts_list if not p.get("posted_declined") and not p.get("declined")]
+            if not active_posts:
+                return {"current_streak": 0, "best_streak": 0, "total_posts": 0, "last_post_date": ""}
+            post_dates = set()
+            for entry in active_posts:
+                try:
+                    ts = entry.get("timestamp")
+                    if ts:
+                        post_dates.add(datetime.fromisoformat(str(ts).replace("Z", "+00:00")).date())
+                except Exception:
+                    continue
+            if not post_dates:
+                return {"current_streak": 0, "best_streak": 0, "total_posts": len(active_posts), "last_post_date": ""}
+            sorted_dates = sorted(post_dates, reverse=True)
+            last_post_date = sorted_dates[0]
+            today = datetime.now().date()
+            if last_post_date < today - timedelta(days=1):
+                return {"current_streak": 0, "best_streak": 0, "total_posts": len(active_posts), "last_post_date": str(last_post_date)}
+            
+            streak_val = 1
+            for i in range(1, len(sorted_dates)):
+                if sorted_dates[i] == sorted_dates[i - 1] - timedelta(days=1):
+                    streak_val += 1
+                else:
+                    break
+            best_streak = 1
+            running = 1
+            for i in range(1, len(sorted_dates)):
+                if sorted_dates[i] == sorted_dates[i - 1] - timedelta(days=1):
+                    running += 1
+                else:
+                    best_streak = max(best_streak, running)
+                    running = 1
+            best_streak = max(best_streak, running)
+            return {"current_streak": streak_val, "best_streak": best_streak, "total_posts": len(active_posts), "last_post_date": str(last_post_date)}
+        
+        streak = calculate_streak_local(posts)
+        
+        total_impressions = sum(row["impressions"] for row in recent)
+        best_format = _best_group(rows, "format_key")
+        best_day = _best_group(rows, "day")
+        best_time = _best_group(rows, "time_window")
+        top = max(rows, key=lambda row: row["impressions"])
+        overall_avg = _avg([row["impressions"] for row in rows])
+        
+        patterns = []
+        by_format = defaultdict(list)
+        by_chars = defaultdict(list)
+        by_day = defaultdict(list)
+        tags = defaultdict(list)
+        for row in rows:
+            by_format[row["format_key"]].append(row["impressions"])
+            by_chars[row["char_bucket"]].append(row["impressions"])
+            by_day[row["day"]].append(row["impressions"])
+            for tag in row["hashtags"]:
+                tags[tag].append(row["impressions"])
+                
+        if len(by_format) >= 2:
+            ordered = sorted(by_format.items(), key=lambda item: _avg(item[1]), reverse=True)
+            high, low = ordered[0], ordered[-1]
+            if _avg(low[1]) > 0:
+                patterns.append({
+                    "pattern": "format",
+                    "description": f"{high[0].upper()} format gets {round(_avg(high[1]) / _avg(low[1]), 1)}x more impressions than {low[0].upper()}",
+                    "impact": "high",
+                })
+        if by_chars:
+            bucket, values = max(by_chars.items(), key=lambda item: _avg(item[1]))
+            lift = round(((_avg(values) - overall_avg) / overall_avg) * 100, 0) if overall_avg else 0
+            patterns.append({"pattern": "length", "description": f"posts in the {bucket} char bucket get {lift}% more engagement", "impact": "medium"})
+        if by_day:
+            day, values = max(by_day.items(), key=lambda item: _avg(item[1]))
+            multiple = round(_avg(values) / overall_avg, 1) if overall_avg else 0
+            patterns.append({"pattern": "day", "description": f"{day} posts get {multiple}x your average", "impact": "medium"})
+            
+        hashtag_performance = [
+            {"hashtag": tag, "avg_impressions": round(_avg(values), 1), "uses": len(values)}
+            for tag, values in sorted(tags.items(), key=lambda item: _avg(item[1]), reverse=True)
+        ]
+        for tag in hashtag_performance[:3]:
+            patterns.append({
+                "pattern": "hashtag",
+                "description": f"{tag['hashtag']} adds avg {int(tag['avg_impressions'])} impressions",
+                "impact": "medium",
+            })
+            
+        data = {
+            "overview": {
+                "total_posts": len(recent),
+                "total_verified": len([post for post in posts if post.get("posted_verified")]),
+                "total_impressions": total_impressions,
+                "avg_engagement_rate": round(_avg([row["engagement_rate"] for row in recent]), 2),
+                "posting_streak": streak.get("current_streak", 0),
+                "best_streak": streak.get("best_streak", streak.get("current_streak", 0)),
+            },
+            "best_format": {"format_key": best_format.get("name", ""), "avg_impressions": best_format.get("avg", 0.0), "sample_size": best_format.get("sample_size", 0)},
+            "best_day": {"day": best_day.get("name", ""), "avg_impressions": best_day.get("avg", 0.0)},
+            "best_time": {"window": best_time.get("name", ""), "avg_impressions": best_time.get("avg", 0.0)},
+            "top_post": {key: top[key] for key in ["post_text", "impressions", "likes", "format_key", "timestamp"]},
+            "viral_patterns": patterns[:8],
+            "hashtag_performance": hashtag_performance[:20],
+        }
+        
     _INSIGHTS_CACHE["timestamp"] = now
     _INSIGHTS_CACHE[cache_key] = data
     return data

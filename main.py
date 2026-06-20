@@ -5,7 +5,6 @@ import os
 import time
 import webbrowser
 import json
-from core.tray import run_tray, stop_tray
 from api.server import start_server
 from core.capture import run_capture
 from core.ocr import run_ocr
@@ -29,7 +28,11 @@ from api.monitoring import capture_error, init_sentry
 
 def handle_exit(sig, frame):
     print("\n[Shiplog] Shutting down... bye.")
-    stop_tray()
+    try:
+        from core.tray import stop_tray
+        stop_tray()
+    except Exception:
+        pass
     os._exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)   # Ctrl+C
@@ -114,9 +117,15 @@ if __name__ == "__main__":
     # Start tray in a daemon thread so it doesn't block signal handling in main thread
     def run_tray_guarded():
         try:
+            from core.tray import run_tray
             run_tray(trigger_callback=on_trigger)
         except Exception as e:
-            capture_error(e, {"module": "tray"})
+            print(f"[Tray] Tray icon could not be started: {e}")
+            print("[Tray] Continuing in headless/server-only mode.")
+            try:
+                capture_error(e, {"module": "tray"})
+            except Exception:
+                pass
 
     tray_thread = threading.Thread(
         target=run_tray_guarded,

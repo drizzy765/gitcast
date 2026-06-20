@@ -3478,6 +3478,10 @@
                                 ${renderApiKeyRows()}
                             </div>
                             <div id="api-key-form-slot" style="margin-top:12px;"></div>
+                            <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                                <button class="btn-brutalist btn-primary-brutalist" id="diagnose-keys-btn" onclick="runDiagnostics()">[DIAGNOSE_KEYS]</button>
+                            </div>
+                            <div id="diagnose-results-slot" style="margin-top:12px;"></div>
                         </div>
                     </div>
                 </div>
@@ -3515,6 +3519,77 @@
             if (keys) state.keys = keys;
             const guide = await api('/api/keys/guide');
             if (guide) state.keyGuide = guide;
+        }
+
+        async function runDiagnostics() {
+            const btn = document.getElementById('diagnose-keys-btn');
+            const slot = document.getElementById('diagnose-results-slot');
+            if (!btn || !slot) return;
+            
+            btn.innerText = "[DIAGNOSING...]";
+            btn.disabled = true;
+            slot.innerHTML = `
+                <div style="font-family:monospace; font-size:var(--text-xs); color:var(--text-secondary); border: 1px dashed var(--border); padding:12px; background:rgba(0,0,0,0.2);">
+                    Testing provider endpoints in background... please wait.
+                </div>
+            `;
+            
+            try {
+                const res = await api('/api/diagnose');
+                if (!res || !res.results) {
+                    slot.innerHTML = `
+                        <div style="font-family:monospace; font-size:var(--text-xs); color:var(--accent-red); border: 1px dashed var(--accent-red); padding:12px; background:rgba(239,68,68,0.1);">
+                            [!!] Diagnostic check failed to return results.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = `
+                    <div style="font-family:monospace; font-size:var(--text-xs); border: 1px dashed var(--border); padding:12px; background:rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:8px;">
+                        <div style="font-weight:bold; color:var(--text-primary); margin-bottom:4px;">DIAGNOSTIC REPORT:</div>
+                `;
+                
+                for (const [provider, status] of Object.entries(res.results)) {
+                    const name = provider.toUpperCase();
+                    let color = 'var(--text-secondary)';
+                    let label = '[NOT_CONFIGURED]';
+                    let detail = '';
+                    
+                    if (status.configured) {
+                        if (status.status === 'success') {
+                            color = 'var(--accent-green)';
+                            label = '[SUCCESS ✓]';
+                        } else {
+                            color = 'var(--accent-red)';
+                            label = '[FAILED ✗]';
+                            detail = `<div style="color:var(--text-secondary); margin-left:16px; word-break:break-all; font-size:10px; margin-top:2px;">Error: ${status.error}</div>`;
+                        }
+                    }
+                    
+                    html += `
+                        <div style="border-bottom:1px dotted var(--border); padding-bottom:4px; margin-bottom:4px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span>${name}</span>
+                                <span style="color:${color}; font-weight:bold;">${label}</span>
+                            </div>
+                            ${detail}
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+                slot.innerHTML = html;
+            } catch (e) {
+                slot.innerHTML = `
+                    <div style="font-family:monospace; font-size:var(--text-xs); color:var(--accent-red); border: 1px dashed var(--accent-red); padding:12px; background:rgba(239,68,68,0.1);">
+                        [!!] Diagnostics failed with error: ${e.message}
+                    </div>
+                `;
+            } finally {
+                btn.innerText = "[DIAGNOSE_KEYS]";
+                btn.disabled = false;
+            }
         }
 
         function renderApiKeyRows() {
