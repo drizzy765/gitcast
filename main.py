@@ -27,7 +27,7 @@ from api.monitoring import capture_error, init_sentry
 # ── Graceful shutdown ─────────────────────────────────────────────────────────
 
 def handle_exit(sig, frame):
-    print("\n[Shiplog] Shutting down... bye.")
+    print("\n[Gitcast] Shutting down... bye.")
     try:
         from core.tray import stop_tray
         stop_tray()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             "\n"
             "> [!!] NO API KEYS DETECTED\n"
             ">\n"
-            "> shiplog needs at least one AI provider key.\n"
+            "> gitcast needs at least one AI provider key.\n"
             "> all keys are free to obtain:\n"
             ">\n"
             ">   GROQ (recommended first key)\n"
@@ -100,11 +100,11 @@ if __name__ == "__main__":
         )
 
     if not is_onboarding_complete():
-        print("[Shiplog] First launch — set your Project Narrative via tray → Settings.")
+        print("[Gitcast] First launch — set your Project Narrative via tray → Settings.")
         complete_onboarding()
 
-    print("[Shiplog] Running — press Ctrl+Alt+S to trigger (Instant).")
-    print("[Shiplog] Press Ctrl+C to quit.\n")
+    print("[Gitcast] Running — press Ctrl+Alt+S to trigger (Instant).")
+    print("[Gitcast] Press Ctrl+C to quit.\n")
 
     # Run maintenance tasks
     run_cleanup()

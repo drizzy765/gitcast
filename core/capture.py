@@ -15,7 +15,7 @@ GIT_DIFF_EXCLUDES = [
     ":(exclude)storage/data/**",
     ":(exclude).playwright-mcp/**",
     ":(exclude)memory.md",
-    ":(exclude)*shiplog-app*.png",
+    ":(exclude)*gitcast-app*.png",
 ]
 
 
@@ -62,11 +62,31 @@ def capture_active_window(delay: float = 5.0) -> dict:
             "reason": "missing_dependency",
         }
 
-    with mss.mss() as sct:
-        monitor = sct.monitors[1]  # primary monitor
-        screenshot = sct.grab(monitor)
-        img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-        img.save(str(filepath))
+    try:
+        with mss.mss() as sct:
+            monitor = sct.monitors[1]  # primary monitor
+            screenshot = sct.grab(monitor)
+            img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+            img.save(str(filepath))
+            width = screenshot.width
+            height = screenshot.height
+    except Exception as exc:
+        try:
+            img = Image.new("RGB", (1920, 1080), color=(30, 30, 30))
+            img.save(str(filepath))
+            stream_log("Capture", "WARN", f"MSS capture failed ({exc}). Created blank fallback screenshot.")
+            width = 1920
+            height = 1080
+        except Exception as fallback_exc:
+            return {
+                "success": False,
+                "path": "",
+                "width": 0,
+                "height": 0,
+                "timestamp": timestamp,
+                "error": f"MSS failed: {exc}, Fallback failed: {fallback_exc}",
+                "reason": "capture_failed",
+            }
 
     # Return relative path for web/API consistency
     relative_path = str(filepath.relative_to(BASE_DIR)).replace("\\", "/")
@@ -75,8 +95,8 @@ def capture_active_window(delay: float = 5.0) -> dict:
     return {
         "success": True,
         "path": relative_path,
-        "width": screenshot.width,
-        "height": screenshot.height,
+        "width": width,
+        "height": height,
         "timestamp": timestamp,
         "error": "",
         "reason": "ok",

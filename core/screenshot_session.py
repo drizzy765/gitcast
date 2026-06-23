@@ -80,7 +80,7 @@ class ScreenshotSession:
             f"[bold {self.accent_color}]Ctrl+S[/bold {self.accent_color}]  →  [white]Capture Now (Instant)[/white]\n"
             f"[bold {self.accent_color}]Ctrl+D[/bold {self.accent_color}]  →  [white]Done & Review[/white]\n"
             f"[bold {self.accent_color}]Ctrl+C[/bold {self.accent_color}]  →  [white]Cancel[/white]",
-            title=f"[bold {self.accent_color}]SHIPLOG[/bold {self.accent_color}]  ·  Rapid Capture Mode",
+            title=f"[bold {self.accent_color}]GITCAST[/bold {self.accent_color}]  ·  Rapid Capture Mode",
             expand=False,
             border_style=self.accent_color,
             box=box.ROUNDED,

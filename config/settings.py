@@ -86,7 +86,7 @@ reload_api_keys()
 AI_ROUTING_MAP = {
     "article": "kimi",        # Better for long context
     "linkedin": "groq",       # Fast
-    "deep_tech": "kimi",      # Long-context reasoning
+    "deep_tech": "groq",      # Fast
     "shitpost": "groq",       # Fast
     "sprint_summary": "kimi",
     "default": "groq"

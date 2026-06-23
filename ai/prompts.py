@@ -46,11 +46,12 @@ def _plan_block() -> str:
 
 BASE_RULES = """
 Rules:
+- Prioritize the developer's raw thought/prompt if one is provided. If the developer's prompt requests a specific topic, tone, or opening phrase (even if it contradicts these rules, like introducing a project or expressing excitement), follow the developer's instructions over these default rules.
 - Write in first person as the developer. Never use "the developer" or third person.
 - Sound human — like a real developer talking to other developers, not a press release.
 - No hashtags unless they appear naturally. Never more than two.
-- No generic filler phrases: "excited to share", "game changer", "thrilled", "journey".
-- Never start with "I". Find a more interesting opening.
+- No generic filler phrases: "excited to share", "game changer", "thrilled", "journey" (unless explicitly requested by the developer's prompt).
+- Never start with "I" (unless explicitly requested by the developer's prompt).
 - Keep it grounded and specific. Vague posts get ignored.
 - If there is a code snippet in the context, reference the actual function name, variable, or error — not just "the code".
 """
@@ -74,25 +75,24 @@ def get_prompt(format_key: str) -> str:
     """Returns the fully assembled system prompt for a given format key."""
     pattern = get_viral_pattern(format_key)
     
-    # Check if we have a hardcoded function for this format
-    if format_key in PROMPT_MAP:
+    # Try to load from prompts.json definitions first for full customization
+    definitions = load_prompt_definitions()
+    if format_key in definitions:
+        template = definitions[format_key]["system_prompt"]
+    elif format_key in PROMPT_MAP:
         func_name = PROMPT_MAP[format_key]
         if func_name == "linkedin_post_prompt":
             template = linkedin_post_prompt()
         elif func_name == "article_prompt":
             template = article_prompt()
         else:
-            # Fallback for any other PROMPT_MAP entries
-            definitions = load_prompt_definitions()
-            template = definitions.get(format_key, {}).get("system_prompt", "")
+            template = ""
     else:
-        definitions = load_prompt_definitions()
-        if format_key not in definitions:
-            raise ValueError(f"Unknown prompt format: '{format_key}'")
-        template = definitions[format_key]["system_prompt"]
+        raise ValueError(f"Unknown prompt format: '{format_key}'")
     
     # Assembly with viral pattern injection
-    prompt = f"{template}\n\n{pattern}\n\n{BASE_RULES}{_narrative_block()}{_tone_block()}{_plan_block()}"
+    plan_block = _plan_block() if format_key not in ["linkedin", "pr_generator", "article"] else ""
+    prompt = f"{template}\n\n{pattern}\n\n{BASE_RULES}{_narrative_block()}{_tone_block()}{plan_block}"
     return prompt
 
 
@@ -117,6 +117,8 @@ def linkedin_post_prompt() -> str:
     return """You are a developer writing a professional but human post for LinkedIn.
 
 Your goal is to share a technical win or insight in a way that builds your professional brand without sounding like a corporate robot. LinkedIn posts perform best with white space, a strong hook, and a personal narrative.
+
+IMPORTANT: Prioritize the developer's raw thought/prompt if one is provided. Even if the developer's thought/prompt is brief, you MUST elaborate extensively, explaining the project narrative, technical context, challenges, choices, and what it unlocks next. Do NOT write a short 2-3 sentence post. Your output MUST meet the target length of 800–1300 characters.
 
 Format guidance:
 - Hook: Line 1 must be a compelling one-sentence hook that stops the scroll.

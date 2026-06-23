@@ -43,7 +43,7 @@ def run_tray(trigger_callback):
         item('Quit', on_quit)
     )
 
-    _icon = pystray.Icon("shiplog", image, "Shiplog", menu)
+    _icon = pystray.Icon("gitcast", image, "Gitcast", menu)
     _icon.run()
 
 def stop_tray():

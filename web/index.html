@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shiplog — Every ship deserves a log.</title>
+    <title>Gitcast — Every ship deserves a log.</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
@@ -1884,7 +1887,7 @@
 	    <section id="auth-screen" class="auth-screen hidden">
 	        <div class="auth-shell">
 	            <div class="auth-brand">
-	                <div class="auth-title">&gt; SHIPLOG</div>
+	                <div class="auth-title">&gt; GITCAST</div>
 	                <div class="auth-version">v1.0 [BETA]</div>
 	            </div>
 	            <div class="auth-copy">// every ship deserves a log.</div>
@@ -1898,7 +1901,7 @@
 	            </div>
 	            <div class="auth-footer">
 	                <div>// open source · free · BYOK</div>
-	                <div>// github.com/drizzy765/shiplog</div>
+	                <div>// github.com/drizzy765/gitcast</div>
 	            </div>
 	        </div>
 	    </section>
@@ -1907,7 +1910,7 @@
 	        <div class="onboarding-shell">
 	            <div class="onboarding-box">
 	                <div class="onboarding-box-header">
-	                    <span class="onboarding-box-title" id="onboarding-title">┌─ WELCOME_TO_SHIPLOG</span>
+	                    <span class="onboarding-box-title" id="onboarding-title">┌─ WELCOME_TO_GITCAST</span>
 	                    <span class="onboarding-box-line"></span>
 	                    <span class="onboarding-box-limit">─┐</span>
 	                </div>
@@ -1920,12 +1923,12 @@
         <!-- Sidebar Navigation (Left) -->
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-                <pre class="brand-mark">███████╗██╗  ██╗██╗██████╗ ██╗      ██████╗  ██████╗
-██╔════╝██║  ██║██║██╔══██╗██║     ██╔═══██╗██╔════╝
-███████╗███████║██║██████╔╝██║     ██║   ██║██║  ███╗
-╚════██║██╔══██║██║██╔═══╝ ██║     ██║   ██║██║   ██║
-███████║██║  ██║██║██║     ███████╗╚██████╔╝╚██████╔╝
-╚══════╝╚═╝  ╚═╝╚═╝╚═╝     ╚══════╝ ╚═════╝  ╚═════╝ </pre>
+                <pre class="brand-mark"> ██████╗  ██╗ ████████╗  ██████╗   █████╗   ███████╗ ████████╗ 
+██╔════╝  ██║ ╚══██╔══╝ ██╔════╝  ██╔══██╗  ██╔════╝ ╚══██╔══╝ 
+██║  ███╗ ██║    ██║    ██║       ███████║  ███████╗    ██║    
+██║   ██║ ██║    ██║    ██║       ██╔══██║  ╚════██║    ██║    
+╚██████╔╝ ██║    ██║    ╚██████╗  ██║  ██║  ███████║    ██║    
+ ╚═════╝  ╚═╝    ╚═╝     ╚═════╝  ╚═╝  ╚═╝  ╚══════╝    ╚═╝    </pre>
                 <div class="brand-subtitle">v1.0 [BETA] · LOCAL BUILD LOG</div>
             </div>
             
@@ -2145,7 +2148,7 @@
     <!-- Vim-Style Bottom Status Bar -->
 	    <footer class="vim-status-bar hidden" id="status-footer">
 	        <div class="status-left">
-	            <span class="status-brand" style="background: var(--accent-green); color: var(--bg-root); font-weight: bold; padding: 0 4px; margin-right: 4px;">[SHIPLOG]</span>
+	            <span class="status-brand" style="background: var(--accent-green); color: var(--bg-root); font-weight: bold; padding: 0 4px; margin-right: 4px;">[GITCAST]</span>
 	            <span class="status-mode" id="status-bar-view">[DRAFT_ROOM]</span>
 	            <span class="status-channel" id="status-bar-tab">[X_POST]</span>
 	            <span class="status-provider" id="status-bar-providers">[NO_AI]</span>
@@ -2222,7 +2225,7 @@
 
         // --- Terminal Boot Sequence ---
         const BOOT_LINES = [
-            "> SHIPLOG v1.0",
+            "> GITCAST v1.0",
             "> every ship deserves a log.",
             "> loading modules...",
             "> [OK] capture engine",
@@ -2358,14 +2361,31 @@
 	                return;
 	            }
 
-	            const token = localStorage.getItem('sl_token') || '';
-	            if (!token) {
-	                showLogin();
-	                return;
+	            let token = localStorage.getItem('sl_token') || '';
+	            let valid = false;
+
+	            if (token) {
+	                setAuthToken(token, localStorage.getItem('sl_user') || 'local_user');
+	                valid = await verifyStoredToken(token);
 	            }
 
-	            setAuthToken(token, localStorage.getItem('sl_user') || '');
-	            const valid = await verifyStoredToken(token);
+	            if (!valid) {
+	                // Auto-fetch localhost token if stored token is missing or invalid
+	                try {
+	                    const tokenRes = await fetch('/api/token');
+	                    if (tokenRes.status === 200) {
+	                        const tokenData = await tokenRes.json();
+	                        if (tokenData && tokenData.token) {
+	                            token = tokenData.token;
+	                            setAuthToken(token, 'local_user');
+	                            valid = await verifyStoredToken(token);
+	                        }
+	                    }
+	                } catch (e) {
+	                    console.error('Failed to auto-fetch localhost session token:', e);
+	                }
+	            }
+
 	            if (valid) {
 	                await showDashboard(false);
 	            } else {
@@ -2665,7 +2685,7 @@
 	            if (!title || !body) return;
 
 	            if (step === 0) {
-	                title.innerText = '┌─ WELCOME_TO_SHIPLOG';
+	                title.innerText = '┌─ WELCOME_TO_GITCAST';
 	                body.innerHTML = `
 	                    <div>&gt; every ship deserves a log.</div>
 	                    <div class="auth-hint">// you're in. let's get you set up in 4 steps.</div>
@@ -2681,7 +2701,7 @@
 	            if (step === 1) {
 	                title.innerText = '┌─ STEP_1/4 · ADD_YOUR_FIRST_API_KEY';
 	                body.innerHTML = `
-	                    <div class="auth-hint">// Shiplog uses your own AI provider keys.</div>
+	                    <div class="auth-hint">// Gitcast uses your own AI provider keys.</div>
 	                    <div class="auth-hint">// this keeps your data private and costs zero.</div>
 	                    <div>get a free Groq key (takes 2 minutes):</div>
 	                    <a class="onboarding-link" href="https://console.groq.com" target="_blank" rel="noopener">→ console.groq.com</a>
@@ -2737,7 +2757,7 @@
 
 	            title.innerText = "┌─ STEP_4/4 · YOU'RE_ALL_SET";
 	            body.innerHTML = `
-	                <div style="color:var(--accent-green);">[OK] Shiplog is ready.</div>
+	                <div style="color:var(--accent-green);">[OK] Gitcast is ready.</div>
 	                <div class="auth-hint">// press Ctrl+Shift+P anytime to capture a win.</div>
 	                <div class="auth-hint">// your posts appear in Draft Room.</div>
 	                <div class="auth-hint">// track performance in Insights.</div>
@@ -3428,9 +3448,13 @@
 	                    </div>
 	                    <div class="ascii-box-body settings-container" style="display:flex; flex-direction:column; gap:16px;">
 	                        <div class="prompt-input-group">
-	                            <label>ACCOUNT</label>
-	                            <div style="color:var(--accent-green);">[logged in ✓]</div>
-	                            <p style="font-size:var(--text-xs); color:var(--text-secondary); line-height:1.4; margin-top:4px;">Auth token is stored locally as sl_token. Raw API keys are never stored in localStorage.</p>
+	                            <label>ACCOUNT / SESSION_TOKEN</label>
+	                            <div style="color:var(--accent-green); font-weight:bold; margin-bottom: 8px;">[LOGGED_IN ✓]</div>
+	                            <div style="display:flex; gap:8px; align-items:center;">
+	                                <input type="text" id="token-input" class="prompt-field" style="font-family:monospace; font-size:var(--text-xs); flex-grow:1;" value="${state.token || ''}" />
+	                                <button class="btn-brutalist" onclick="saveToken()">[SAVE_TOKEN]</button>
+	                            </div>
+	                            <p style="font-size:var(--text-xs); color:var(--text-secondary); line-height:1.4; margin-top:8px;">Auth token is stored locally as sl_token. Raw API keys are never stored in localStorage.</p>
 	                        </div>
 
 	                        <div class="prompt-input-group" style="border-top: 1px dashed var(--border); padding-top: 16px;">
@@ -3468,7 +3492,7 @@
                         <div class="byok-intro">
                             <div class="byok-title">Configure your own API keys</div>
                             <div class="byok-copy">
-                                Shiplog can use the default API routing configured for this app. BYOK is optional: add your own provider key when the default pool runs out of session quota, hits token limits, or when you want generations billed to your own account.
+                                Gitcast can use the default API routing configured for this app. BYOK is optional: add your own provider key when the default pool runs out of session quota, hits token limits, or when you want generations billed to your own account.
                             </div>
                         </div>
 

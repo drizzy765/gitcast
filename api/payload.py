@@ -18,7 +18,7 @@ def build_payload(
     Supports single or multi-screenshot sessions.
     """
     if format_keys is None:
-        format_keys = ["deep_tech", "struggle", "quick_win", "pr_generator"]
+        format_keys = ["deep_tech", "linkedin", "pr_generator", "quick_win"]
 
     narrative = get_project_narrative()
     git_diff = capture_result.get("git_diff", {"diff": "", "success": False})

@@ -18,7 +18,7 @@ from api.auth import get_token
 init_sentry()
 
 app = FastAPI(
-    title="Shiplog",
+    title="Gitcast",
     description="Local AI server for build-in-public post generation",
     version="0.1.0",
     docs_url="/docs",
@@ -70,6 +70,13 @@ app.mount(
     name="screenshots",
 )
 
+app.mount(
+    "/assets",
+    StaticFiles(directory=str(BASE_DIR / "assets")),
+    name="assets",
+)
+
+
 # register routes
 app.include_router(router, prefix="/api")
 app.include_router(auth_router, prefix="/auth")
@@ -80,7 +87,7 @@ app.include_router(auth_router, prefix="/auth")
 @app.on_event("startup")
 def startup_event():
     print(f"\n[Auth] Session Token: {get_token()}")
-    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
+    print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
 
 
 # ── Serve Frontend ────────────────────────────────────────────────────────────
@@ -102,7 +109,7 @@ async def read_app():
 
 @app.get("/favicon.ico")
 async def favicon():
-    return Response(status_code=204)
+    return FileResponse(BASE_DIR / "assets" / "favicon.ico")
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -139,7 +146,7 @@ def start_server():
         print(f"[Server] Failed to write session token to file: {e}")
 
     print(f"\n[Auth] Session Token: {get_token()}")
-    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
+    print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
     uvicorn.run(
         "api.server:app",
         host="127.0.0.1",
@@ -150,6 +157,6 @@ def start_server():
 
 
 if __name__ == "__main__":
-    print("[Server] Starting Shiplog API on http://127.0.0.1:8000")
+    print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
     print("[Server] Docs available at http://127.0.0.1:8000/docs")
     start_server()

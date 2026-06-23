@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from dotenv import dotenv_values, load_dotenv, set_key, unset_key
 from ai.generator import generate_posts, generate_sprint_summary, _ai_call
-from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, article_refinement_prompt
+from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, article_refinement_prompt, get_prompt
 from ai.formatter import split_into_thread
 from ai.viral_patterns import get_all_patterns
 from api.payload import validate_payload
@@ -884,10 +884,20 @@ async def chat_refine(request: Request, body: ChatRequest):
     format_key = sanitize_text(body.format_key)
     current_text = draft["variations"].get(format_key, "")
     
+    try:
+        platform_prompt = get_prompt(format_key)
+    except Exception as e:
+        platform_prompt = f"Format/Platform key: {format_key}"
+
     refinement_system_prompt = (
-        "You are a social media manager helping a developer refine a post. "
-        "The user will provide instructions on how to change an existing draft. "
-        "Keep the same general format rules but apply the user's changes strictly."
+        "You are a social media manager helping a developer refine a post.\n"
+        f"The post format/platform is: '{format_key}'.\n"
+        "Adhere to the platform rules and guidelines below:\n"
+        "--- START PLATFORM RULES ---\n"
+        f"{platform_prompt}\n"
+        "--- END PLATFORM RULES ---\n\n"
+        "The user will provide instructions on how to change the existing draft. "
+        "Adhere strictly to the platform rules above while applying the user's changes."
     )
     
     refinement_user_message = (

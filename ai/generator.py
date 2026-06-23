@@ -25,13 +25,13 @@ PROVIDERS = {
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": GROQ_API_KEY,
         "model": GROQ_MODEL,
-        "tasks": ["quick_win", "struggle", "linkedin"]
+        "tasks": ["quick_win", "struggle", "linkedin", "deep_tech", "pr_generator"]
     },
     "kimi": {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key": MOONSHOT_API_KEY,
         "model": MOONSHOT_MODEL,
-        "tasks": ["article", "deep_tech", "pr_generator", "sprint_summary"]
+        "tasks": ["article", "sprint_summary"]
     },
     "cerebras": {
         "base_url": "https://api.cerebras.ai/v1",
@@ -147,68 +147,71 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
 
         output = {}
         unavailable = {}
-        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            for format_key, system_prompt in selected_prompts.items():
-                stream_log("Generator", "AI", f"thinking about {format_key}")
-                started = asyncio.get_event_loop().time()
-                
-                active_user_message = user_message
-                if format_key == "pr_generator":
-                    if "## Screen context" in active_user_message:
-                        parts = active_user_message.split("## Screen context")
-                        prefix = parts[0].strip()
-                        suffix = parts[1].strip()
-                        if "## " in suffix:
-                            next_idx = suffix.find("## ")
-                            active_user_message = prefix + "\n\n" + suffix[next_idx:].strip()
-                        else:
-                            active_user_message = prefix
-                
-                try:
-                    if use_vision and screenshots and format_key != "pr_generator":
-                        stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
-                        stream_log("GENERATOR", "INFO", f"generating {format_key} via gemini...")
-                        t0 = asyncio.get_event_loop().time()
-                        try:
-                            result = await _gemini_vision_call(
-                                system_prompt=system_prompt,
-                                user_message=active_user_message,
-                                screenshots=screenshots,
-                                client=client,
-                            )
-                            _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
-                            elapsed = asyncio.get_event_loop().time() - t0
-                            stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
-                        except Exception as e:
-                            print(f"[Generator] {format_key} failed on gemini: {e}")
-                            stream_log("GENERATOR", "WARN", f"{format_key} failed on gemini — trying fallback")
-                            raise e
+
+        async def run_one(format_key, system_prompt, client):
+            started = asyncio.get_event_loop().time()
+            active_user_message = user_message
+            if format_key == "pr_generator":
+                if "## Screen context" in active_user_message:
+                    parts = active_user_message.split("## Screen context")
+                    prefix = parts[0].strip()
+                    suffix = parts[1].strip()
+                    if "## " in suffix:
+                        next_idx = suffix.find("## ")
+                        active_user_message = prefix + "\n\n" + suffix[next_idx:].strip()
                     else:
-                        result = await _ai_call(
-                            format_key,
-                            system_prompt,
-                            active_user_message,
-                            user_id=user_id,
-                            unavailable=unavailable,
+                        active_user_message = prefix
+            
+            local_meta = {"provider_used": "", "used_fallback": False}
+            try:
+                if use_vision and screenshots and format_key != "pr_generator":
+                    stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
+                    stream_log("GENERATOR", "INFO", f"generating {format_key} via gemini...")
+                    t0 = asyncio.get_event_loop().time()
+                    try:
+                        result = await _gemini_vision_call(
+                            system_prompt=system_prompt,
+                            user_message=active_user_message,
+                            screenshots=screenshots,
                             client=client,
                         )
+                        elapsed = asyncio.get_event_loop().time() - t0
+                        stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
+                        local_meta.update({"provider_used": "gemini", "used_fallback": True})
+                    except Exception as e:
+                        print(f"[Generator] {format_key} failed on gemini: {e}")
+                        stream_log("GENERATOR", "WARN", f"{format_key} failed on gemini — trying fallback")
+                        raise e
+                else:
+                    result = await _ai_call(
+                        format_key,
+                        system_prompt,
+                        active_user_message,
+                        user_id=user_id,
+                        unavailable=unavailable,
+                        client=client,
+                        meta=local_meta,
+                    )
 
-                    output[format_key] = result
-                    elapsed = asyncio.get_event_loop().time() - started
-                    track("post_generated", {
-                        "format_keys": [format_key],
-                        "provider_used": _last_call_meta.get("provider_used", ""),
-                        "latency_seconds": round(elapsed, 1),
-                        "used_fallback": bool(_last_call_meta.get("used_fallback", False)),
-                    })
-                    
-                    delay = 2.0 if "article" in format_key else 1.2
-                    if format_key != list(selected_prompts.keys())[-1]:
-                        await asyncio.sleep(delay)
-                except Exception as e:
-                    stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
-                    output[format_key] = f"[Error] {str(e)}"
-                    
+                output[format_key] = result
+                elapsed = asyncio.get_event_loop().time() - started
+                track("post_generated", {
+                    "format_keys": [format_key],
+                    "provider_used": local_meta.get("provider_used", ""),
+                    "latency_seconds": round(elapsed, 1),
+                    "used_fallback": bool(local_meta.get("used_fallback", False)),
+                })
+            except Exception as e:
+                stream_log("Generator", "ERROR", f"{format_key} failed: {e}")
+                output[format_key] = f"[Error] {str(e)}"
+
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            tasks = [
+                run_one(format_key, system_prompt, client)
+                for format_key, system_prompt in selected_prompts.items()
+            ]
+            await asyncio.gather(*tasks)
+            
         # Check if all format generation failed
         all_failed = True
         for format_key in format_keys:
@@ -264,6 +267,7 @@ async def _ai_call(
     user_id: str = "",
     unavailable: dict[str, str] | None = None,
     client: httpx.AsyncClient = None,
+    meta: dict | None = None,
 ) -> str:
     """
     Identifies primary provider for a task and falls back through available providers.
@@ -306,6 +310,11 @@ async def _ai_call(
                     "provider_used": provider_name,
                     "used_fallback": provider_name != primary,
                 })
+                if meta is not None:
+                    meta.update({
+                        "provider_used": provider_name,
+                        "used_fallback": provider_name != primary,
+                    })
                 elapsed = asyncio.get_event_loop().time() - t0
                 stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
                 return result
@@ -317,6 +326,7 @@ async def _ai_call(
                 continue
             except Exception as e:
                 last_error = str(e)
+                unavailable[provider_name] = str(e)
                 print(f"[Generator] {format_key} failed on {provider_name}: {e}")
                 stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
                 continue
@@ -330,6 +340,8 @@ async def _ai_call(
                     stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
                 result = await _gemini_text_call(system_prompt, user_message, client=active_client)
                 _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
+                if meta is not None:
+                    meta.update({"provider_used": "gemini", "used_fallback": True})
                 elapsed = asyncio.get_event_loop().time() - t0
                 stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
                 return result

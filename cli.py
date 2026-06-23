@@ -39,7 +39,7 @@ def main():
             
     except Exception as e:
         print(f"[SL Error] Connection failed: {e}")
-        print("Is Shiplog running? (python main.py)")
+        print("Is Gitcast running? (python main.py)")
 
 if __name__ == "__main__":
     main()
