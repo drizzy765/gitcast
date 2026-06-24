@@ -1,0 +1,56 @@
+{
+  "name": "Gitcast",
+  "logo": {
+    "dark": "/assets/favicon-32x32.png",
+    "light": "/assets/favicon-32x32.png"
+  },
+  "favicon": "/assets/favicon.ico",
+  "colors": {
+    "primary": "#00ff88",
+    "light": "#00ff88",
+    "dark": "#0a0a0a"
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/drizzy765/gitcast"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Download",
+    "url": "https://github.com/drizzy765/gitcast"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "docs/introduction",
+        "docs/quickstart",
+        "docs/api-keys"
+      ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "docs/capture-flow",
+        "docs/dashboard",
+        "docs/post-formats",
+        "docs/sprint-mode",
+        "docs/insights",
+        "docs/article-generator",
+        "docs/providers"
+      ]
+    },
+    {
+      "group": "Community",
+      "pages": [
+        "docs/contributing",
+        "docs/changelog"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/timilovesml1234",
+    "github": "https://github.com/drizzy765/gitcast"
+  }
+}
