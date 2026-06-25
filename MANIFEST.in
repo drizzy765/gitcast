@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include .env.example
+include cli/.env.example
+include requirements.txt
+recursive-include web *
+recursive-include assets *
+recursive-include docs *
