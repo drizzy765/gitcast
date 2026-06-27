@@ -97,25 +97,18 @@ This document records the issues faced during the testing, packaging, and execut
   1. **Unwanted Side-Effects**: It imports and executes the user's local `main.py` (e.g., in a snake game project), causing dependencies like `pygame` to initialize and boot, printing their community welcome messages and running game startup side-effects.
   2. **Namespace Collision & ImportError**: Since the user's `main.py` does not define `on_trigger`, the application crashes with an `ImportError`.
   3. **Missing Package Module**: The packaged/installed version of `gitcast` from PyPI does not distribute its own root-level `main.py` file because `find_packages()` in `setup.py` only bundles directories containing `__init__.py`. Thus, `main` is completely missing from site-packages.
-* **Status**: Logged and pending future resolution.
+* **Status**: Resolved in `gitcast==1.0.7` by moving `on_trigger` to `core/trigger.py` and removing all local directory `sys.path` injection.
 
-#### Proposed Solutions & Analysis
+### Issue 2.3: Unauthorized (401) API Errors and Malformed ObjectMultiplex Chunks
+* **Symptom**: Browser console logs API call failures when calling endpoints like `/api/keys/status` or when trying to generate posts:
+  ```text
+  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+  contentscript.js:14083 ObjectMultiplex - malformed chunk without name "[object Object]"
+  ```
+* **Possible Cause**:
+  1. **Authentication Enforcement**: In Gitcast V3, dependency injection was added to all endpoints (`user_id: str = Depends(get_current_user)`) to support multi-user BYOK (Bring Your Own Key) features.
+  2. **Header/Token omission**: If the frontend (running on `http://localhost:8000`) makes requests to `/api/settings/keys` or other protected routes but fails to supply the correct `Authorization: Bearer <token>` or `X-Session-Token` header, the authentication middleware (`api/auth_middleware.py`) rejects it with `401 Unauthorized`.
+  3. **Malformed Chunk Error**: The `ObjectMultiplex` warning in the console is triggered when the frontend expects a multiplexed stream or JSON packet of a specific structure, but instead receives the raw HTTP 401 JSON error detail `{"detail": "Unauthorized"}` or `{"detail": "Missing Authorization header"}`, causing a client-side parser misalignment.
+* **Status**: Logged and pending future frontend/header propagation triage.
 
-##### Option A: Move trigger callback logic to a dedicated package module (e.g., `core/trigger.py`)
-* **Rating**: ⭐⭐⭐⭐⭐ (Best Possible Fix)
-* **Ups (Pros)**:
-  1. **Clean Namespace isolation**: Completely eliminates the custom `sys.path.insert(0, os.getcwd())` lookup logic inside `cli/gitcast.py`.
-  2. **No collisions**: Importing from `core.trigger` is guaranteed to load files packaged inside your library's namespace, so it won't conflict with any `main.py` inside the user's workspace.
-  3. **No side-effects**: Users' codebases (like a Pygame-based game) will never be imported or executed by Gitcast's boot process.
-  4. **Packaging Standard**: Adheres to Python's package guidelines by not polluting the global site-packages namespace with a top-level module named `main`.
-* **Downs (Cons)**:
-  - Requires moving the `on_trigger` function definition from `main.py` to `core/trigger.py` (minimal effort).
-
-##### Option B: Package the root-level `main.py` explicitly in `setup.py`
-* **Rating**: ⭐⭐ (Poor Packaging Practice)
-* **Ups (Pros)**:
-  - Quick fix: Simply adding `py_modules=["main"]` in `setup.py` distributes `main.py` alongside the package directories.
-* **Downs (Cons)**:
-  - **Global namespace pollution**: Distributing a generic package module named `main` into Python's `site-packages` namespace is highly discouraged. It will clash with any local `main` module import in users' custom python environments.
-  - **Does not solve the collision**: Since `sys.path` in `cli/gitcast.py` checks `os.getcwd()` first, the local `main.py` of the user's project (e.g. `snakegame/main.py`) will still override and take precedence over the packaged `main.py`, preserving the pygame execution side-effects and crash.
 

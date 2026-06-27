@@ -69,7 +69,6 @@ def main():
 
         print("[OK] server running at http://localhost:8000")
         print("[OK] browser opened")
-        print("[OK] hotkey: Ctrl+Shift+P")
 
         from core.tray import run_tray
         from core.trigger import on_trigger
