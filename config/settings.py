@@ -5,9 +5,55 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+import sys
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config"
-load_dotenv(BASE_DIR / ".env")
+
+def get_env_paths() -> list:
+    paths = []
+    # 1. Custom env path
+    custom_path = os.getenv("GITCAST_ENV_PATH")
+    if custom_path:
+        paths.append(Path(custom_path))
+    # 2. Current working directory
+    paths.append(Path(os.getcwd()) / ".env")
+    # 3. Virtual environment parent
+    if hasattr(sys, "prefix") and sys.prefix:
+        paths.append(Path(sys.prefix).parent / ".env")
+    # 4. User home directories
+    paths.append(Path.home() / ".gitcast" / ".env")
+    paths.append(Path.home() / ".gitcast.env")
+    # 5. Base directory
+    paths.append(BASE_DIR / ".env")
+    return [p for p in paths if p]
+
+def load_all_dotenvs(override: bool = False) -> None:
+    paths = get_env_paths()
+    if override:
+        for p in reversed(paths):
+            if p.exists() and p.is_file():
+                load_dotenv(p, override=True)
+    else:
+        for p in paths:
+            if p.exists() and p.is_file():
+                load_dotenv(p, override=False)
+
+def get_active_env_path(for_write: bool = False) -> Path:
+    paths = get_env_paths()
+    for p in paths:
+        if p.exists() and p.is_file():
+            return p
+    if for_write:
+        home_env = Path.home() / ".gitcast" / ".env"
+        try:
+            home_env.parent.mkdir(parents=True, exist_ok=True)
+            return home_env
+        except Exception:
+            pass
+    return BASE_DIR / ".env"
+
+load_all_dotenvs()
 STORAGE_DIR = BASE_DIR / "storage" / "data"
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", "")
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
@@ -63,8 +109,13 @@ def reload_api_keys() -> None:
     global GEMINI_MODEL
     global CEREBRAS_MODEL
     global OPENROUTER_MODEL
+    global SUPABASE_URL
+    global SUPABASE_SERVICE_KEY
+    global SUPABASE_ANON_KEY
+    global SUPABASE_JWT_SECRET
+    global SUPABASE_JWT_AUDIENCE
 
-    load_dotenv(BASE_DIR / ".env", override=True)
+    load_all_dotenvs(override=True)
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
     MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -75,6 +126,12 @@ def reload_api_keys() -> None:
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
     OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
+    
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+    SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 
 
 reload_api_keys()

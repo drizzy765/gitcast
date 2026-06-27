@@ -41,24 +41,7 @@ signal.signal(signal.SIGTERM, handle_exit)  # kill signal
 
 # ── Hotkey trigger ────────────────────────────────────────────────────────────
 
-_is_processing = False
-
-def on_trigger():
-    global _is_processing
-    if _is_processing:
-        return
-    
-    _is_processing = True
-    print("[Main] Hotkey fired — starting interactive session...")
-    
-    try:
-        from core.screenshot_session import ScreenshotSession
-        session = ScreenshotSession()
-        session.run()
-    except Exception as e:
-        print(f"[Main] Error during session: {e}")
-    finally:
-        _is_processing = False
+from core.trigger import on_trigger
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

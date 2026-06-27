@@ -1,5 +1,37 @@
 import os
+import shutil
 from setuptools import setup, find_packages
+
+# Monkeypatch copystat, os.link, chmod, and utime to avoid "Operation not permitted" errors under WSL mounts
+try:
+    if hasattr(os, 'link'):
+        del os.link
+        
+    orig_chmod = os.chmod
+    def patched_chmod(path, mode, *args, **kwargs):
+        try:
+            orig_chmod(path, mode, *args, **kwargs)
+        except OSError:
+            pass
+    os.chmod = patched_chmod
+
+    orig_utime = os.utime
+    def patched_utime(path, times=None, *args, **kwargs):
+        try:
+            orig_utime(path, times, *args, **kwargs)
+        except OSError:
+            pass
+    os.utime = patched_utime
+
+    orig_copystat = shutil.copystat
+    def patched_copystat(src, dst, *args, **kwargs):
+        try:
+            orig_copystat(src, dst, *args, **kwargs)
+        except OSError:
+            pass
+    shutil.copystat = patched_copystat
+except Exception:
+    pass
 
 # Read the contents of README.md
 this_directory = os.path.abspath(os.path.dirname(__file__))
@@ -19,7 +51,7 @@ if os.path.exists(requirements_path):
 
 setup(
     name="gitcast",
-    version="1.0.0",
+    version="1.0.7",
     description="git diff → published post. under 60 seconds.",
     long_description=long_description,
     long_description_content_type="text/markdown",

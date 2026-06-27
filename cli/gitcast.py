@@ -7,8 +7,8 @@ import webbrowser
 
 def main():
     if "--setup" in sys.argv:
-        env_path = os.path.join(
-            os.path.dirname(__file__), '..', '.env')
+        from config.settings import get_active_env_path
+        env_path = str(get_active_env_path(for_write=True))
         example_path = os.path.join(
             os.path.dirname(__file__), '..', '.env.example')
         if not os.path.exists(example_path):
@@ -40,11 +40,41 @@ def main():
         sys.exit(0)
 
     if len(sys.argv) < 2:
-        print("Usage:")
-        print("  gitcast \"your thought here\"  -> Quick single capture")
-        print("  gitcast capture            -> Start interactive multi-shot session")
-        print("  gitcast --setup            -> Setup environment variables")
-        sys.exit(1)
+        # start FastAPI server in background thread
+        import threading
+        import webbrowser
+        import time
+        import urllib.request
+
+        def start_server():
+            from api.server import start_server as run
+            run()
+
+        server_thread = threading.Thread(
+            target=start_server, daemon=True)
+        server_thread.start()
+
+        # wait for server to be ready (max 5 seconds)
+        for _ in range(10):
+            try:
+                urllib.request.urlopen(
+                    "http://localhost:8000/health",
+                    timeout=1)
+                break
+            except Exception:
+                time.sleep(0.5)
+
+        # open browser
+        webbrowser.open("http://localhost:8000")
+
+        print("[OK] server running at http://localhost:8000")
+        print("[OK] browser opened")
+        print("[OK] hotkey: Ctrl+Shift+P")
+
+        from core.tray import run_tray
+        from core.trigger import on_trigger
+        run_tray(trigger_callback=on_trigger)
+        return
 
     command = sys.argv[1]
 
@@ -60,14 +90,14 @@ def main():
     try:
         # Call the internal trigger endpoint
         response = httpx.post(
-            "http://127.0.0.1:8000/api/cli/trigger",
+            "http://localhost:8000/api/cli/trigger",
             json={"thought": thought},
             timeout=30
         )
         
         if response.status_code == 200:
             print("[Gitcast] Context captured. Opening Draft Room...")
-            webbrowser.open("http://127.0.0.1:8000")
+            webbrowser.open("http://localhost:8000")
         else:
             print(f"[Gitcast Error] Failed to trigger: {response.text}")
             

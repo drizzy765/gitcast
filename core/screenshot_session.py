@@ -17,6 +17,8 @@ from core.ocr import run_ocr
 from core.security import scan_for_secrets, delete_capture
 from config.settings import STORAGE_DIR, CURRENT_DRAFT, get_project_narrative
 
+screenshot_dir = STORAGE_DIR / "screenshots"
+
 console = Console()
 
 class ScreenshotSession:
@@ -127,12 +129,13 @@ class ScreenshotSession:
                     return
 
                 # OCR and Security (Silent progress)
-                ocr = run_ocr(shot["path"])
+                abs_shot_path = str(screenshot_dir / Path(shot["path"]).name)
+                ocr = run_ocr(abs_shot_path)
                 security = scan_for_secrets(ocr["text"] or ocr["raw_text"])
 
                 if not security["clean"]:
                     console.print(f"\n[red]⚠️  Shot {len(self.screenshots)+1} blocked (sensitive content).[/red]")
-                    delete_capture(shot["path"])
+                    delete_capture(abs_shot_path)
                     return
 
                 # Add to list with default purpose
@@ -212,7 +215,7 @@ class ScreenshotSession:
             if keep:
                 final_shots.append(s)
             else:
-                delete_capture(s["path"])
+                delete_capture(str(screenshot_dir / Path(s["path"]).name))
         
         self.screenshots = final_shots
 

@@ -7,6 +7,8 @@ from config.settings import STORAGE_DIR
 from core.log_stream import stream_log
 from api.analytics import track
 BASE_DIR = STORAGE_DIR.parent.parent
+screenshot_dir = STORAGE_DIR / "screenshots"
+screenshot_dir.mkdir(parents=True, exist_ok=True)
 from .framing import add_programming_frame
 
 
@@ -218,11 +220,13 @@ def run_capture(delay: float = 5.0) -> dict:
     # Apply programming frame if capture succeeded
     if screenshot.get("success") and screenshot.get("path"):
         try:
-            framed_path = add_programming_frame(screenshot["path"])
-            screenshot["framed_path"] = framed_path
+            abs_path = str(screenshot_dir / Path(screenshot["path"]).name)
+            framed_path = add_programming_frame(abs_path)
+            rel_framed_path = str(Path(framed_path).relative_to(BASE_DIR)).replace("\\", "/")
+            screenshot["framed_path"] = rel_framed_path
             # By default, use the framed path for downstream preview/publishing
             screenshot["raw_path"] = screenshot["path"]
-            screenshot["path"] = framed_path
+            screenshot["path"] = rel_framed_path
         except Exception as e:
             stream_log("Capture", "WARN", f"framing failed: {e}")
             screenshot["framed_path"] = ""

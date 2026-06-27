@@ -445,7 +445,8 @@ KEY_GUIDE = {
 
 
 def _env_path():
-    path = BASE_DIR / ".env"
+    from config.settings import get_active_env_path
+    path = get_active_env_path(for_write=True)
     path.touch(exist_ok=True)
     return path
 
@@ -540,8 +541,7 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
 
 
 @router.get("/keys/status")
-def get_ai_keys_status():
-    user_id = LOCAL_USER_ID
+def get_ai_keys_status(user_id: str = Depends(get_current_user)):
     if _is_local_user(user_id):
         env_values = dotenv_values(_env_path())
         return {
@@ -667,9 +667,8 @@ def add_to_waitlist(request: WaitlistRequest):
 
 @router.patch("/settings")
 @router.post("/settings")
-def update_settings(update: SettingsUpdate):
+def update_settings(update: SettingsUpdate, user_id: str = Depends(get_current_user)):
     """Updates user project settings."""
-    user_id = LOCAL_USER_ID
     values = update.dict(exclude_unset=True)
     if "project_narrative" in values and values["project_narrative"] is not None:
         values["project_narrative"] = sanitize_text(values["project_narrative"])
@@ -679,9 +678,8 @@ def update_settings(update: SettingsUpdate):
 
 @router.post("/publish")
 @limiter.limit("10/minute")
-async def publish(request: Request, body: PublishRequest):
+async def publish(request: Request, body: PublishRequest, user_id: str = Depends(get_current_user)):
     """Publishes a post to X (Twitter)."""
-    user_id = LOCAL_USER_ID
     from publisher.twitter import publish_post
     try:
         post_text = sanitize_text(body.post_text)
@@ -782,8 +780,7 @@ async def get_framed_screenshot(filename: str):
 
 @router.post("/generate", response_model=GenerateResponse)
 @limiter.limit("10/minute")
-async def generate(request: Request, body: GenerateRequest):
-    user_id = LOCAL_USER_ID
+async def generate(request: Request, body: GenerateRequest, user_id: str = Depends(get_current_user)):
     payload = body.dict()
     for key, value in list(payload.items()):
         if isinstance(value, str):
@@ -865,9 +862,8 @@ def get_current_draft():
 
 @router.post("/chat")
 @limiter.limit("20/minute")
-async def chat_refine(request: Request, body: ChatRequest):
+async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depends(get_current_user)):
     """Refines a post variation using AI chat."""
-    user_id = LOCAL_USER_ID
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to refine.")
 
@@ -925,9 +921,8 @@ async def chat_refine(request: Request, body: ChatRequest):
 
 
 @router.post("/cli/trigger")
-async def cli_trigger(request: CliTriggerRequest):
+async def cli_trigger(request: CliTriggerRequest, user_id: str = Depends(get_current_user)):
     """Triggers a capture workflow with a specific thought from the CLI."""
-    user_id = LOCAL_USER_ID
     from core.capture import run_capture
     from core.ocr import run_ocr
     from api.payload import build_payload
@@ -963,9 +958,8 @@ async def cli_trigger(request: CliTriggerRequest):
 
 
 @router.post("/capture/trigger")
-async def ui_trigger_capture(request: CaptureTriggerRequest):
+async def ui_trigger_capture(request: CaptureTriggerRequest, user_id: str = Depends(get_current_user)):
     """Triggers a capture workflow from the UI."""
-    user_id = LOCAL_USER_ID
     from core.capture import run_capture
     from core.ocr import run_ocr
     from api.payload import build_payload
@@ -1044,9 +1038,8 @@ def list_screenshots():
 
 
 @router.post("/screenshot/recommend")
-async def recommend_screenshot(request: RecommendRequest):
+async def recommend_screenshot(request: RecommendRequest, user_id: str = Depends(get_current_user)):
     """Uses AI to recommend where to post a specific screenshot."""
-    user_id = LOCAL_USER_ID
     from config.settings import STORAGE_DIR
     path = STORAGE_DIR / "screenshots" / sanitize_text(request.filename)
     if not path.exists():
@@ -1136,16 +1129,14 @@ def get_formats():
 
 
 @router.get("/settings/plan")
-def get_plan():
-    user_id = LOCAL_USER_ID
+def get_plan(user_id: str = Depends(get_current_user)):
     settings = _settings_for_user(user_id)
     preferred = settings.get("preferred_providers") or {}
     return {"plan": preferred.get("twitter_plan", get_twitter_plan())}
 
 
 @router.put("/settings/plan")
-def update_plan(update: PlanUpdate):
-    user_id = LOCAL_USER_ID
+def update_plan(update: PlanUpdate, user_id: str = Depends(get_current_user)):
     plan = sanitize_text(update.plan).lower()
     settings = _settings_for_user(user_id)
     preferred = settings.get("preferred_providers") or {}
@@ -1155,14 +1146,12 @@ def update_plan(update: PlanUpdate):
 
 
 @router.get("/settings")
-def get_all_settings():
-    user_id = LOCAL_USER_ID
+def get_all_settings(user_id: str = Depends(get_current_user)):
     return _settings_for_user(user_id)
 
 
 @router.post("/settings/sprint/toggle")
-def sprint_toggle():
-    user_id = LOCAL_USER_ID
+def sprint_toggle(user_id: str = Depends(get_current_user)):
     settings = _settings_for_user(user_id)
     new_state = not bool(settings.get("sprint_mode"))
     _update_settings_for_user(user_id, {"sprint_mode": new_state})
@@ -1170,15 +1159,13 @@ def sprint_toggle():
 
 
 @router.get("/settings/keys")
-def get_keys_status():
-    user_id = LOCAL_USER_ID
-    return get_ai_keys_status()
+def get_keys_status(user_id: str = Depends(get_current_user)):
+    return get_ai_keys_status(user_id=user_id)
 
 
 @router.get("/diagnose")
-async def diagnose_connectivity():
+async def diagnose_connectivity(user_id: str = Depends(get_current_user)):
     """Diagnoses network and authentication status of all configured AI providers."""
-    user_id = LOCAL_USER_ID
     import ai.generator
     import httpx
     
@@ -1247,9 +1234,8 @@ async def diagnose_connectivity():
 
 @router.post("/article/generate")
 @limiter.limit("5/minute")
-async def generate_article(request: Request, body: ArticleGenerateRequest):
+async def generate_article(request: Request, body: ArticleGenerateRequest, user_id: str = Depends(get_current_user)):
     """Generates a full technical article from sprint context."""
-    user_id = LOCAL_USER_ID
     if not CURRENT_DRAFT.exists():
         raise HTTPException(status_code=400, detail="No active draft to generate article from.")
 
@@ -1285,9 +1271,8 @@ async def generate_article(request: Request, body: ArticleGenerateRequest):
 
 
 @router.post("/article/refine")
-async def refine_article(request: ArticleRefineRequest):
+async def refine_article(request: ArticleRefineRequest, user_id: str = Depends(get_current_user)):
     """Refines an article draft based on user instructions."""
-    user_id = LOCAL_USER_ID
     current_article = sanitize_text(request.current_article)
     instruction = sanitize_text(request.instruction)
     injection = check_prompt_injection(instruction)
@@ -1315,8 +1300,7 @@ def thread_split(request: ThreadSplitRequest):
 
 
 @router.post("/posts/verify")
-async def verify_logged_post(request: PostVerifyRequest):
-    user_id = LOCAL_USER_ID
+async def verify_logged_post(request: PostVerifyRequest, user_id: str = Depends(get_current_user)):
     post_id = sanitize_text(request.post_id)
     post_url = sanitize_text(request.post_url or "")
     result = await safe_update_post(post_id, {
@@ -1332,8 +1316,7 @@ async def verify_logged_post(request: PostVerifyRequest):
 
 
 @router.post("/posts/decline")
-async def decline_logged_post(request: PostDeclineRequest):
-    user_id = LOCAL_USER_ID
+async def decline_logged_post(request: PostDeclineRequest, user_id: str = Depends(get_current_user)):
     result = await safe_update_post(sanitize_text(request.post_id), {"declined": True})
     if not result:
         raise HTTPException(status_code=404, detail="post not found")
@@ -1346,8 +1329,7 @@ async def unverified_posts():
 
 
 @router.post("/metrics/save")
-async def save_post_metrics(request: MetricsSaveRequest):
-    user_id = LOCAL_USER_ID
+async def save_post_metrics(request: MetricsSaveRequest, user_id: str = Depends(get_current_user)):
     values = {
         "impressions": request.impressions,
         "likes": request.likes,
@@ -1422,9 +1404,9 @@ async def get_post_metrics(post_id: str):
 
 
 @router.get("/insights")
-async def get_insights():
+async def get_insights(user_id: str = Depends(get_current_user)):
     now = time.time()
-    cache_key = f"data:{LOCAL_USER_ID}"
+    cache_key = f"data:{user_id}"
     if _INSIGHTS_CACHE.get(cache_key) is not None and now - _INSIGHTS_CACHE["timestamp"] < 3600:
         return _INSIGHTS_CACHE[cache_key]
     
