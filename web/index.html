@@ -2171,7 +2171,7 @@
         const state = {
             view: 'draft', // draft, article, history, insights, settings, gallery, prompts, byok
             tab: 'deep_tech',
-	            token: localStorage.getItem('sl_token') || '',
+	            token: sessionStorage.getItem('sl_token') || '',
             draft: null,
             tabs: {
                 deep_tech: { text: '', undo: [], shots: [] },
@@ -2333,16 +2333,16 @@
 	        function setAuthToken(token, userId = '') {
 	            state.token = token || '';
 	            window.CE_TOKEN = state.token;
-	            if (state.token) localStorage.setItem('sl_token', state.token);
-	            if (userId) localStorage.setItem('sl_user', userId);
+	            if (state.token) sessionStorage.setItem('sl_token', state.token);
+	            if (userId) sessionStorage.setItem('sl_user', userId);
 	        }
 
 	        function clearAuthToken() {
 	            state.token = '';
 	            window.CE_TOKEN = '';
-	            localStorage.removeItem('sl_token');
-	            localStorage.removeItem('sl_user');
-	            localStorage.removeItem('session_token');
+	            sessionStorage.removeItem('sl_token');
+	            sessionStorage.removeItem('sl_user');
+	            sessionStorage.removeItem('session_token');
 	        }
 
 	        function readAuthHash() {
@@ -2387,11 +2387,11 @@
 	                }
 	            }
 
-	            // 2. Fallback to localStorage token if we couldn't get a valid token from localhost auto-fetch
+	            // 2. Fallback to sessionStorage token if we couldn't get a valid token from localhost auto-fetch
 	            if (!valid) {
-	                token = localStorage.getItem('sl_token') || '';
+	                token = sessionStorage.getItem('sl_token') || '';
 	                if (token) {
-	                    setAuthToken(token, localStorage.getItem('sl_user') || 'local_user');
+	                    setAuthToken(token, sessionStorage.getItem('sl_user') || 'local_user');
 	                    valid = await verifyStoredToken(token);
 	                }
 	            }
@@ -2576,7 +2576,7 @@
 	        }
 
 	        async function logout() {
-	            const token = localStorage.getItem('sl_token') || '';
+	            const token = sessionStorage.getItem('sl_token') || '';
 	            try {
 	                if (token) {
 	                    await fetch('/auth/logout', {
@@ -2605,7 +2605,7 @@
 	        }
 
 	        async function apiFetch(url, options = {}) {
-	            const token = localStorage.getItem('sl_token') || state.token || '';
+	            const token = sessionStorage.getItem('sl_token') || state.token || '';
 	            const headers = {
 	                'Authorization': `Bearer ${token}`,
 	                'X-Session-Token': token,
@@ -4926,7 +4926,7 @@
 	            if (state.logSource) state.logSource.close();
 	            const status = document.getElementById('logs-connection');
 	            try {
-	                state.logSource = new EventSource('/api/logs/stream?token=' + encodeURIComponent(localStorage.getItem('sl_token') || state.token || ''));
+	                state.logSource = new EventSource('/api/logs/stream?token=' + encodeURIComponent(sessionStorage.getItem('sl_token') || state.token || ''));
                 state.logSource.onopen = () => {
                     if (status) {
                         status.innerText = '[LIVE]';

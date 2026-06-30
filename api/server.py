@@ -127,22 +127,20 @@ def health_check():
 # ── Auth token retrieval (Localhost only) ───────────────────────────────────────
 
 def is_localhost(host: str) -> bool:
-    return host in [
-        "127.0.0.1",
-        "::1",
-        "localhost",
-        "::ffff:127.0.0.1",
-    ]
+    if not host:
+        return False
+    clean = host.replace("::ffff:", "")
+    return clean in ["127.0.0.1", "::1", "localhost"]
 
 @app.get("/api/token")
 async def get_token(request: Request):
-    host = request.client.host \
-        if request.client else ""
+    host = request.client.host if request.client else ""
     if not is_localhost(host):
         raise HTTPException(status_code=403,
             detail="localhost only")
     from api.auth import get_token as _get_token
     return {"token": _get_token()}
+
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

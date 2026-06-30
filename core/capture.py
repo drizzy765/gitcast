@@ -133,8 +133,8 @@ def get_git_diff(cwd: str = None) -> dict:
             return {
                 "success": False,
                 "diff": "",
-                "error": result.stderr.strip(),
-                "reason": "git_error",
+                "error": "not a git repository",
+                "reason": "no_git",
             }
 
         if not diff_text:
@@ -184,32 +184,27 @@ def get_git_diff(cwd: str = None) -> dict:
 
 def detect_working_directory() -> str:
     """
-    Attempts to find the most likely git repo the user is working in.
-    Checks the current working directory first.
+    Returns the actual cwd gitcast was launched from.
+    Does NOT fall back to unrelated directories like
+    context-engine's own install path or Path.home().
     """
-    candidates = [
-        Path.cwd(),
-        Path(__file__).resolve().parent.parent,
-        Path.home(),
-    ]
-
-    for candidate in candidates:
-        try:
-            result = subprocess.run(
-                ["git", "rev-parse", "--show-toplevel"],
-                cwd=str(candidate),
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=3,
-            )
-            if result.returncode == 0:
-                return result.stdout.strip()
-        except Exception:
-            continue
-
-    return str(Path.cwd())
+    import sys
+    cwd = os.getcwd()
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=3,
+            creationflags=subprocess.CREATE_NO_WINDOW
+                if sys.platform == "win32" else 0,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return cwd  # not a git repo — return cwd as-is
 
 
 def run_capture(delay: float = 5.0) -> dict:
