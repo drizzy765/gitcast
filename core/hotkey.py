@@ -8,6 +8,7 @@ def start_hotkey_listener(callback):
         callback()
 
     _listener = keyboard.GlobalHotKeys({
+        '<ctrl>+<shift>+p': on_activate,
         '<ctrl>+<alt>+s': on_activate
     })
     _listener.start()

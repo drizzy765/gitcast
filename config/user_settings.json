@@ -1,6 +1,6 @@
 {
   "project_narrative": "",
-  "sprint_mode": true,
+  "sprint_mode": false,
   "tone_memory_enabled": true,
   "ocr_confidence_threshold": 60,
   "post_char_limit": 280,

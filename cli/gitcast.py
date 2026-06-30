@@ -67,8 +67,28 @@ def main():
         # open browser
         webbrowser.open("http://localhost:8000")
 
+        # ASCII Logo
+        print(" ██████╗ ██╗████████╗ ██████╗  █████╗  ███████╗████████╗")
+        print("██╔════╝ ██║╚══██╔══╝██╔════╝ ██╔══██╗ ██╔════╝╚══██╔══╝")
+        print("██║  ███╗██║   ██║   ██║      ███████║ ███████╗   ██║   ")
+        print("██║   ██║██║   ██║   ██║      ██╔══██║ ╚════██║   ██║   ")
+        print("╚██████╔╝██║   ██║   ╚██████╗ ██║  ██║ ███████║   ██║   ")
+        print(" ╚═════╝ ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚══════╝   ╚═╝   ")
+
+        from config.settings import USING_BASE_KEYS
+
+        if USING_BASE_KEYS:
+            print("> [OK] using Gitcast shared API key")
+            print("> // want your own key? run: "
+                  "gitcast --setup")
+            print("> // get free key: console.groq.com")
+        else:
+            print("> [OK] using your configured API keys")
+
         print("[OK] server running at http://localhost:8000")
         print("[OK] browser opened")
+        print("\n> [OK] Gitcast daemon is listening globally.")
+        print("> Press Ctrl+Alt+S (or Ctrl+Shift+P) while coding to capture a screenshot + git diff and generate posts.\n")
 
         from core.tray import run_tray
         from core.trigger import on_trigger

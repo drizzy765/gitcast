@@ -11,7 +11,7 @@ from api.auth_routes import router as auth_router
 from config.settings import missing_api_keys, BASE_DIR, STORAGE_DIR, CONFIG_DIR
 from api.monitoring import init_sentry
 from api.ratelimit import limiter
-from api.auth import get_token
+from api.auth import get_token as get_auth_token
 
 # ── App setup ─────────────────────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ app.include_router(auth_router, prefix="/auth")
 
 @app.on_event("startup")
 def startup_event():
-    print(f"\n[Auth] Session Token: {get_token()}")
+    print(f"\n[Auth] Session Token: {get_auth_token()}")
     print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
 
 
@@ -126,12 +126,23 @@ def health_check():
 
 # ── Auth token retrieval (Localhost only) ───────────────────────────────────────
 
+def is_localhost(host: str) -> bool:
+    return host in [
+        "127.0.0.1",
+        "::1",
+        "localhost",
+        "::ffff:127.0.0.1",
+    ]
+
 @app.get("/api/token")
-def get_session_token(request: Request):
-    client_host = request.client.host if request.client else None
-    if client_host not in ["127.0.0.1", "localhost", "::1"]:
-        raise HTTPException(status_code=403, detail="Forbidden: Access allowed only from localhost")
-    return {"token": get_token()}
+async def get_token(request: Request):
+    host = request.client.host \
+        if request.client else ""
+    if not is_localhost(host):
+        raise HTTPException(status_code=403,
+            detail="localhost only")
+    from api.auth import get_token as _get_token
+    return {"token": _get_token()}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -141,11 +152,11 @@ def start_server():
     # Write session token to config/session_token.txt
     try:
         token_file = CONFIG_DIR / "session_token.txt"
-        token_file.write_text(get_token(), encoding="utf-8")
+        token_file.write_text(get_auth_token(), encoding="utf-8")
     except Exception as e:
         print(f"[Server] Failed to write session token to file: {e}")
 
-    print(f"\n[Auth] Session Token: {get_token()}")
+    print(f"\n[Auth] Session Token: {get_auth_token()}")
     print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
     uvicorn.run(
         "api.server:app",

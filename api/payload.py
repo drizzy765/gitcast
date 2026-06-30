@@ -121,7 +121,6 @@ def _build_user_message(
     diff_text = git_diff.get("diff", "") if isinstance(git_diff, dict) else ""
     if diff_text:
         parts.append(f"## Git diff (recent code changes)\n```\n{diff_text.strip()}\n```")
-
     # project narrative
     if narrative:
         parts.append(f"## Project context\n{narrative}")
@@ -184,13 +183,15 @@ def _encode_image(image_path: str) -> str:
     Returns empty string if encoding fails.
     """
     try:
-        with open(image_path, "rb") as f:
+        from config.settings import BASE_DIR
+        path = Path(image_path)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
     except Exception as e:
         stream_log("Payload", "WARN", f"image encoding failed: {e}")
         return ""
-
-
 # ── Payload validator ─────────────────────────────────────────────────────────
 
 def validate_payload(payload: dict) -> tuple[bool, list[str]]:

@@ -6,6 +6,20 @@ This document records the issues faced during the testing, packaging, and execut
 
 ## 1. Resolved Issues
 
+### Fixed in `gitcast==1.0.8`
+
+#### Issue 2.3: Unauthorized (401) API Errors on localhost
+* **Symptom**: Browser console logs API call failures: `api/keys/status:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)`.
+* **Root Cause**: On page load, the frontend checked if a token existed in `localStorage` and immediately verified it by querying `/api/keys/status`. When the server has restarted or the session has expired, the old token was no longer valid, causing the FastAPI backend to reject it with a `401 Unauthorized` response before the frontend could retrieve a fresh token.
+* **Resolution**: Optimized `authGate` in `web/index.html` to check if the app is accessed on `localhost` (using `window.location.hostname`). If so, it auto-fetches the fresh session token directly from the server's `/api/token` endpoint *first* before verifying or falling back to `localStorage`. This avoids sending any request to `/api/keys/status` with an invalid/expired session token on startup, eliminating the console error.
+
+### Fixed in `gitcast==1.0.7`
+
+#### Issue 2.2: ImportError and Pygame conflicts when running gitcast CLI from project directories containing `main.py`
+* **Symptom**: Running `gitcast` from any project directory containing its own `main.py` (e.g., `snakegame/main.py`) causes the application to crash on startup after initializing the user's local modules (e.g., importing `pygame` and running game startup logic).
+* **Root Cause**: In `cli/gitcast.py`, the script checked if `main.py` existed in the current working directory (`os.getcwd()`), and if so, prepended `os.getcwd()` to `sys.path` and attempted to run `from main import on_trigger`. This executed the user's local `main.py` and crashed when `on_trigger` was not defined.
+* **Resolution**: Moved `on_trigger` to `core/trigger.py` and removed all local directory `sys.path` injection.
+
 ### Fixed in `gitcast==1.0.6`
 
 #### Issue 1.4: FastAPI Server Rate Limiting on Localhost
@@ -66,53 +80,12 @@ This document records the issues faced during the testing, packaging, and execut
   ```
 * **Status**: Logged and waiting for future triage. The application starts, but key bindings or endpoints triggers are failing to generate the actual post output.
 
-### Issue 2.2: ImportError and Pygame conflicts when running gitcast CLI from project directories containing `main.py`
-* **Symptom**: Running `gitcast` from any project directory containing its own `main.py` (e.g., `snakegame/main.py`) causes the application to crash on startup after initializing the user's local modules (e.g., importing `pygame` and running game startup logic).
-* **Console Logs & Traceback**:
-  ```text
-  (venv) PS C:\Users\USER\Documents\snakegame> gitcast
-  [Monitoring] Sentry not configured - skipping
-
-  [Auth] Session Token: fe45cf73-a93b-4db3-a90a-f03dda41001c
-  [Server] Starting Gitcast API on http://127.0.0.1:8000
-
-  [Auth] Session Token: fe45cf73-a93b-4db3-a90a-f03dda41001c
-  [Server] Starting Gitcast API on http://127.0.0.1:8000
-  pygame 2.6.1 (SDL 2.28.4, Python 3.10.0)
-  Hello from the pygame community. https://www.pygame.org/contribute.html
-  Traceback (most recent call last):
-    File "C:\Users\USER\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 196, in _run_module_as_main
-      return _run_code(code, main_globals, None,
-    File "C:\Users\USER\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 86, in _run_code
-      exec(code, run_globals)
-    File "C:\Users\USER\Documents\context-engine\venv\Scripts\gitcast.exe\__main__.py", line 7, in <module>
-      sys.exit(main())
-    File "C:\Users\USER\Documents\context-engine\venv\lib\site-packages\cli\gitcast.py", line 79, in main
-      from main import on_trigger
-  ImportError: cannot import name 'on_trigger' from 'main' (C:\Users\USER\Documents\snakegame\main.py)
-  ```
+### Issue 2.4: 401 Unauthorized API Errors and Failure to Generate Posts on Directory/Venv Switch (gitcast==1.0.10)
+* **Symptom**: Running `gitcast` from a different project directory (`snakegame`) using a different virtual environment leads to `api/keys/status:1 Failed to load resource: 401 (Unauthorized)` in the browser console, and post generation does not trigger.
 * **Root Cause**:
-  In `cli/gitcast.py`, the script checks if `main.py` exists in the current working directory (`os.getcwd()`), and if so, prepends `os.getcwd()` to `sys.path` and attempts to run `from main import on_trigger`. 
-  This causes the following critical failures:
-  1. **Unwanted Side-Effects**: It imports and executes the user's local `main.py` (e.g., in a snake game project), causing dependencies like `pygame` to initialize and boot, printing their community welcome messages and running game startup side-effects.
-  2. **Namespace Collision & ImportError**: Since the user's `main.py` does not define `on_trigger`, the application crashes with an `ImportError`.
-  3. **Missing Package Module**: The packaged/installed version of `gitcast` from PyPI does not distribute its own root-level `main.py` file because `find_packages()` in `setup.py` only bundles directories containing `__init__.py`. Thus, `main` is completely missing from site-packages.
-* **Status**: Resolved in `gitcast==1.0.7` by moving `on_trigger` to `core/trigger.py` and removing all local directory `sys.path` injection.
+  1. **Token Authentication Bypass Failure**: The browser's attempt to retrieve the active session token from `/api/token` returns `403 Forbidden` if the request host is mapped as an IPv4-mapped IPv6 address (e.g. `::ffff:127.0.0.1`). The frontend then falls back to using the old `localStorage` token from a previous run (e.g. in `context-engine`), which the FastAPI backend rejects with a `401 Unauthorized` status.
+  2. **Wrong Working Directory Resolution**: If the target directory (`snakegame`) is not a Git repository, `detect_working_directory()` falls back to candidates in the list, matching the parent `context-engine` directory. Diffs and history are scanned from the wrong project, preventing post generation for the active context.
+* **Status**: Logged in detail in [pypit-error.md](file:///mnt/c/Users/USER/Documents/context-engine/pypit-error.md) and awaiting resolution.
 
-### Issue 2.3: Unauthorized (401) API Errors and contentscript.js ObjectMultiplex Warnings
-* **Symptom**: Browser console logs API call failures and extension warnings:
-  ```text
-  contentscript.js:14083 MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added. Use emitter.setMaxListeners() to increase limit
-  contentscript.js:14083 MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added. Use emitter.setMaxListeners() to increase limit
-  contentscript.js:14083 ObjectMultiplex - orphaned data for stream "app-init-liveness"
-  contentscript.js:14083 ObjectMultiplex - orphaned data for stream "background-liveness"
-  contentscript.js:14083 ObjectMultiplex - malformed chunk without name "[object Object]"
-  api/keys/status:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)
-  ```
-* **Possible Cause & Analysis**:
-  1. **Browser Extension Interference**: The warnings from `contentscript.js` (including `MaxListenersExceededWarning`, `ObjectMultiplex`, `app-init-liveness`, and `background-liveness`) are typical of browser extensions (such as MetaMask or wallet extensions) communicating between their inject-scripts and background processes, and are **not** generated by Gitcast's own codebase.
-  2. **FastAPI Authentication Rejection**: The `401 (Unauthorized)` response on `/api/keys/status` is a Gitcast-specific backend security validation error. In Gitcast V3, security controls require requests to provide a valid token. If the frontend does not correctly configure the local session token retrieved from `/api/token` into the request headers (`Authorization: Bearer <token>` or `X-Session-Token: <token>`), the authentication middleware (`api/auth_middleware.py`) rejects it.
-  3. **Malformed Chunk Side-Effect**: When a resource fails to load (returning a HTTP 401 error response), browser extensions or multiplexers attempting to parse the stream may log a `malformed chunk` error, as they expect formatted payload stream data but instead receive the error status response.
-* **Status**: Logged and pending future authentication header integration triage.
 
 

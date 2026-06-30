@@ -185,12 +185,11 @@ def get_git_diff(cwd: str = None) -> dict:
 def detect_working_directory() -> str:
     """
     Attempts to find the most likely git repo the user is working in.
-    Checks the script's own directory first, then walks up from cwd.
+    Checks the current working directory first.
     """
     candidates = [
-        Path(__file__).resolve().parent.parent,  # project root
         Path.cwd(),
-        Path(os.environ.get("USERPROFILE", "")) / "Documents" / "context-engine",
+        Path(__file__).resolve().parent.parent,
         Path.home(),
     ]
 
@@ -210,7 +209,7 @@ def detect_working_directory() -> str:
         except Exception:
             continue
 
-    return str(Path.home())
+    return str(Path.cwd())
 
 
 def run_capture(delay: float = 5.0) -> dict:

@@ -84,13 +84,16 @@ API_KEY_ENV_MAP = {
     "kimi": "MOONSHOT_API_KEY",
     "cerebras": "CEREBRAS_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",
 }
 
 GROQ_API_KEY = ""
+DEEPSEEK_API_KEY = ""
 MOONSHOT_API_KEY = ""
 GEMINI_API_KEY = ""
 CEREBRAS_API_KEY = ""
 OPENROUTER_API_KEY = ""
+USING_BASE_KEYS = False
 GROQ_MODEL = ""
 MOONSHOT_MODEL = ""
 GEMINI_MODEL = ""
@@ -100,10 +103,12 @@ OPENROUTER_MODEL = ""
 
 def reload_api_keys() -> None:
     global GROQ_API_KEY
+    global DEEPSEEK_API_KEY
     global MOONSHOT_API_KEY
     global GEMINI_API_KEY
     global CEREBRAS_API_KEY
     global OPENROUTER_API_KEY
+    global USING_BASE_KEYS
     global GROQ_MODEL
     global MOONSHOT_MODEL
     global GEMINI_MODEL
@@ -116,11 +121,26 @@ def reload_api_keys() -> None:
     global SUPABASE_JWT_AUDIENCE
 
     load_all_dotenvs(override=True)
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    
+    # Base keys — maintainer's keys as default fallback
+    # Users can override by setting their own in .env
+    _BASE_GROQ = os.getenv("GITCAST_BASE_GROQ_KEY", "")
+    _BASE_DEEPSEEK = os.getenv("GITCAST_BASE_DEEPSEEK_KEY", "")
+    _BASE_GEMINI = os.getenv("GITCAST_BASE_GEMINI_KEY", "")
+
+    # User key takes priority, falls back to base key
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY") or _BASE_GROQ
+    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY") or _BASE_DEEPSEEK
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or _BASE_GEMINI
     MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-    CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+    CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
+
+    # Flag so the app knows which mode it's in
+    USING_BASE_KEYS = (
+        not os.getenv("GROQ_API_KEY") and bool(_BASE_GROQ)
+    )
+
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-8k")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")

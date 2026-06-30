@@ -32,7 +32,11 @@ def run_ocr(image_path: str) -> dict:
     threshold = get_ocr_threshold()  # default 60, set in config/settings.py
 
     try:
-        img = Image.open(image_path)
+        from config.settings import BASE_DIR
+        path = Path(image_path)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        img = Image.open(path)
 
         # get detailed output including confidence scores per word
         data = pytesseract.image_to_data(

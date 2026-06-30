@@ -542,32 +542,23 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
 
 @router.get("/keys/status")
 def get_ai_keys_status(user_id: str = Depends(get_current_user)):
-    if _is_local_user(user_id):
-        env_values = dotenv_values(_env_path())
-        return {
-            provider: {
-                "configured": bool((env_values.get(env_name) or os.getenv(env_name) or "").strip()),
-                "key_preview": "",
-                "last_used_at": None,
-            }
-            for provider, env_name in API_KEY_ENV_MAP.items()
-        }
-
-    response = (
-        get_client()
-        .table("api_keys")
-        .select("provider,key_preview,last_used_at,created_at")
-        .eq("user_id", user_id)
-        .execute()
+    from config.settings import (
+        GROQ_API_KEY,
+        DEEPSEEK_API_KEY,
+        GEMINI_API_KEY,
+        MOONSHOT_API_KEY,
+        CEREBRAS_API_KEY,
+        OPENROUTER_API_KEY,
+        USING_BASE_KEYS,
     )
-    saved = {row["provider"]: row for row in response.data or []}
     return {
-        provider: {
-            "configured": provider in saved,
-            "key_preview": saved.get(provider, {}).get("key_preview", ""),
-            "last_used_at": saved.get(provider, {}).get("last_used_at"),
-        }
-        for provider in API_KEY_ENV_MAP
+        "groq": bool(GROQ_API_KEY),
+        "deepseek": bool(DEEPSEEK_API_KEY),
+        "gemini": bool(GEMINI_API_KEY),
+        "kimi": bool(MOONSHOT_API_KEY),
+        "cerebras": bool(CEREBRAS_API_KEY),
+        "openrouter": bool(OPENROUTER_API_KEY),
+        "using_base_keys": USING_BASE_KEYS,
     }
 
 

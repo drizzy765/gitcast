@@ -1984,8 +1984,11 @@
                         <span class="provider-name">OPENROUTER</span>
                         <span class="provider-status" id="status-openrouter">[ACTIVE]</span>
                     </div>
-	                </div>
-	            </div>
+                </div>
+                <div id="shared-key-note" class="shared-key-note hidden" style="font-size: 10px; color: #ffb800; margin-top: 8px; font-family: var(--font-mono);">
+                    // using shared key · add yours: gitcast --setup
+                </div>
+            </div>
 
 	            <div class="sidebar-spacer"></div>
 	            <div class="sidebar-auth-container">
@@ -2361,16 +2364,14 @@
 	                return;
 	            }
 
-	            let token = localStorage.getItem('sl_token') || '';
+	            let token = '';
 	            let valid = false;
 
-	            if (token) {
-	                setAuthToken(token, localStorage.getItem('sl_user') || 'local_user');
-	                valid = await verifyStoredToken(token);
-	            }
-
-	            if (!valid) {
-	                // Auto-fetch localhost token if stored token is missing or invalid
+	            // 1. If on localhost, try to get the active session token directly from the server first
+	            const isLocalhost = window.location.hostname === 'localhost' || 
+	                                window.location.hostname === '127.0.0.1' || 
+	                                window.location.hostname === '[::1]';
+	            if (isLocalhost) {
 	                try {
 	                    const tokenRes = await fetch('/api/token');
 	                    if (tokenRes.status === 200) {
@@ -2383,6 +2384,15 @@
 	                    }
 	                } catch (e) {
 	                    console.error('Failed to auto-fetch localhost session token:', e);
+	                }
+	            }
+
+	            // 2. Fallback to localStorage token if we couldn't get a valid token from localhost auto-fetch
+	            if (!valid) {
+	                token = localStorage.getItem('sl_token') || '';
+	                if (token) {
+	                    setAuthToken(token, localStorage.getItem('sl_user') || 'local_user');
+	                    valid = await verifyStoredToken(token);
 	                }
 	            }
 
@@ -2646,20 +2656,49 @@
             if (keys) {
                 state.keys = keys;
                 const onlineProviders = [];
+                const usingBaseKeys = !!keys.using_base_keys;
+
                 KEY_PROVIDERS.forEach(k => {
                     const el = document.getElementById(`l-${k}`);
                     const lbl = document.getElementById(`status-${k}`);
                     const active = !!keys[k];
                     
-                    if (el) el.classList.toggle('online', active);
+                    if (el) {
+                        el.classList.toggle('online', active);
+                        if (active) {
+                            if (k === 'groq' && usingBaseKeys) {
+                                el.style.color = '#ffb800'; // Amber for shared key
+                            } else {
+                                el.style.color = ''; // Use CSS default
+                            }
+                        } else {
+                            el.style.color = '';
+                        }
+                    }
                     if (lbl) {
-                        lbl.innerText = active ? '[ACTIVE]' : '[MISSING]';
-                        lbl.style.color = active ? 'var(--accent-green)' : 'var(--text-secondary)';
+                        if (k === 'groq' && usingBaseKeys) {
+                            lbl.innerText = '[SHARED]';
+                            lbl.style.color = '#ffb800';
+                        } else {
+                            lbl.innerText = active ? '[ACTIVE]' : '[MISSING]';
+                            lbl.style.color = active ? 'var(--accent-green)' : 'var(--text-secondary)';
+                        }
                     }
                     if (active) {
                         onlineProviders.push(k.toUpperCase());
                     }
                 });
+
+                // Toggle note display
+                const noteEl = document.getElementById('shared-key-note');
+                if (noteEl) {
+                    if (usingBaseKeys) {
+                        noteEl.classList.remove('hidden');
+                    } else {
+                        noteEl.classList.add('hidden');
+                    }
+                }
+
                 document.getElementById('status-bar-providers').innerText = onlineProviders.length > 0 ? `[${onlineProviders.join('/')}]` : '[NO_AI]';
             }
             const guide = await api('/api/keys/guide');
@@ -3619,7 +3658,7 @@
         function renderApiKeyRows() {
             return KEY_PROVIDERS.map(provider => {
                 const guide = state.keyGuide[provider] || {};
-                const active = !!state.keys[provider]?.configured;
+                const active = state.keys[provider]?.configured !== undefined ? !!state.keys[provider]?.configured : !!state.keys[provider];
                 const status = active ? '[ACTIVE ✓]' : '[NOT_CONFIGURED]';
                 const statusClass = active ? 'active' : 'missing';
                 const preview = active ? '[●●●●●●●●...set]' : '[no_key_saved]';

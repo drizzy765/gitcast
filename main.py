@@ -53,7 +53,8 @@ if __name__ == "__main__":
     if missing:
         print(f"[Warning] Missing API keys: {', '.join(missing)}")
 
-    if not any(ai_provider_key_status().values()):
+    from config.settings import USING_BASE_KEYS
+    if not any(ai_provider_key_status().values()) and not USING_BASE_KEYS:
         print(
             "\n"
             "> [!!] NO API KEYS DETECTED\n"
