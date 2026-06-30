@@ -846,7 +846,11 @@ def get_current_draft():
     
     try:
         with open(CURRENT_DRAFT, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict) and "payload" in data:
+                is_valid, warnings = validate_payload(data["payload"])
+                data["warnings"] = warnings
+            return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 

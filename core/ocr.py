@@ -62,7 +62,8 @@ def run_ocr(image_path: str) -> dict:
             img,
             config="--psm 6"
         )
-        clean_text = _clean_ocr_text(raw_text)
+        filtered_text = filter_browser_chrome(raw_text)
+        clean_text = _clean_ocr_text(filtered_text)
 
         is_reliable = mean_confidence >= threshold
 
@@ -93,6 +94,45 @@ def run_ocr(image_path: str) -> dict:
         )
     except Exception as e:
         return _error_result(str(e))
+
+
+def filter_browser_chrome(text: str) -> str:
+    """
+    Removes common browser UI noise from OCR text:
+    tab titles, bookmark bars, extension icons,
+    single-character garbage from icons.
+    """
+    import re
+
+    lines = text.split('\n')
+    cleaned = []
+
+    noise_patterns = [
+        r'^\W{1,3}$',           # lines of just symbols
+        r'^[a-z]{1,2}$',        # 1-2 char garbage
+        r'bookmark',
+        r'localhost:\d+',
+        r'^\d+:\d+\s*(AM|PM)?$', # clock/time
+        r'gmail|youtube|maps$',  # bookmark bar entries
+        r'ask\s*(gemini|chatgpt|claude)',
+        r'^[●○✓✗→←↑↓]+$',
+    ]
+
+    for line in lines:
+        stripped = line.strip()
+        if len(stripped) < 3:
+            continue
+        if any(re.search(p, stripped, re.IGNORECASE)
+               for p in noise_patterns):
+            continue
+        # skip lines that are mostly symbols/garbage
+        alpha_ratio = sum(c.isalpha() for c in stripped) / \
+            max(len(stripped), 1)
+        if alpha_ratio < 0.5:
+            continue
+        cleaned.append(stripped)
+
+    return '\n'.join(cleaned)
 
 
 # ── Text cleaning ─────────────────────────────────────────────────────────────

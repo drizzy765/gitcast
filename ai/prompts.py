@@ -46,14 +46,27 @@ def _plan_block() -> str:
 
 BASE_RULES = """
 Rules:
-- Prioritize the developer's raw thought/prompt if one is provided. If the developer's prompt requests a specific topic, tone, or opening phrase (even if it contradicts these rules, like introducing a project or expressing excitement), follow the developer's instructions over these default rules.
-- Write in first person as the developer. Never use "the developer" or third person.
-- Sound human — like a real developer talking to other developers, not a press release.
-- No hashtags unless they appear naturally. Never more than two.
-- No generic filler phrases: "excited to share", "game changer", "thrilled", "journey" (unless explicitly requested by the developer's prompt).
-- Never start with "I" (unless explicitly requested by the developer's prompt).
+- Write in first person as the developer.
+- Sound human — like a developer talking to other
+  developers, not a press release or marketing copy.
+- NEVER invent a project, feature, or narrative that
+  isn't directly supported by the git diff, OCR text,
+  or the developer's raw thought. If the available
+  context is thin or unclear, write a short, honest,
+  low-key post rather than fabricating details.
+- If OCR text looks like browser UI, tab names, or
+  garbled text rather than code, IGNORE it completely
+  and rely only on the raw thought and git diff.
+- No hashtags unless they appear naturally. Never
+  more than two. Never hashtag stuff like #innovation,
+  #GamingEvolved, #TechMeetsTradition — these read as
+  AI-generated marketing fluff.
+- No generic filler: "excited to share", "game changer",
+  "cutting-edge", "pushing boundaries", "unparalleled",
+  "the intersection of X and Y", "delving into".
 - Keep it grounded and specific. Vague posts get ignored.
-- If there is a code snippet in the context, reference the actual function name, variable, or error — not just "the code".
+- If there is a code snippet in the context, reference
+  the actual function name, variable, or error.
 """
 
 

@@ -104,23 +104,35 @@ def _build_user_message(
     if raw_thought.strip():
         parts.append(f"## Developer's raw thought\n{raw_thought.strip()}")
 
-    # Screenshots with Purpose Tags and OCR
-    parts.append("## Screen context")
-    for s in screenshots:
-        idx = s.get("index", 1)
-        purpose = s.get("purpose", "general")
-        parts.append(f"### Screenshot {idx} ({purpose})")
-        
-        ocr = s.get("ocr_text", "").strip()
-        if ocr:
-            parts.append(f"Visible text:\n{ocr}")
-        else:
-            parts.append("[No text detected or OCR failed]")
+    parts.append(
+        "## Priority\n"
+        "If a git diff is present below, treat it as "
+        "the primary source of truth for what changed. "
+        "Screen text is secondary context only."
+    )
 
-    # git diff
+    # git diff section comes first
     diff_text = git_diff.get("diff", "") if isinstance(git_diff, dict) else ""
     if diff_text:
-        parts.append(f"## Git diff (recent code changes)\n```\n{diff_text.strip()}\n```")
+        parts.append(f"## Git diff (primary source)\n```\n{diff_text.strip()}\n```")
+
+    # check if OCR text is fragmented
+    ocr_text = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")]).strip()
+    if ocr_text and len(ocr_text) < 80:
+        parts.append(
+            "## Note\n"
+            "Screen context is fragmented/unreliable — "
+            "do not base the post on it. Rely on the "
+            "developer's raw thought and git diff only."
+        )
+
+    # OCR section comes second, clearly labeled
+    if ocr_text and not use_vision:
+        parts.append(
+            f"## Screen text (secondary, may be noisy)\n"
+            f"{ocr_text}"
+        )
+
     # project narrative
     if narrative:
         parts.append(f"## Project context\n{narrative}")
@@ -192,6 +204,8 @@ def _encode_image(image_path: str) -> str:
     except Exception as e:
         stream_log("Payload", "WARN", f"image encoding failed: {e}")
         return ""
+
+
 # ── Payload validator ─────────────────────────────────────────────────────────
 
 def validate_payload(payload: dict) -> tuple[bool, list[str]]:
@@ -200,22 +214,28 @@ def validate_payload(payload: dict) -> tuple[bool, list[str]]:
     Returns (is_valid, list_of_warnings).
     """
     warnings = []
+    raw_thought = payload.get("raw_thought", "").strip()
+    ocr_text = payload.get("ocr_text", "").strip()
+    git_diff_available = payload.get("git_diff_available", False)
 
-    if not payload.get("raw_thought"):
-        warnings.append("No raw thought provided — post quality will be lower.")
+    generic_thoughts = [
+        "captured via hotkey trigger",
+        "", "test", "testing",
+    ]
+    is_generic = raw_thought.lower() in generic_thoughts
 
-    if not payload.get("git_diff_available"):
-        warnings.append("No git diff — post will rely on OCR and raw thought only.")
+    has_real_content = (
+        not is_generic or
+        len(ocr_text) > 100 or
+        git_diff_available
+    )
 
-    if not payload.get("ocr_text") and not payload.get("use_vision_fallback"):
-        warnings.append("No OCR text and no vision fallback — very limited context.")
+    if not has_real_content:
+        warnings.append(
+            "No meaningful context captured — type a "
+            "real thought or capture a code window")
 
-    if not payload.get("narrative"):
-        warnings.append("No project narrative set — posts will lack mission context.")
-
-    # payload is valid as long as there's at least a raw thought
-    is_valid = bool(payload.get("raw_thought"))
-
+    is_valid = bool(raw_thought)  # still allow generation
     return is_valid, warnings
 
 
