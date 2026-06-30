@@ -1,80 +1,51 @@
 # Quick Start
 
-Get Gitcast running in under 5 minutes.
+Get Gitcast running in under 2 minutes.
 
-## Prerequisites
+## Step 1 — Install
 
-- Python 3.10 or higher
-- Git installed
-- Windows 10/11, macOS, or Linux
-- At least one free API key (see step 2)
-
-## Step 1 — Clone and install
-
-```bash
-git clone https://github.com/drizzy765/gitcast.git
-cd gitcast
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux  
-source venv/bin/activate
-
-pip install -r requirements.txt
-```
+    pip install gitcast
 
 ## Step 2 — Install Tesseract OCR
 
-Tesseract is required for local text extraction from screenshots. It never sends data externally.
+Required for local screenshot text extraction.
 
-**Windows:**
-1. Download from https://github.com/UB-Mannheim/tesseract/wiki
-2. Install to `C:\Program Files\Tesseract-OCR`
-3. Add to PATH: `C:\Program Files\Tesseract-OCR`
+**Windows:** github.com/UB-Mannheim/tesseract/wiki
+**Mac:** brew install tesseract
+**Linux:** sudo apt install tesseract-ocr
 
-**macOS:**
-```bash
-brew install tesseract
-```
+## Step 3 — Run
 
-**Linux:**
-```bash
-sudo apt install tesseract-ocr
-```
+    gitcast
 
-## Step 3 — Get your free API keys
+Gitcast starts immediately using a shared demo
+API key. No configuration needed for your first
+posts.
 
-You need at least one provider key. Groq is recommended as your first key — free and takes 2 minutes.
+You'll see:
 
-| Provider | URL | Free Tier | Best For |
-|----------|-----|-----------|----------|
-| Groq | console.groq.com | 12k TPM | Quick posts |
-| DeepSeek | platform.deepseek.com | $5 credit | Technical posts |
-| Gemini | aistudio.google.com | 1M tokens/day | Vision fallback |
-| Kimi | platform.moonshot.cn | 15 RPM | Articles |
+    > [OK] using Gitcast shared API key
+    > // want your own key? run: gitcast --setup
+    > [OK] server running at http://localhost:8000
+    > [OK] browser opened
+    > Press Ctrl+Alt+S (or Ctrl+Shift+P) to capture
 
-## Step 4 — Configure environment
+## Step 4 — Capture your first win
 
-```bash
-cp .env.example .env
-```
+From any window — VS Code, terminal, browser —
+press **Ctrl+Alt+S**.
 
-Open `.env` and add your keys:
+Gitcast captures your screen and git diff locally,
+asks what you were working on, and generates
+4 post variations.
 
-```ini
-GROQ_API_KEY=your_groq_key_here
-DEEPSEEK_API_KEY=your_deepseek_key_here
-GEMINI_API_KEY=your_gemini_key_here
-```
+## Step 5 (optional) — Add your own API key
 
-## Step 5 — Run Gitcast
+The shared key has limited capacity. To remove
+limits, get your own free key:
 
-```bash
-python main.py
-```
+    gitcast --setup
 
-Dashboard opens automatically at http://127.0.0.1:8000
-
-Press Ctrl+Shift+P from anywhere to capture your first win.
+Add at least one key (Groq recommended first —
+takes 2 minutes at console.groq.com). Your key
+automatically overrides the shared one.

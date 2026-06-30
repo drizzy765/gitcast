@@ -1,4 +1,24 @@
-# API Keys Guide
+# API Keys
+
+## You don't need a key to start
+
+Gitcast ships with a shared demo API key so you
+can try it immediately after install — zero
+configuration required.
+
+The shared key has rate limits shared across all
+users trying the demo. For regular use, add your
+own free key.
+
+## How key priority works
+
+    1. Your own key (if configured) → always used first
+    2. Gitcast's shared key → automatic fallback
+
+Run `gitcast --setup` anytime to add your own key.
+It takes effect immediately on next run.
+
+---
 
 Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. We never see them.
 

@@ -4,8 +4,11 @@ How Gitcast captures context without breaking your flow.
 
 ## The 7-step flow
 
-### 1. Trigger
-Press Ctrl+Shift+P from anywhere — VS Code, terminal, browser. The pynput listener runs silently in the system tray.
+## Trigger
+
+Press **Ctrl+Alt+S** or **Ctrl+Shift+P** from
+anywhere — VS Code, terminal, browser. Both
+hotkeys trigger the same capture flow. The pynput listener runs silently in the system tray.
 
 ### 2. Parallel capture
 Two things happen simultaneously:
