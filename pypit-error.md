@@ -195,3 +195,20 @@ This ensures `gitcast` remains scoped to the current directory where the user in
 ### Identified Flaw & Analysis
 * **Problem**: When running `gitcast`, the dashboard is immediately opened in the default browser on startup. However, when the user triggers their very first capture using the `Ctrl+Alt+S` hotkey, the system calls `webbrowser.open("http://localhost:8000")` again. Since the dashboard was already opened at startup, this second call opens a redundant duplicate tab.
 * **Solution**: Track whether the browser was already opened at server startup (or set `_browser_opened = True` upon startup in `gitcast.py`), so that the first capture trigger does not open a second browser tab.
+
+---
+
+## 6. Incorrect Post Generation Output with Empty/Thin Context (gitcast==1.0.17) - 2026-07-01
+
+### Issue
+When testing `gitcast==1.0.17` on a `snakegame` directory with `raw_thought = "Captured via hotkey trigger"` and no git diff, the generated post repeats/summarizes the prompt structure and priority instructions:
+
+```text
+1/3: Context for this build update: Captured via hotkey trigger, priority is determined by git diff, with screen text as secondary context. A hook will be added to enhance functionality.
+2/3: If a git diff is present, it serves as the primary source of truth for changes, taking precedence over screen text. The added hook will integrate with this process.
+3/3: Final context for build update: Rely on git diff for accurate information on changes, using screen text only for supplementary context, with the new hook providing additional support.
+```
+
+### Analysis
+Because of the thin context (no git diff, generic thought, and noisy/fragmented OCR), the system instructions, notes, and priority rules leaked into the user message template. Under low-context scenarios, the LLM falls back to summarizing or structuring its response around the prompt meta-instructions rather than writing a real, grounded developer post.
+
