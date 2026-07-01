@@ -118,7 +118,7 @@ def _build_user_message(
 
     # check if OCR text is fragmented
     ocr_text = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")]).strip()
-    if ocr_text and len(ocr_text) < 80:
+    if len(ocr_text.strip()) < 80:
         parts.append(
             "## Note\n"
             "Screen context is fragmented/unreliable — "
@@ -130,7 +130,7 @@ def _build_user_message(
     if ocr_text and not use_vision:
         parts.append(
             f"## Screen text (secondary, may be noisy)\n"
-            f"{ocr_text}"
+            f"{ocr_text.strip()}"
         )
 
     # project narrative

@@ -3,7 +3,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from api.payload import build_payload
 from api.routes import generate_article, ArticleGenerateRequest

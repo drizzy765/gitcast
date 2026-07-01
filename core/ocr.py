@@ -135,6 +135,7 @@ def filter_browser_chrome(text: str) -> str:
     return '\n'.join(cleaned)
 
 
+
 # ── Text cleaning ─────────────────────────────────────────────────────────────
 
 def _clean_ocr_text(raw: str) -> str:
