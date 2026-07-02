@@ -104,13 +104,6 @@ def _build_user_message(
     if raw_thought.strip():
         parts.append(f"## Developer's raw thought\n{raw_thought.strip()}")
 
-    parts.append(
-        "## Priority\n"
-        "If a git diff is present below, treat it as "
-        "the primary source of truth for what changed. "
-        "Screen text is secondary context only."
-    )
-
     # git diff section comes first
     diff_text = git_diff.get("diff", "") if isinstance(git_diff, dict) else ""
     if diff_text:
@@ -118,13 +111,6 @@ def _build_user_message(
 
     # check if OCR text is fragmented
     ocr_text = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")]).strip()
-    if len(ocr_text.strip()) < 80:
-        parts.append(
-            "## Note\n"
-            "Screen context is fragmented/unreliable — "
-            "do not base the post on it. Rely on the "
-            "developer's raw thought and git diff only."
-        )
 
     # OCR section comes second, clearly labeled
     if ocr_text and not use_vision:
@@ -208,35 +194,55 @@ def _encode_image(image_path: str) -> str:
 
 # ── Payload validator ─────────────────────────────────────────────────────────
 
+GENERIC_THOUGHTS = [
+    "captured via hotkey trigger",
+    "",
+    "test",
+    "testing",
+    "...",
+    "thought",
+]
+
 def validate_payload(payload: dict) -> tuple[bool, list[str]]:
     """
     Checks the payload has the minimum viable content to generate a post.
     Returns (is_valid, list_of_warnings).
     """
     warnings = []
+
     raw_thought = payload.get("raw_thought", "").strip()
     ocr_text = payload.get("ocr_text", "").strip()
+    git_diff = payload.get("git_diff", "").strip()
     git_diff_available = payload.get("git_diff_available", False)
 
-    generic_thoughts = [
-        "captured via hotkey trigger",
-        "", "test", "testing",
-    ]
-    is_generic = raw_thought.lower() in generic_thoughts
-
-    has_real_content = (
-        not is_generic or
-        len(ocr_text) > 100 or
-        git_diff_available
+    is_generic_thought = (
+        raw_thought.lower() in GENERIC_THOUGHTS or
+        len(raw_thought) < 5
     )
+    has_real_ocr = len(ocr_text) >= 80
+    has_diff = git_diff_available and len(git_diff) > 20
 
-    if not has_real_content:
+    # BLOCK generation if all three are weak
+    if is_generic_thought and not has_real_ocr and not has_diff:
+        return False, [
+            "Not enough context to generate a post. Please:\n"
+            "1. Capture from your code editor (not a browser)\n"
+            "2. Type a real thought about what you just built or fixed\n"
+            "3. Make sure you have uncommitted git changes for best results"
+        ]
+
+    # WARN but allow if thought is real but diff missing
+    if not has_diff:
         warnings.append(
-            "No meaningful context captured — type a "
-            "real thought or capture a code window")
+            "No git diff — post will rely on your thought and screen context only."
+        )
 
-    is_valid = bool(raw_thought)  # still allow generation
-    return is_valid, warnings
+    if not raw_thought or is_generic_thought:
+        warnings.append(
+            "Generic thought detected — post quality will be lower. Try describing what you actually fixed or built."
+        )
+
+    return True, warnings
 
 
 # ── Test ──────────────────────────────────────────────────────────────────────

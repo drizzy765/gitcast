@@ -2637,6 +2637,17 @@
                 }
                 if (!res.ok) {
                     const text = await res.text();
+                    let errorData = {};
+                    try {
+                        errorData = JSON.parse(text);
+                    } catch(e) {}
+                    const detail = errorData.detail || {};
+                    const error = typeof detail === 'object' ? (detail.error || '') : (detail || '');
+                    
+                    if (error.includes('insufficient_context') || res.status === 400) {
+                        showContextWarning(detail.message || errorData.message || error || text);
+                        return null;
+                    }
                     throw new Error(text || `Request failed with status ${res.status}`);
                 }
                 return res.json();
@@ -4989,12 +5000,31 @@
             }
         }
 
-        function appendLog(entry) {
+        function appendLog(entry, level = null, message = null) {
+            if (typeof entry === 'string') {
+                entry = {
+                    module: entry,
+                    level: level,
+                    message: message,
+                    time: new Date().toLocaleTimeString()
+                };
+            }
             state.logs.push(entry);
             if (state.logs.length > 50) state.logs = state.logs.slice(-50);
             if (state.logsOpen) {
                 renderLogs();
             }
+        }
+
+        function showContextWarning(message) {
+            const editor = document.getElementById('post-editor') || document.getElementById('main-editor');
+            if (editor) {
+                editor.value = '';
+                editor.placeholder = message ||
+                    'Not enough context — capture from ' +
+                    'your code editor and type a real thought.';
+            }
+            appendLog('GENERATOR', 'WARN', 'generation blocked — thin context');
         }
 
         function renderLogs() {

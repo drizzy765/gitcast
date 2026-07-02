@@ -54,6 +54,7 @@ Rules:
   or the developer's raw thought. If the available
   context is thin or unclear, write a short, honest,
   low-key post rather than fabricating details.
+- If a git diff is provided, it is the primary source of truth. Screen text is secondary and may be noisy — ignore any browser UI text.
 - If OCR text looks like browser UI, tab names, or
   garbled text rather than code, IGNORE it completely
   and rely only on the raw thought and git diff.

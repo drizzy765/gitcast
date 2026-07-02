@@ -789,7 +789,11 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
     if not is_valid:
         raise HTTPException(
             status_code=400,
-            detail="Payload has no raw thought — cannot generate posts."
+            detail={
+                "error": "insufficient_context",
+                "message": warnings[0] if warnings else "Not enough context.",
+                "warnings": warnings,
+            }
         )
 
     try:
