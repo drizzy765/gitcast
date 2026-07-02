@@ -65,6 +65,7 @@ Rules:
 - No generic filler: "excited to share", "game changer",
   "cutting-edge", "pushing boundaries", "unparalleled",
   "the intersection of X and Y", "delving into".
+- NEVER use marketing-heavy, hype-filled, or clickbait phrases like "Revolutionizing Snake Game Development", "unprecedented performance gains", "Join the conversation", or similar corporate/AI clichés.
 - Keep it grounded and specific. Vague posts get ignored.
 - If there is a code snippet in the context, reference
   the actual function name, variable, or error.

@@ -230,7 +230,6 @@ class ScreenshotSession:
         ))
         
         self.save_session_and_generate()
-        webbrowser.open("http://localhost:8000")
 
     def save_session_and_generate(self):
         """Background generation of post variations."""

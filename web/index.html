@@ -2021,6 +2021,7 @@
                             <div id="draft-warning-banner" class="hidden" style="background: rgba(255, 184, 0, 0.1); border: 2px solid var(--accent-amber); color: var(--accent-amber); padding: 12px; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-size: var(--text-sm); line-height: 1.4; display: none;">
                                 [WARNING] No meaningful context captured — type a real thought or capture a code window
                             </div>
+                            <div id="context-quality-indicator" style="margin-bottom: 12px; display: none;"></div>
                             <textarea id="main-editor" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
                             <div class="editor-inner-footer">
                                 <span class="undo-btn" id="undo-btn" onclick="undoRefinement()">← [UNDO_LAST_CHANGE]</span>
@@ -2954,11 +2955,35 @@
                         banner.classList.add('hidden');
                     }
                 }
+
+                // Update context quality indicator
+                const qualityIndicator = document.getElementById('context-quality-indicator');
+                if (qualityIndicator) {
+                    qualityIndicator.style.display = 'block';
+                    if (warnings.length > 0) {
+                        qualityIndicator.style.color = 'var(--accent-amber)';
+                        qualityIndicator.innerHTML = `<pre style="margin: 0; padding: 0; line-height: 1.4; font-family: 'JetBrains Mono', monospace; font-size: var(--text-sm); white-space: pre;">┌─ CONTEXT_QUALITY ────────────────────────────┐
+│ [!!] thin context detected                   │
+│ // no git diff found                         │
+│ // set your project narrative in settings    │
+│ // for better posts: capture from code editor│
+└──────────────────────────────────────────────┘</pre>`;
+                    } else {
+                        qualityIndicator.style.color = 'var(--accent-green)';
+                        qualityIndicator.innerHTML = `<pre style="margin: 0; padding: 0; line-height: 1.4; font-family: 'JetBrains Mono', monospace; font-size: var(--text-sm); white-space: pre;">┌─ CONTEXT_QUALITY ────────────────────────────┐
+│ [OK] git diff detected · OCR reliable        │
+└──────────────────────────────────────────────┘</pre>`;
+                    }
+                }
             } else {
                 const banner = document.getElementById('draft-warning-banner');
                 if (banner) {
                     banner.style.display = 'none';
                     banner.classList.add('hidden');
+                }
+                const qualityIndicator = document.getElementById('context-quality-indicator');
+                if (qualityIndicator) {
+                    qualityIndicator.style.display = 'none';
                 }
             }
         }

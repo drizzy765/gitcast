@@ -33,7 +33,6 @@ def main():
         
         if response.status_code == 200:
             print("[SL] Context captured. Opening Draft Room...")
-            webbrowser.open("http://127.0.0.1:8000")
         else:
             print(f"[SL Error] Failed to trigger: {response.text}")
             

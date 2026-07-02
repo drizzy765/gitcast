@@ -21,5 +21,4 @@ def show_review(payload, variations, on_publish, on_close):
     except Exception as e:
         print(f"[Gitcast] Failed to save draft: {e}")
         
-    webbrowser.open("http://localhost:8000")
     on_close()

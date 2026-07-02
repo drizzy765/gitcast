@@ -5,6 +5,8 @@ import subprocess
 import httpx
 import webbrowser
 
+_browser_opened = False
+
 def main():
     if "--setup" in sys.argv:
         from config.settings import get_active_env_path
@@ -65,7 +67,10 @@ def main():
                 time.sleep(0.5)
 
         # open browser
-        webbrowser.open("http://localhost:8000")
+        global _browser_opened
+        if not _browser_opened:
+            webbrowser.open("http://localhost:8000")
+            _browser_opened = True
 
         # ASCII Logo
         print(" ██████╗ ██╗████████╗ ██████╗  █████╗  ███████╗████████╗")
@@ -116,7 +121,6 @@ def main():
         
         if response.status_code == 200:
             print("[Gitcast] Context captured. Opening Draft Room...")
-            webbrowser.open("http://localhost:8000")
         else:
             print(f"[Gitcast Error] Failed to trigger: {response.text}")
             

@@ -19,14 +19,16 @@ FONT_SIZE = 13
 # ── Popup window ──────────────────────────────────────────────────────────────
 
 class CapturePopup:
-    def __init__(self, on_submit, on_dismiss):
+    def __init__(self, on_submit, on_dismiss, prompt_text=None):
         """
         Args:
             on_submit:  Callback called with the user's raw thought string.
             on_dismiss: Callback called when the user hits Esc or closes.
+            prompt_text: Optional custom prompt text.
         """
         self.on_submit = on_submit
         self.on_dismiss = on_dismiss
+        self.prompt_text = prompt_text or "What was the struggle or win?"
         self.result = None
         self.root = None
 
@@ -64,7 +66,7 @@ class CapturePopup:
         label_font = tkfont.Font(family=FONT_FAMILY, size=10)
         label = tk.Label(
             main_frame,
-            text="What was the struggle or win?",
+            text=self.prompt_text,
             bg=BG_COLOR,
             fg=PLACEHOLDER_COLOR,
             font=label_font,
@@ -147,14 +149,14 @@ class CapturePopup:
 
 # ── Public interface ──────────────────────────────────────────────────────────
 
-def show_popup(on_submit, on_dismiss):
+def show_popup(on_submit, on_dismiss, prompt_text=None):
     """
     Shows the capture popup in a new thread so it doesn't block
     the hotkey listener or the tray process.
     """
     def run():
         try:
-            popup = CapturePopup(on_submit=on_submit, on_dismiss=on_dismiss)
+            popup = CapturePopup(on_submit=on_submit, on_dismiss=on_dismiss, prompt_text=prompt_text)
             popup.show()
         except Exception as e:
             print(f"[Gitcast] Popup display error: {e}")

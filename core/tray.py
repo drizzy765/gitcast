@@ -34,7 +34,7 @@ def run_tray(trigger_callback):
         trigger_callback()
 
     def open_dashboard(icon, item):
-        webbrowser.open("http://127.0.0.1:8000")
+        pass
 
     image = create_image()
     menu = pystray.Menu(

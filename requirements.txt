@@ -18,3 +18,4 @@ slowapi
 limits
 sentry-sdk[fastapi]
 posthog
+plyer

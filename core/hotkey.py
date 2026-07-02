@@ -1,10 +1,19 @@
 from pynput import keyboard
+import time
 
 _listener = None
+_last_trigger_time = 0
+COOLDOWN_SECONDS = 3
 
 def start_hotkey_listener(callback):
     global _listener
     def on_activate():
+        global _last_trigger_time
+        now = time.time()
+        if now - _last_trigger_time < COOLDOWN_SECONDS:
+            print("[Hotkey] cooldown — ignoring rapid repeat")
+            return
+        _last_trigger_time = now
         callback()
 
     _listener = keyboard.GlobalHotKeys({
