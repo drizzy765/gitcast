@@ -132,8 +132,10 @@ class ProviderKeyRemove(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str
+    instruction: str
+    current_post: str
     format_key: str
+    tab: Optional[str] = None
 
 
 class CliTriggerRequest(BaseModel):
@@ -859,62 +861,68 @@ def get_current_draft():
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 
 
+REFINE_PROVIDER = {
+    "article": "kimi",
+    "x_post": "groq",
+    "quick_win": "groq",
+    "linkedin": "groq",
+    "pr_desc": "deepseek",
+}
+
+
 @router.post("/chat")
 @limiter.limit("20/minute")
 async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depends(get_current_user)):
     """Refines a post variation using AI chat."""
-    if not CURRENT_DRAFT.exists():
-        raise HTTPException(status_code=400, detail="No active draft to refine.")
-
-    try:
-        with open(CURRENT_DRAFT, "r", encoding="utf-8") as f:
-            draft = json.load(f)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
-
-    message = sanitize_text(body.message)
-    injection = check_prompt_injection(message)
-    if not injection["safe"]:
-        message = injection.get("sanitized", "")
+    instruction = sanitize_text(body.instruction)
+    current_post = body.current_post
     format_key = sanitize_text(body.format_key)
-    current_text = draft["variations"].get(format_key, "")
-    
-    try:
-        platform_prompt = get_prompt(format_key)
-    except Exception as e:
-        platform_prompt = f"Format/Platform key: {format_key}"
 
-    refinement_system_prompt = (
-        "You are a social media manager helping a developer refine a post.\n"
-        f"The post format/platform is: '{format_key}'.\n"
-        "Adhere to the platform rules and guidelines below:\n"
-        "--- START PLATFORM RULES ---\n"
-        f"{platform_prompt}\n"
-        "--- END PLATFORM RULES ---\n\n"
-        "The user will provide instructions on how to change the existing draft. "
-        "Adhere strictly to the platform rules above while applying the user's changes."
-    )
-    
-    refinement_user_message = (
-        f"Original Context:\n{draft['payload']['user_message']}\n\n"
-        f"Current Draft for '{format_key}':\n{current_text}\n\n"
-        f"User Instruction: {message}\n\n"
-        "Output ONLY the revised post text. No preamble."
-    )
+    refinement_system = f"""You are refining a
+{format_key} post for a developer.
+The user's instruction is: {instruction}
+Apply it to the post below. Return ONLY the
+refined post text — no explanation, no preamble,
+no markdown wrapper. Just the improved post."""
+
+    refinement_user = f"""Current post:
+{current_post}
+
+Instruction: {instruction}
+
+Return the refined post now:"""
 
     try:
-        new_text = await _ai_call(
+        refined_text = await _ai_call(
             format_key,
-            refinement_system_prompt,
-            refinement_user_message,
+            refinement_system,
+            refinement_user,
             user_id=user_id,
         )
         
-        draft["variations"][format_key] = new_text
-        with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
-            json.dump(draft, f, indent=4)
-            
-        return {"success": True, "new_text": new_text}
+        if CURRENT_DRAFT.exists():
+            try:
+                with open(CURRENT_DRAFT, "r", encoding="utf-8") as f:
+                    draft = json.load(f)
+                
+                if "variations" not in draft:
+                    draft["variations"] = {}
+                
+                # Map incoming public format_key to backend variation key
+                variation_key = format_key
+                if format_key == "x_post":
+                    variation_key = "deep_tech"
+                elif format_key == "pr_desc":
+                    variation_key = "pr_generator"
+                
+                draft["variations"][variation_key] = refined_text
+                
+                with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
+                    json.dump(draft, f, indent=4)
+            except Exception as e:
+                print(f"Error updating draft file: {e}")
+
+        return {"success": True, "new_text": refined_text, "refined_post": refined_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI refinement failed: {e}")
 

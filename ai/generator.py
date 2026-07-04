@@ -1,3 +1,4 @@
+import os
 import asyncio
 import httpx
 import uuid
@@ -11,6 +12,7 @@ from config.settings import (
     MOONSHOT_API_KEY,
     CEREBRAS_API_KEY,
     OPENROUTER_API_KEY,
+    DEEPSEEK_API_KEY,
     GROQ_MODEL,
     MOONSHOT_MODEL,
     GEMINI_MODEL,
@@ -25,13 +27,19 @@ PROVIDERS = {
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": GROQ_API_KEY,
         "model": GROQ_MODEL,
-        "tasks": ["quick_win", "struggle", "linkedin", "deep_tech", "pr_generator"]
+        "tasks": ["quick_win", "struggle", "linkedin", "deep_tech", "pr_generator", "x_post"]
     },
     "kimi": {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key": MOONSHOT_API_KEY,
         "model": MOONSHOT_MODEL,
         "tasks": ["article", "sprint_summary"]
+    },
+    "deepseek": {
+        "base_url": os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1"),
+        "api_key": DEEPSEEK_API_KEY,
+        "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+        "tasks": ["pr_desc"]
     },
     "cerebras": {
         "base_url": "https://api.cerebras.ai/v1",
