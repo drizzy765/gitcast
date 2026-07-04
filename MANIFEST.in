@@ -6,3 +6,5 @@ include requirements.txt
 recursive-include web *
 recursive-include assets *
 recursive-include docs *
+recursive-include storage/data prompts.json
+
