@@ -2206,6 +2206,55 @@
 	            pollingTimer: null
         };
 
+        const tabState = {
+            x_post:    { content: '', history: [] },
+            linkedin:  { content: '', history: [] },
+            pr_desc:   { content: '', history: [] },
+            quick_win: { content: '', history: [] },
+            article:   { content: '', history: [] },
+        };
+
+        const TAB_CHIPS = {
+            x_post: [
+                "make it viral",
+                "add a hook",
+                "turn into thread",
+                "more punchy",
+                "rage bait",
+                "deep tech version",
+            ],
+            linkedin: [
+                "corporate tone",
+                "make it viral",
+                "add statistics",
+                "thought leadership",
+                "shorter hook",
+                "add emojis",
+            ],
+            pr_desc: [
+                "more technical",
+                "add test details",
+                "simplify language",
+                "add risk notes",
+                "add screenshots section",
+            ],
+            quick_win: [
+                "punchier",
+                "add emoji",
+                "more confident",
+                "shorter",
+                "add a number",
+            ],
+            article: [
+                "make it longer",
+                "expand intro",
+                "add code examples",
+                "make it conversational",
+                "add conclusion",
+                "add TL;DR",
+            ],
+        };
+
         const KEY_PROVIDERS = ['groq', 'gemini', 'kimi', 'cerebras', 'openrouter'];
         const LOG_LEVEL_CLASS = {
             OK: 'ok',
@@ -2325,12 +2374,13 @@
 
             const inputEl = document.getElementById('ai-refine-input');
             if (inputEl) {
-                inputEl.onkeypress = (e) => {
-                    if (e.key === 'Enter') sendRefinement();
-                };
-                inputEl.onkeydown = (e) => {
-                    if (e.key === 'Enter') sendRefinement();
-                };
+                inputEl.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        sendRefinement();
+                    }
+                });
             }
 
             // Setup input event listeners for each tab's editor
@@ -3268,13 +3318,7 @@
         }
 
         // --- Logic Handlers ---
-        const tabState = {
-            x_post:    { content: '', history: [] },
-            linkedin:  { content: '', history: [] },
-            pr_desc:   { content: '', history: [] },
-            quick_win: { content: '', history: [] },
-            article:   { content: '', history: [] },
-        };
+
 
         function getActiveTab() {
             if (state.view === 'article') return 'article';
@@ -3436,46 +3480,7 @@
             if (el) el.style.display = 'block';
         }
 
-        const TAB_CHIPS = {
-            x_post: [
-                "make it viral",
-                "add a hook",
-                "turn into thread",
-                "more punchy",
-                "rage bait",
-                "deep tech version",
-            ],
-            linkedin: [
-                "corporate tone",
-                "make it viral",
-                "add statistics",
-                "thought leadership",
-                "shorter hook",
-                "add emojis",
-            ],
-            pr_desc: [
-                "more technical",
-                "add test details",
-                "simplify language",
-                "add risk notes",
-                "add screenshots section",
-            ],
-            quick_win: [
-                "punchier",
-                "add emoji",
-                "more confident",
-                "shorter",
-                "add a number",
-            ],
-            article: [
-                "make it longer",
-                "expand intro",
-                "add code examples",
-                "make it conversational",
-                "add conclusion",
-                "add TL;DR",
-            ],
-        };
+
 
         function updateAiChips(tabKey) {
             const chips = TAB_CHIPS[tabKey] || [];
@@ -3486,11 +3491,12 @@
                 const btn = document.createElement('button');
                 btn.className = 'chip-btn chip';
                 btn.textContent = `[${chip.toUpperCase().replace(/ /g, '_')}]`;
-                btn.onclick = () => {
+                btn.onclick = async () => {
                     const input = document.getElementById('ai-refine-input');
                     if (input) {
                         input.value = chip;
-                        sendRefinement();
+                        await sendRefinement();
+                        input.value = '';
                     }
                 };
                 container.appendChild(btn);
