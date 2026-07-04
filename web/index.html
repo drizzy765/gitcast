@@ -2002,9 +2002,9 @@
         <main class="main-content" id="main-container">
             <header class="main-header">
                 <div class="tabs" id="tab-bar">
-                    <div class="tab active" data-tab="x_post">[X_POST]</div>
+                    <div class="tab active" data-tab="deep_tech">[X_POST]</div>
                     <div class="tab" data-tab="linkedin">[LINKEDIN]</div>
-                    <div class="tab" data-tab="pr_desc">[PR_DESC]</div>
+                    <div class="tab" data-tab="pr_generator">[PR_DESC]</div>
                     <div class="tab" data-tab="quick_win">[QUICK_WIN]</div>
                 </div>
                 <button class="btn-brutalist" onclick="triggerCapture()">[NEW_CAPTURE]</button>
@@ -2023,9 +2023,9 @@
                             <div id="draft-warning-banner" class="hidden" style="background: rgba(255, 184, 0, 0.1); border: 2px solid var(--accent-amber); color: var(--accent-amber); padding: 12px; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-size: var(--text-sm); line-height: 1.4; display: none;">
                                 [WARNING] No meaningful context captured — type a real thought or capture a code window
                             </div>
-                            <textarea id="editor-x_post" class="editor-field" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
+                            <textarea id="editor-deep_tech" class="editor-field" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green);"></textarea>
                             <textarea id="editor-linkedin" class="editor-field hidden" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green); display: none;"></textarea>
-                            <textarea id="editor-pr_desc" class="editor-field hidden" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green); display: none;"></textarea>
+                            <textarea id="editor-pr_generator" class="editor-field hidden" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green); display: none;"></textarea>
                             <textarea id="editor-quick_win" class="editor-field hidden" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green); display: none;"></textarea>
                             <textarea id="editor-article" class="editor-field hidden" placeholder="Generating post content...▋" style="flex: 1; min-height: 180px; width: 100%; border: none; outline: none; background: transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: var(--text-lg); line-height: 1.6; resize: none; caret-color: var(--accent-green); display: none;"></textarea>
                             <div class="editor-inner-footer">
@@ -2207,15 +2207,15 @@
         };
 
         const tabState = {
-            x_post:    { content: '', history: [] },
+            deep_tech: { content: '', history: [] },
             linkedin:  { content: '', history: [] },
-            pr_desc:   { content: '', history: [] },
+            pr_generator: { content: '', history: [] },
             quick_win: { content: '', history: [] },
             article:   { content: '', history: [] },
         };
 
         const TAB_CHIPS = {
-            x_post: [
+            deep_tech: [
                 "make it viral",
                 "add a hook",
                 "turn into thread",
@@ -2231,7 +2231,7 @@
                 "shorter hook",
                 "add emojis",
             ],
-            pr_desc: [
+            pr_generator: [
                 "more technical",
                 "add test details",
                 "simplify language",
@@ -2384,22 +2384,17 @@
             }
 
             // Setup input event listeners for each tab's editor
-            ['x_post', 'linkedin', 'pr_desc', 'quick_win', 'article'].forEach(tabKey => {
+            ['deep_tech', 'linkedin', 'pr_generator', 'quick_win', 'article'].forEach(tabKey => {
                 const editor = document.getElementById(`editor-${tabKey}`);
                 if (editor) {
                     editor.oninput = (e) => {
                         const text = e.target.value;
                         tabState[tabKey].content = text;
                         
-                        const keyMapRev = {
-                            x_post: 'deep_tech',
-                            pr_desc: 'pr_generator'
-                        };
-                        const legacyKey = keyMapRev[tabKey] || tabKey;
-                        if (legacyKey === 'article') {
+                        if (tabKey === 'article') {
                             state.article.text = text;
-                        } else if (state.tabs[legacyKey]) {
-                            state.tabs[legacyKey].text = text;
+                        } else if (state.tabs[tabKey]) {
+                            state.tabs[tabKey].text = text;
                         }
                         updatePreview(tabKey, text);
                     };
@@ -2981,15 +2976,15 @@
 	                hideOnboarding();
 	                showToast('Onboarding complete', 'success');
 	            } else {
-	                if (status) status.innerText = '[!!] onboarding save failed';
-	                if (btn) {
-	                    btn.disabled = false;
-	                    btn.innerText = '[OPEN_DASHBOARD →]';
-	                }
-	            }
-	        }
+                if (status) status.innerText = '[!!] onboarding save failed';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '[OPEN_DASHBOARD →]';
+                }
+            }
+        }
 
-	        async function fetchDraft() {
+        async function fetchDraft() {
             const draft = await api('/api/draft');
             if (draft && draft.status === 'ready') {
                 const isNewDraft = draft.timestamp !== state.draft?.timestamp;
@@ -2998,16 +2993,9 @@
                 const payload = draft.payload || {};
                 const screenshots = Array.isArray(payload.screenshots) ? payload.screenshots : [];
                 const errors = [];
-                const keyMap = {
-                    deep_tech: 'x_post',
-                    linkedin: 'linkedin',
-                    pr_generator: 'pr_desc',
-                    quick_win: 'quick_win'
-                };
                 Object.keys(state.tabs).forEach(k => {
-                    const mappedKey = keyMap[k] || k;
-                    if (isNewDraft || !tabState[mappedKey].content) {
-                        tabState[mappedKey].content = variations[k] || '';
+                    if (isNewDraft || !tabState[k].content) {
+                        tabState[k].content = variations[k] || '';
                     }
                     if (isNewDraft || !state.tabs[k].text) state.tabs[k].text = variations[k] || '';
                     state.tabs[k].shots = screenshots.map(s => ({...s, status: 'pending'}));
@@ -3023,14 +3011,10 @@
                     } else if (String(variations[k] || '').startsWith('[Error]')) {
                         errors.push(k);
                     }
-                });
-                if (errors.length) showToast(`Generation failed for ${errors.join(', ')}`, 'error');
 
-                // Populate individual textareas
-                Object.keys(keyMap).forEach(k => {
-                    const mappedKey = keyMap[k];
-                    const val = tabState[mappedKey].content;
-                    const editor = document.querySelector(`#editor-${mappedKey}`);
+                    // Populate individual textareas
+                    const val = tabState[k].content;
+                    const editor = document.querySelector(`#editor-${k}`);
                     if (editor) {
                         if (editor.tagName === 'TEXTAREA') {
                             editor.value = val;
@@ -3039,6 +3023,7 @@
                         }
                     }
                 });
+                if (errors.length) showToast(`Generation failed for ${errors.join(', ')}`, 'error');
 
                 // Toggle warning banner
                 const warnings = draft.warnings || [];
@@ -3076,7 +3061,7 @@
 
             if (!warnings || warnings.length === 0) {
                 el.style.color = '#00ff88'
-                el.textContent = '[OK] context good'
+                el.textContent = '[OK] context'
             } else {
                 el.style.color = '#ffb800'
                 el.textContent = '[!!] thin context'
@@ -3143,19 +3128,14 @@
 
             // Editor visibility and value assignment
             const activeTab = getActiveTab();
-            ['x_post', 'linkedin', 'pr_desc', 'quick_win', 'article'].forEach(t => {
+            ['deep_tech', 'linkedin', 'pr_generator', 'quick_win', 'article'].forEach(t => {
                 const ed = document.getElementById(`editor-${t}`);
                 if (ed) {
                     if (t === activeTab) {
                         ed.classList.remove('hidden');
                         ed.style.display = 'block';
                         
-                        const keyMapRev = {
-                            x_post: 'deep_tech',
-                            pr_desc: 'pr_generator'
-                        };
-                        const legacyKey = keyMapRev[t] || t;
-                        const legacyVal = (legacyKey === 'article') ? state.article.text : (state.tabs[legacyKey]?.text || '');
+                        const legacyVal = (t === 'article') ? state.article.text : (state.tabs[t]?.text || '');
                         if (legacyVal && !tabState[t].content) {
                             tabState[t].content = legacyVal;
                         }
@@ -3219,12 +3199,7 @@
             let text = refined;
             if (text === undefined) {
                 const active = activeTab || getActiveTab();
-                const keyMapRev = {
-                    x_post: 'deep_tech',
-                    pr_desc: 'pr_generator'
-                };
-                const legacyKey = keyMapRev[active] || active;
-                text = (legacyKey === 'article' ? state.article.text : state.tabs[legacyKey]?.text) || '';
+                text = (active === 'article' ? state.article.text : state.tabs[active]?.text) || '';
             }
             const previewTitle = document.getElementById('preview-title');
             const primaryBtn = document.getElementById('primary-action-btn');
@@ -3324,12 +3299,9 @@
             if (state.view === 'article') return 'article';
             const active = document.querySelector('.tab-btn.active, [data-tab].active, .tab.active');
             if (active) {
-                const tab = active.dataset.tab || active.id.replace('tab-', '');
-                if (tab === 'deep_tech') return 'x_post';
-                if (tab === 'pr_generator') return 'pr_desc';
-                return tab;
+                return active.dataset.tab || active.id.replace('tab-', '');
             }
-            return 'x_post';
+            return 'deep_tech';
         }
 
         function switchTab(tabKey) {
@@ -3339,15 +3311,10 @@
                 tabState[prevTab].content = prevEditor.value || prevEditor.innerText;
             }
 
-            const keyMapRev = {
-                x_post: 'deep_tech',
-                pr_desc: 'pr_generator'
-            };
-            const legacyKey = keyMapRev[tabKey] || tabKey;
-            state.tab = legacyKey;
+            state.tab = tabKey;
 
             document.querySelectorAll('.tab').forEach(el => {
-                if (el.dataset.tab === legacyKey || el.dataset.tab === tabKey) {
+                if (el.dataset.tab === tabKey) {
                     el.classList.add('active');
                 } else {
                     el.classList.remove('active');
@@ -3416,16 +3383,10 @@
                         }
                         tabState[activeTab].content = refined;
 
-                        // Keep content in sync with legacy state if needed
-                        const keyMapRev = {
-                            x_post: 'deep_tech',
-                            pr_desc: 'pr_generator'
-                        };
-                        const legacyKey = keyMapRev[activeTab] || activeTab;
-                        if (legacyKey === 'article') {
+                        if (activeTab === 'article') {
                             state.article.text = refined;
-                        } else if (state.tabs[legacyKey]) {
-                            state.tabs[legacyKey].text = refined;
+                        } else if (state.tabs[activeTab]) {
+                            state.tabs[activeTab].text = refined;
                         }
 
                         updatePreview(activeTab, refined);
@@ -3457,15 +3418,10 @@
                 }
                 tabState[activeTab].content = prev;
                 
-                const keyMapRev = {
-                    x_post: 'deep_tech',
-                    pr_desc: 'pr_generator'
-                };
-                const legacyKey = keyMapRev[activeTab] || activeTab;
-                if (legacyKey === 'article') {
+                if (activeTab === 'article') {
                     state.article.text = prev;
-                } else if (state.tabs[legacyKey]) {
-                    state.tabs[legacyKey].text = prev;
+                } else if (state.tabs[activeTab]) {
+                    state.tabs[activeTab].text = prev;
                 }
                 
                 updatePreview(activeTab, prev);

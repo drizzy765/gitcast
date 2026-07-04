@@ -39,7 +39,7 @@ PROVIDERS = {
         "base_url": os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1"),
         "api_key": DEEPSEEK_API_KEY,
         "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "tasks": ["pr_desc"]
+        "tasks": ["pr_generator", "pr_desc"]
     },
     "cerebras": {
         "base_url": "https://api.cerebras.ai/v1",

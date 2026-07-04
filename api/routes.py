@@ -861,13 +861,7 @@ def get_current_draft():
         raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
 
 
-REFINE_PROVIDER = {
-    "article": "kimi",
-    "x_post": "groq",
-    "quick_win": "groq",
-    "linkedin": "groq",
-    "pr_desc": "deepseek",
-}
+
 
 
 @router.post("/chat")
@@ -908,14 +902,7 @@ Return the refined post now:"""
                 if "variations" not in draft:
                     draft["variations"] = {}
                 
-                # Map incoming public format_key to backend variation key
-                variation_key = format_key
-                if format_key == "x_post":
-                    variation_key = "deep_tech"
-                elif format_key == "pr_desc":
-                    variation_key = "pr_generator"
-                
-                draft["variations"][variation_key] = refined_text
+                draft["variations"][format_key] = refined_text
                 
                 with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
                     json.dump(draft, f, indent=4)
