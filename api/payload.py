@@ -49,25 +49,10 @@ def build_payload(
     if use_vision and primary_shot.get("path"):
         screenshot_b64 = _encode_image(primary_shot["path"])
 
-    # build the structured user message
-    user_message = _build_user_message(
-        raw_thought=raw_thought,
-        screenshots=screenshots,
-        git_diff=git_diff,
-        narrative=narrative,
-        use_vision=use_vision,
-    )
-
     # joined OCR text for legacy/summary access
     all_ocr = "\n\n".join([s.get("ocr_text", "") for s in screenshots if s.get("ocr_text")])
 
-    stream_log(
-        "Payload",
-        "OK",
-        f"assembled payload: {len(screenshots)} screenshot(s), {len(all_ocr)} OCR chars",
-    )
-
-    return {
+    payload = {
         "raw_thought": raw_thought.strip(),
         "ocr_text": all_ocr,
         "screenshots": screenshots,
@@ -77,11 +62,29 @@ def build_payload(
         "use_vision_fallback": use_vision,
         "screenshot_b64": screenshot_b64,
         "screenshot_path": primary_shot.get("path", ""),
-        "user_message": user_message,
         "format_keys": format_keys,
         "timestamp": primary_shot.get("timestamp", ""),
         "working_dir": capture_result.get("working_dir", ""),
     }
+
+    # build the structured user message
+    user_message = _build_user_message(
+        raw_thought=raw_thought,
+        screenshots=screenshots,
+        git_diff=git_diff,
+        narrative=narrative,
+        use_vision=use_vision,
+        payload=payload,
+    )
+    payload["user_message"] = user_message
+
+    stream_log(
+        "Payload",
+        "OK",
+        f"assembled payload: {len(screenshots)} screenshot(s), {len(all_ocr)} OCR chars",
+    )
+
+    return payload
 
 
 # ── User message builder ──────────────────────────────────────────────────────
@@ -92,6 +95,7 @@ def _build_user_message(
     git_diff: dict,
     narrative: str,
     use_vision: bool,
+    payload: dict = None,
 ) -> str:
     """
     Builds the user-turn message that gets sent to the LLM.
@@ -122,6 +126,15 @@ def _build_user_message(
     # project narrative
     if narrative:
         parts.append(f"## Project context\n{narrative}")
+
+    if payload and payload.get("readme_content"):
+        parts.append(
+            f"## Project context\n"
+            f"Project name: {payload.get('project_name', 'Unknown')}\n"
+            f"Tech stack: {payload.get('tech_stack', 'Unknown')}\n"
+            f"README:\n"
+            f"{payload['readme_content'][:1500]}"
+        )
 
     parts.append(
         "\nUsing the context above, generate the post now. "

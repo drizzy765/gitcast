@@ -69,6 +69,7 @@ Rules:
 - Keep it grounded and specific. Vague posts get ignored.
 - If there is a code snippet in the context, reference
   the actual function name, variable, or error.
+- The project README and tech stack are provided as context. Use them to write about the ACTUAL project the developer is working on — not about Gitcast or any other tool. Reference the real project name, real technologies, and real features described in the README.
 """
 
 

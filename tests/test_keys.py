@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import asyncio
 import httpx
 import os
@@ -84,3 +85,35 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+=======
+import asyncio
+import os
+import sys
+from pathlib import Path
+
+# Add project root to path so we can import config
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from config.settings import GITCAST_API_URL, BYOK_KEY, BYOK_PROVIDER
+from core.cloud_client import check_server_health
+
+async def main():
+    print("=== Gitcast Cloud API Connectivity & BYOK Settings Test ===\n")
+    print(f"Cloud URL: {GITCAST_API_URL}")
+    print(f"BYOK Provider: {BYOK_PROVIDER}")
+    print(f"BYOK Key Set: {bool(BYOK_KEY)}")
+    
+    print("\nChecking cloud server health...")
+    health = check_server_health()
+    print(f"Health Status: {health.get('status')}")
+    if health.get("status") == "ok":
+        print("✅ Cloud Server Connected successfully!")
+        providers = health.get("providers", {})
+        print(f"Available cloud providers: {', '.join(k for k, v in providers.items() if v)}")
+    else:
+        print("❌ Cloud Server Unreachable or unhealthy")
+        print(f"Details: {health}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+>>>>>>> 1305f09 ( docs: update README with detailed features, CLI reference, and architecture flow)
