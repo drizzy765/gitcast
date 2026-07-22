@@ -190,7 +190,7 @@ For deep work sessions where you don't want to break your flow:
 
 ---
 
-## 💻 CLI Reference
+##  CLI Reference
 
 | Command | Description |
 |---|---|
