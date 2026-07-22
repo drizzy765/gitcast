@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Gitcast
 
 > git diff → published post. under 60 seconds.
@@ -79,26 +79,26 @@ Works immediately after install — **no API key setup required**! Gitcast comes
 
 ---
 
-## ✨ Features
+##  Features
 
-- ⚡ **Global Hotkey Capture**: Press **`Ctrl+Shift+P`** or **`Ctrl+Alt+S`** anywhere (VS Code, terminal, browser) to instantly capture your screen and local code changes (`git diff`).
-- 🔒 **Privacy-First & Local OCR**: Screen text extraction (Tesseract OCR) runs 100% locally on your machine. Sensitive credentials (API keys, secrets, tokens, passwords) are automatically detected and blocked.
-- 🎨 **Automated macOS Window Framing**: Raw screenshots are automatically wrapped in a sleek macOS-style window frame with traffic light controls and soft drop shadows for viral social posts.
-- 🤖 **Multi-Format AI Generation**: Generates 5 distinct content formats simultaneously in under 8 seconds:
+-  **Global Hotkey Capture**: Press **`Ctrl+Shift+P`** or **`Ctrl+Alt+S`** anywhere (VS Code, terminal, browser) to instantly capture your screen and local code changes (`git diff`).
+-  **Privacy-First & Local OCR**: Screen text extraction (Tesseract OCR) runs 100% locally on your machine. Sensitive credentials (API keys, secrets, tokens, passwords) are automatically detected and blocked.
+-  **Automated macOS Window Framing**: Raw screenshots are automatically wrapped in a sleek macOS-style window frame with traffic light controls and soft drop shadows for viral social posts.
+-  **Multi-Format AI Generation**: Generates 5 distinct content formats simultaneously in under 8 seconds:
   - **X (Twitter) Post**: High-impact, tech-focused updates with code context.
   - **LinkedIn Draft**: Structured narrative posts tailored for developer networks.
   - **PR Description**: Full GitHub/GitLab markdown pull request descriptions (What, Why, How, Testing).
   - **Quick Win**: Short punchy updates ideal for feature ships.
   - **Longform Article**: Medium/Substack-ready markdown blog posts.
-- 🏃 **Sprint Mode (Deep Work)**: Silently log multiple code captures throughout a long coding session without popups, then synthesize them into a cohesive multi-step "sprint thread" at the end.
-- 👁️ **Smart Vision AI Fallback**: If local OCR confidence falls below 60%, Gitcast seamlessly routes the screenshot to Gemini Vision for high-accuracy multimodal reading.
-- 🌐 **Interactive Local Dashboard & Review Room**: Web UI running locally at `http://localhost:8000` with live preview, inline editing, and natural language AI refinement chat.
-- 🚀 **1-Click Publishing & Clipboard Integration**: Publish directly to X (Twitter) via API v2 with media upload support, or copy pre-formatted markdown to clipboard.
-- 🔑 **Bring Your Own Key (BYOK)**: Zero setup required out-of-the-box, plus optional BYOK support for Groq, Gemini, DeepSeek, OpenRouter, and Moonshot/Kimi.
+-  **Sprint Mode (Deep Work)**: Silently log multiple code captures throughout a long coding session without popups, then synthesize them into a cohesive multi-step "sprint thread" at the end.
+-  **Smart Vision AI Fallback**: If local OCR confidence falls below 60%, Gitcast seamlessly routes the screenshot to Gemini Vision for high-accuracy multimodal reading.
+-  **Interactive Local Dashboard & Review Room**: Web UI running locally at `http://localhost:8000` with live preview, inline editing, and natural language AI refinement chat.
+-  **1-Click Publishing & Clipboard Integration**: Publish directly to X (Twitter) via API v2 with media upload support, or copy pre-formatted markdown to clipboard.
+-  **Bring Your Own Key (BYOK)**: Zero setup required out-of-the-box, plus optional BYOK support for Groq, Gemini, DeepSeek, OpenRouter, and Moonshot/Kimi.
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Step 1 — Install Tesseract OCR
 
@@ -151,7 +151,7 @@ Or configure keys in the dashboard sidebar under **[BYOK]**. Get a free Groq key
 
 ---
 
-## 🛠️ How It Works
+##  How It Works
 
 ```text
   [HotKey / CLI Trigger]  ──> Press Ctrl+Shift+P or run `gitcast "thought"`
@@ -180,7 +180,7 @@ Gitcast automatically detects project context from your current working director
 
 ---
 
-## 🏃 Sprint Mode
+##  Sprint Mode
 
 For deep work sessions where you don't want to break your flow:
 
@@ -202,16 +202,16 @@ For deep work sessions where you don't want to break your flow:
 
 ---
 
-## 🔒 Privacy & Security
+##  Privacy & Security
 
-- 🏠 **100% On-Device OCR**: Text from screenshots is extracted locally via Tesseract before any API requests.
-- 🛡️ **Automated Secret Scanning**: Regex scanner screens OCR text for API keys (`sk-`, `gsk_`, `Bearer`), tokens, passwords, and long hashes, automatically redacting and blocking sensitive captures.
-- 🗑️ **Automatic Cleanup**: Screenshots are encrypted with Fernet locally and auto-cleaned after 24 hours. Declined captures are securely deleted immediately.
-- 🚫 **No Background Screen Recording**: Gitcast only captures screen data when explicitly triggered by your hotkey or CLI command.
+-  **100% On-Device OCR**: Text from screenshots is extracted locally via Tesseract before any API requests.
+-  **Automated Secret Scanning**: Regex scanner screens OCR text for API keys (`sk-`, `gsk_`, `Bearer`), tokens, passwords, and long hashes, automatically redacting and blocking sensitive captures.
+-  **Automatic Cleanup**: Screenshots are encrypted with Fernet locally and auto-cleaned after 24 hours. Declined captures are securely deleted immediately.
+-  **No Background Screen Recording**: Gitcast only captures screen data when explicitly triggered by your hotkey or CLI command.
 
 ---
 
-## ⚙️ AI Providers & BYOK Priority
+##  AI Providers & BYOK Priority
 
 Gitcast routes each post format to the optimal provider for performance and output quality:
 
@@ -228,7 +228,7 @@ Gitcast routes each post format to the optimal provider for performance and outp
 
 ---
 
-## 🧰 Tech Stack
+##  Tech Stack
 
 - **Backend**: Python 3.10+, FastAPI, Uvicorn, Pydantic, `httpx`
 - **System & Screen**: `mss`, `Pillow`, `pytesseract`, `pynput`, `plyer`
@@ -238,9 +238,9 @@ Gitcast routes each post format to the optimal provider for performance and outp
 
 ---
 
-## 📄 License
+##  License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
-Built with ❤️ by [Timilehin Agoro](https://github.com/drizzy765) (@drizzy765).
+Built with  by [Timilehin Agoro](https://github.com/drizzy765) (@drizzy765).
 >>>>>>> 1305f09 ( docs: update README with detailed features, CLI reference, and architecture flow)
