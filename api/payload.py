@@ -12,6 +12,7 @@ def build_payload(
     capture_result: dict,
     format_keys: list = None,
     multi_screenshots: list = None,
+    project_ctx: dict = None,
 ) -> dict:
     """
     Assembles the full payload from all captured context.
@@ -40,8 +41,6 @@ def build_payload(
         }]
 
     # Decide vision fallback based on primary shot or all shots
-    # For now, we'll use OCR if any shot is reliable, but usually it's per-shot.
-    # LLM will see OCR text for each shot.
     use_vision = ocr_result.get("use_vision_fallback", False) if not multi_screenshots else False
 
     # encode primary screenshot as base64 for vision fallback
@@ -66,6 +65,13 @@ def build_payload(
         "timestamp": primary_shot.get("timestamp", ""),
         "working_dir": capture_result.get("working_dir", ""),
     }
+
+    if project_ctx:
+        payload["project_name"] = project_ctx.get("project_name", "")
+        payload["readme_content"] = project_ctx.get("readme_content", "")
+        payload["tech_stack"] = project_ctx.get("tech_stack", "")
+        payload["project_type"] = project_ctx.get("project_type", "")
+        payload["main_language"] = project_ctx.get("main_language", "")
 
     # build the structured user message
     user_message = _build_user_message(
@@ -101,6 +107,9 @@ def _build_user_message(
     Builds the user-turn message that gets sent to the LLM.
     Structures multiple screenshots with their purpose tags.
     """
+    if payload is None:
+        payload = {}
+
     parts = []
     parts.append("Here is the context for this build update:\n")
 
@@ -123,18 +132,45 @@ def _build_user_message(
             f"{ocr_text.strip()}"
         )
 
-    # project narrative
-    if narrative:
-        parts.append(f"## Project context\n{narrative}")
+    narrative = payload.get("narrative", "").strip()
+    readme = payload.get("readme_content", "").strip()
+    tech_stack = payload.get("tech_stack", "").strip()
+    project_name = payload.get(
+        "project_name", "").strip()
 
-    if payload and payload.get("readme_content"):
-        parts.append(
-            f"## Project context\n"
-            f"Project name: {payload.get('project_name', 'Unknown')}\n"
-            f"Tech stack: {payload.get('tech_stack', 'Unknown')}\n"
-            f"README:\n"
-            f"{payload['readme_content'][:1500]}"
-        )
+    if narrative or readme or tech_stack:
+        context_lines = [
+            "## BACKGROUND (use to understand the "
+            "project — do NOT reproduce these headers "
+            "or this section in your output):"
+        ]
+        if project_name:
+            context_lines.append(
+                f"Project name: {project_name}")
+        if tech_stack:
+            context_lines.append(
+                f"Tech stack: {tech_stack}")
+        if narrative:
+            # strip markdown headers from narrative
+            # before injecting so they don't leak
+            clean_narrative = "\n".join(
+                line for line in narrative.splitlines()
+                if not line.strip().startswith("#")
+            )
+            context_lines.append(
+                f"Project description: {clean_narrative[:600]}")
+        if readme:
+            # extract first 400 chars of README
+            # skip any markdown headers
+            clean_readme = "\n".join(
+                line for line in readme.splitlines()
+                if not line.strip().startswith("#")
+                and line.strip()
+            )
+            context_lines.append(
+                f"README summary: {clean_readme[:400]}")
+
+        parts.append("\n".join(context_lines))
 
     parts.append(
         "\nUsing the context above, generate the post now. "

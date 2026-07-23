@@ -70,6 +70,9 @@ Rules:
 - If there is a code snippet in the context, reference
   the actual function name, variable, or error.
 - The project README and tech stack are provided as context. Use them to write about the ACTUAL project the developer is working on — not about Gitcast or any other tool. Reference the real project name, real technologies, and real features described in the README.
+- NEVER reproduce markdown section headers (lines starting with ##) in your output. These are background context for you, not content for the post.
+- The BACKGROUND section in the user message is context only. Use it to understand the project. Do not quote it, reproduce it, or reference its formatting in your output.
+- Write the post in your own words using the project context as inspiration only.
 """
 
 

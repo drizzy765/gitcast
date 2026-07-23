@@ -1,106 +1,39 @@
-
-# Gitcast
-
-> git diff → published post. under 60 seconds.
-
-Privacy-first developer tool that captures your
-coding session via hotkey, generates AI-powered
-social media posts, and publishes them — without
-breaking your flow.
-
-Works out of the box with zero setup. Bring your
-own API keys anytime for unlimited usage.
-
-    pip install gitcast
-    gitcast
-
-Press Ctrl+Alt+S to capture. Open source. MIT license.
-
-## Quick Start
-
-### Install
-
-    pip install gitcast
-
-### Run
-
-    gitcast
-
-That's it. Gitcast works immediately using a shared
-demo API key — no setup required to try it.
-
-Dashboard opens automatically at http://localhost:8000
-
-Press **Ctrl+Alt+S** (or **Ctrl+Shift+P**) from
-anywhere — VS Code, terminal, browser — to capture
-your screen and git diff, then generate a post.
-
-### Add your own API key (optional)
-
-The shared key has rate limits. For unlimited usage,
-add your own free key:
-
-    gitcast --setup
-
-This opens your .env file. Add any of these
-(all free):
-
-| Provider | Get Key | Free Tier |
-|----------|---------|-----------|
-| Groq | console.groq.com | 12k tokens/min |
-| DeepSeek | platform.deepseek.com | $5 credit |
-| Gemini | aistudio.google.com | 1M tokens/day |
-
-Your key always takes priority over the shared key.
-
-### CLI usage
-
-    gitcast                    Start dashboard + hotkey listener
-    gitcast "your thought"     Quick capture with inline thought
-    gitcast capture            Interactive multi-shot screenshot session
-    gitcast --setup            Configure your own API keys
-    gitcast --version          Show version
-
-## Stack
-- Python 3.11+
-- FastAPI, pynput, mss, Tesseract, Groq API, Tweepy
-=======
 # Gitcast
 
 > **git diff → published post. under 60 seconds.**
 
 [![PyPI version](https://img.shields.io/pypi/v/gitcast.svg)](https://pypi.org/project/gitcast/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-Privacy-first developer tool that captures your coding session via global hotkey, reads your local `git diff` and project context, generates AI-powered social media posts, PR descriptions, and articles, and publishes them without breaking your flow.
+Gitcast is a privacy-first developer tool that captures your coding session via a global hotkey, reads your local `git diff` and project context, generates AI-powered social media posts, PR descriptions, and articles, and publishes them without breaking your flow.
 
-Works immediately after install — **no API key setup required**! Gitcast comes with a built-in shared key.
+Works immediately after installation with zero setup required — Gitcast comes with a built-in shared key.
 
 ---
 
-##  Features
+## Features
 
--  **Global Hotkey Capture**: Press **`Ctrl+Shift+P`** or **`Ctrl+Alt+S`** anywhere (VS Code, terminal, browser) to instantly capture your screen and local code changes (`git diff`).
--  **Privacy-First & Local OCR**: Screen text extraction (Tesseract OCR) runs 100% locally on your machine. Sensitive credentials (API keys, secrets, tokens, passwords) are automatically detected and blocked.
--  **Automated macOS Window Framing**: Raw screenshots are automatically wrapped in a sleek macOS-style window frame with traffic light controls and soft drop shadows for viral social posts.
--  **Multi-Format AI Generation**: Generates 5 distinct content formats simultaneously in under 8 seconds:
+- **Global Hotkey Capture**: Press **`Ctrl+Shift+P`** or **`Ctrl+Alt+S`** anywhere (VS Code, terminal, browser) to instantly capture your screen and local code changes (`git diff`).
+- **Privacy-First & Local OCR**: Screen text extraction (Tesseract OCR) runs 100% locally on your machine. Sensitive credentials (API keys, secrets, tokens, passwords) are automatically detected and blocked.
+- **Automated macOS Window Framing**: Raw screenshots are automatically wrapped in a sleek macOS-style window frame with traffic light controls and soft drop shadows for social posts.
+- **Multi-Format AI Generation**: Generates distinct content formats simultaneously in under 8 seconds:
   - **X (Twitter) Post**: High-impact, tech-focused updates with code context.
   - **LinkedIn Draft**: Structured narrative posts tailored for developer networks.
   - **PR Description**: Full GitHub/GitLab markdown pull request descriptions (What, Why, How, Testing).
   - **Quick Win**: Short punchy updates ideal for feature ships.
   - **Longform Article**: Medium/Substack-ready markdown blog posts.
--  **Sprint Mode (Deep Work)**: Silently log multiple code captures throughout a long coding session without popups, then synthesize them into a cohesive multi-step "sprint thread" at the end.
--  **Smart Vision AI Fallback**: If local OCR confidence falls below 60%, Gitcast seamlessly routes the screenshot to Gemini Vision for high-accuracy multimodal reading.
--  **Interactive Local Dashboard & Review Room**: Web UI running locally at `http://localhost:8000` with live preview, inline editing, and natural language AI refinement chat.
--  **1-Click Publishing & Clipboard Integration**: Publish directly to X (Twitter) via API v2 with media upload support, or copy pre-formatted markdown to clipboard.
--  **Bring Your Own Key (BYOK)**: Zero setup required out-of-the-box, plus optional BYOK support for Groq, Gemini, DeepSeek, OpenRouter, and Moonshot/Kimi.
+- **Sprint Mode (Deep Work)**: Silently log multiple code captures throughout a long coding session without popups, then synthesize them into a cohesive multi-step "sprint thread" at the end.
+- **Smart Vision AI Fallback**: If local OCR confidence falls below 60%, Gitcast seamlessly routes the screenshot to Gemini Vision for high-accuracy multimodal reading.
+- **Interactive Local Dashboard & Review Room**: Web UI running locally at `http://localhost:8000` with live preview, inline editing, and natural language AI refinement chat.
+- **1-Click Publishing & Clipboard Integration**: Publish directly to X (Twitter) via API v2 with media upload support, or copy pre-formatted markdown to clipboard.
+- **Bring Your Own Key (BYOK)**: Zero setup required out-of-the-box, plus optional BYOK support for Groq, Gemini, DeepSeek, OpenRouter, and Moonshot/Kimi.
 
 ---
 
-##  Quick Start
+## Quick Start
 
-### Step 1 — Install Tesseract OCR
+### Step 1: Install Tesseract OCR
 
 Required for local screenshot text extraction. Runs entirely on your device — your code never leaves your computer without permission.
 
@@ -119,13 +52,13 @@ Required for local screenshot text extraction. Runs entirely on your device — 
   2. Run installer and check **"Add to PATH"** during installation.
   3. Restart your terminal.
 
-### Step 2 — Install Gitcast
+### Step 2: Install Gitcast
 
 ```bash
 pip install gitcast
 ```
 
-### Step 3 — Launch
+### Step 3: Launch
 
 ```bash
 gitcast
@@ -139,7 +72,7 @@ The web dashboard opens automatically at `http://localhost:8000`.
   gitcast "just added instant fallback routing for AI models"
   ```
 
-### Step 4 — Optional: Add Your Own Key (BYOK)
+### Step 4: Optional: Add Your Own Key (BYOK)
 
 The built-in shared key has rate limits shared across users. For unlimited personal usage, add your own free key:
 
@@ -147,11 +80,11 @@ The built-in shared key has rate limits shared across users. For unlimited perso
 gitcast --setup
 ```
 
-Or configure keys in the dashboard sidebar under **[BYOK]**. Get a free Groq key in 2 minutes at [console.groq.com](https://console.groq.com).
+Or configure keys in the dashboard sidebar under **BYOK**. Get a free Groq key in 2 minutes at [console.groq.com](https://console.groq.com).
 
 ---
 
-##  How It Works
+## Architecture & Flow
 
 ```text
   [HotKey / CLI Trigger]  ──> Press Ctrl+Shift+P or run `gitcast "thought"`
@@ -180,9 +113,9 @@ Gitcast automatically detects project context from your current working director
 
 ---
 
-##  Sprint Mode
+## Sprint Mode
 
-For deep work sessions where you don't want to break your flow:
+For deep work sessions where you do not want to break your flow:
 
 1. **Activate Sprint Mode**: Toggle **Sprint Mode** `[ON]` from the dashboard sidebar or tray icon.
 2. **Capture Silently**: Every `Ctrl+Shift+P` press logs your screenshot and `git diff` silently in the background without popups or AI calls.
@@ -190,7 +123,7 @@ For deep work sessions where you don't want to break your flow:
 
 ---
 
-##  CLI Reference
+## CLI Reference
 
 | Command | Description |
 |---|---|
@@ -202,16 +135,16 @@ For deep work sessions where you don't want to break your flow:
 
 ---
 
-##  Privacy & Security
+## Privacy & Security
 
--  **100% On-Device OCR**: Text from screenshots is extracted locally via Tesseract before any API requests.
--  **Automated Secret Scanning**: Regex scanner screens OCR text for API keys (`sk-`, `gsk_`, `Bearer`), tokens, passwords, and long hashes, automatically redacting and blocking sensitive captures.
--  **Automatic Cleanup**: Screenshots are encrypted with Fernet locally and auto-cleaned after 24 hours. Declined captures are securely deleted immediately.
--  **No Background Screen Recording**: Gitcast only captures screen data when explicitly triggered by your hotkey or CLI command.
+- **100% On-Device OCR**: Text from screenshots is extracted locally via Tesseract before any API requests.
+- **Automated Secret Scanning**: Regex scanner screens OCR text for API keys (`sk-`, `gsk_`), tokens, passwords, and long hashes, automatically redacting and blocking sensitive captures.
+- **Automatic Cleanup**: Screenshots are encrypted with Fernet locally and auto-cleaned after 24 hours. Declined captures are securely deleted immediately.
+- **No Background Screen Recording**: Gitcast only captures screen data when explicitly triggered by your hotkey or CLI command.
 
 ---
 
-##  AI Providers & BYOK Priority
+## AI Providers & BYOK Priority
 
 Gitcast routes each post format to the optimal provider for performance and output quality:
 
@@ -228,7 +161,7 @@ Gitcast routes each post format to the optimal provider for performance and outp
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
 - **Backend**: Python 3.10+, FastAPI, Uvicorn, Pydantic, `httpx`
 - **System & Screen**: `mss`, `Pillow`, `pytesseract`, `pynput`, `plyer`
@@ -238,9 +171,14 @@ Gitcast routes each post format to the optimal provider for performance and outp
 
 ---
 
-##  License
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request or open an Issue on [GitHub](https://github.com/drizzy765/gitcast).
+
+---
+
+## License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
-Built with  by [Timilehin Agoro](https://github.com/drizzy765) (@drizzy765).
->>>>>>> 1305f09 ( docs: update README with detailed features, CLI reference, and architecture flow)
+Built by [Timilehin Agoro](https://github.com/drizzy765) (@drizzy765).
