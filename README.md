@@ -177,6 +177,15 @@ Contributions are welcome! Please feel free to submit a Pull Request or open an 
 
 ---
 
+## Links
+
+- PyPI: https://pypi.org/project/gitcast
+- GitHub: https://github.com/drizzy765/gitcast
+- LinkedIn: https://www.linkedin.com/company/gitcast-dev/
+- Issues: https://github.com/drizzy765/gitcast/issues
+
+---
+
 ## License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

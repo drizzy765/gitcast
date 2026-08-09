@@ -54,13 +54,20 @@ if os.path.exists(requirements_path):
 
 setup(
     name="gitcast",
-    version="1.0.32",
+    version="1.0.33",
     description="git diff → published post. under 60 seconds.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Timilehin Agoro",
     author_email="agorotimilehi05@gmail.com",
     url="https://github.com/drizzy765/gitcast",
+    project_urls={
+        "Homepage": "https://github.com/drizzy765/gitcast",
+        "Repository": "https://github.com/drizzy765/gitcast",
+        "Bug Tracker": "https://github.com/drizzy765/gitcast/issues",
+        "Changelog": "https://github.com/drizzy765/gitcast/releases",
+        "LinkedIn": "https://www.linkedin.com/company/gitcast-dev/",
+    },
     license="MIT",
     python_requires=">=3.10",
     packages=find_packages(),
