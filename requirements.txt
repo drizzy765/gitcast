@@ -17,3 +17,4 @@ limits
 sentry-sdk[fastapi]
 posthog
 plyer
+supabase>=2.4.2
