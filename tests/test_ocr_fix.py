@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from api.payload import build_payload
-from api.routes import generate_article, ArticleGenerateRequest
+from api.routes import generate_article_endpoint as generate_article, ArticleGenerateRequest
 from config.settings import CURRENT_DRAFT
 from fastapi import HTTPException
 
