@@ -43,6 +43,9 @@ def _show_tray_notification(title, message):
 
 
 def _generate_and_open(raw_thought, capture, ocr, project_ctx):
+    _generate_and_show(raw_thought, capture, ocr, project_ctx)
+
+def _generate_and_show(raw_thought, capture, ocr, project_ctx):
     # Step 5: build_payload()
     payload = build_payload(
         raw_thought=raw_thought,
@@ -167,22 +170,27 @@ def _run_trigger():
         return
 
     narrative = get_project_narrative()
+    readme = project_ctx.get("readme_content", "")
+    project_name = project_ctx.get("project_name", "")
 
     if narrative:
-        # silent mode — no popup
-        # use narrative as the raw thought
         raw_thought = narrative
         print("[Trigger] using project narrative — skipping popup")
-        _generate_and_open(raw_thought, capture, ocr, project_ctx)
+        _generate_and_show(raw_thought, capture, ocr, project_ctx)
+
+    elif readme:
+        # README exists — use project name as thought
+        # and README as context, skip popup
+        raw_thought = f"Working on {project_name}"
+        print(f"[Trigger] README found for {project_name} — using as context")
+        _generate_and_show(raw_thought, capture, ocr, project_ctx)
 
     else:
-        # first time or no narrative — show popup once
-        print("[Trigger] no narrative set — showing setup popup")
-
+        # no narrative, no README — show popup
         def on_submit(thought):
+            from config.settings import set_project_narrative
             set_project_narrative(thought)
-            print(f"[Trigger] narrative saved: '{thought}'")
-            _generate_and_open(thought, capture, ocr, project_ctx)
+            _generate_and_show(thought, capture, ocr, project_ctx)
 
         def on_dismiss():
             print("[Trigger] popup dismissed")

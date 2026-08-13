@@ -78,38 +78,7 @@ def _is_uuid(value: str) -> bool:
 
 
 def _load_user_provider_keys(user_id: str) -> dict:
-    from storage.key_manager import decrypt_key
-    from storage.supabase_client import get_client
-
-    if not user_id or not _is_uuid(user_id):
-        return {}
-
-    response = (
-        get_client()
-        .table("api_keys")
-        .select("provider,encrypted_key")
-        .eq("user_id", user_id)
-        .execute()
-    )
-    keys = {}
-    for row in response.data or []:
-        provider = row.get("provider")
-        encrypted_key = row.get("encrypted_key")
-        if not provider or not encrypted_key:
-            continue
-        try:
-            keys[provider] = decrypt_key(encrypted_key)
-            (
-                get_client()
-                .table("api_keys")
-                .update({"last_used_at": datetime.now().isoformat()})
-                .eq("user_id", user_id)
-                .eq("provider", provider)
-                .execute()
-            )
-        except Exception as e:
-            stream_log("Keys", "WARN", f"{provider} key decrypt failed: {e}")
-    return keys
+    return {}
 
 
 def refresh_provider_keys(user_id: str = "") -> None:

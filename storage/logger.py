@@ -1,27 +1,18 @@
+import json
 from datetime import datetime, timedelta
 from typing import Optional
-from uuid import UUID
-
-from storage.supabase_client import get_client
-
-
-def _is_supabase_user(user_id: Optional[str]) -> bool:
-    try:
-        UUID(str(user_id))
-        return True
-    except (TypeError, ValueError):
-        return False
+from uuid import uuid4
 
 
 def _normalize_entry(entry: dict) -> dict:
     timestamp = entry.get("timestamp") or entry.get("created_at") or ""
-    tweet_url = entry.get("tweet_url", "") or ""
+    tweet_url = entry.get("tweet_url", "") or entry.get("post_url", "") or ""
     return {
         **entry,
         "id": str(entry.get("id", "")),
         "timestamp": timestamp,
         "posted_verified": bool(entry.get("posted_verified", False)),
-        "posted_declined": bool(entry.get("declined", False)),
+        "posted_declined": bool(entry.get("declined", False) or entry.get("posted_declined", False)),
         "post_url": tweet_url,
         "verified_at": entry.get("verified_at", "") or "",
         "metrics": {
@@ -37,14 +28,49 @@ def _normalize_entry(entry: dict) -> dict:
     }
 
 
+def _load_local_posts() -> list:
+    from config.settings import POST_LOG
+    if not POST_LOG.exists() or POST_LOG.stat().st_size == 0:
+        return []
+    try:
+        with open(POST_LOG, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                return [_normalize_entry(e) for e in data]
+            return []
+    except Exception:
+        return []
+
+
+def _save_to_local(entry: dict) -> None:
+    from config.settings import POST_LOG
+    posts = _load_local_posts()
+    entry_id = entry.get("id")
+    found = False
+    if entry_id:
+        for i, p in enumerate(posts):
+            if p.get("id") == entry_id:
+                posts[i] = {**p, **entry}
+                found = True
+                break
+    if not found:
+        posts.append(entry)
+    POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(POST_LOG, "w", encoding="utf-8") as f:
+        json.dump(posts, f, indent=4)
+
+
 def save_posts(posts: list, user_id: Optional[str] = None) -> None:
-    print("[Logger] save_posts is deprecated for Supabase storage")
+    from config.settings import POST_LOG
+    POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(POST_LOG, "w", encoding="utf-8") as f:
+        json.dump(posts, f, indent=4)
 
 
 def log_post(
     post_text: str,
     format_key: str,
-    screenshot_path: str,
+    screenshot_path: str = "",
     tweet_url: str = "",
     tweet_id: str = "",
     fallback: bool = False,
@@ -52,109 +78,89 @@ def log_post(
     user_id: Optional[str] = None,
     provider_used: str = "",
 ) -> Optional[str]:
-    if not user_id:
-        raise ValueError("user_id is required")
-    if not _is_supabase_user(user_id):
-        print("[Logger] Local user detected; skipping Supabase post log")
-        return None
-
-    payload = {
-        "user_id": user_id,
+    entry = {
+        "id": str(uuid4()),
         "post_text": post_text,
         "format_key": format_key,
-        "provider_used": provider_used or ("fallback" if fallback else ""),
-        "platform": "twitter",
+        "screenshot_path": screenshot_path,
         "tweet_url": tweet_url,
         "tweet_id": tweet_id,
+        "fallback": fallback,
+        "timestamp": timestamp or datetime.now().isoformat(),
+        "user_id": user_id or "local",
+        "provider_used": provider_used or ("fallback" if fallback else ""),
+        "posted_verified": bool(tweet_url),
+        "declined": False,
     }
-    if timestamp:
-        payload["timestamp"] = timestamp
 
-    try:
-        response = get_client().table("posts").insert(payload).execute()
-        row = response.data[0] if response.data else {}
-        print("[Logger] Post metadata logged to Supabase")
-        return row.get("id")
-    except Exception as e:
-        print(f"[Logger] Failed to log post metadata: {e}")
-        return None
+    # save locally first always
+    _save_to_local(entry)
+
+    # sync to cloud via render server
+    import threading
+    def _sync():
+        try:
+            import asyncio
+            from core.cloud_client import cloud_save_post
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(cloud_save_post(entry))
+        except Exception:
+            pass  # local save already done
+    threading.Thread(target=_sync, daemon=True).start()
+
+    return entry["id"]
 
 
-def load_posts(user_id: str) -> list:
-    if not _is_supabase_user(user_id):
-        return []
-
-    try:
-        response = (
-            get_client()
-            .table("posts")
-            .select("*")
-            .eq("user_id", user_id)
-            .order("timestamp", desc=True)
-            .execute()
-        )
-        return [_normalize_entry(entry) for entry in (response.data or [])]
-    except Exception as e:
-        print(f"[Logger] Failed to load posts: {e}")
-        return []
+def load_posts(user_id: Optional[str] = None) -> list:
+    return _load_local_posts()
 
 
 def verify_post(post_id: str, post_url: str = "", user_id: Optional[str] = None) -> dict:
-    if not user_id:
-        return {"success": False, "error": "user_id is required"}
-    if not _is_supabase_user(user_id):
-        return {"success": False, "error": "local history is not backed by Supabase"}
-
-    payload = {
-        "posted_verified": True,
-        "declined": False,
-        "verified_at": datetime.now().isoformat(),
-    }
-    if post_url:
-        payload["tweet_url"] = post_url
-
-    response = (
-        get_client()
-        .table("posts")
-        .update(payload)
-        .eq("id", post_id)
-        .eq("user_id", user_id)
-        .execute()
-    )
-    if response.data:
+    posts = _load_local_posts()
+    found = False
+    for post in posts:
+        if post.get("id") == post_id:
+            post["posted_verified"] = True
+            post["declined"] = False
+            post["posted_declined"] = False
+            post["verified_at"] = datetime.now().isoformat()
+            if post_url:
+                post["tweet_url"] = post_url
+                post["post_url"] = post_url
+            found = True
+            break
+    if found:
+        save_posts(posts)
         return {"success": True, "post_id": post_id}
     return {"success": False, "error": "post not found"}
 
 
 def decline_post(post_id: str, user_id: Optional[str] = None) -> dict:
-    if not user_id:
-        return {"success": False, "error": "user_id is required"}
-    if not _is_supabase_user(user_id):
-        return {"success": False, "error": "local history is not backed by Supabase"}
-
-    response = (
-        get_client()
-        .table("posts")
-        .update({"declined": True})
-        .eq("id", post_id)
-        .eq("user_id", user_id)
-        .execute()
-    )
-    if response.data:
+    posts = _load_local_posts()
+    found = False
+    for post in posts:
+        if post.get("id") == post_id:
+            post["declined"] = True
+            post["posted_declined"] = True
+            found = True
+            break
+    if found:
+        save_posts(posts)
         return {"success": True, "post_id": post_id}
     return {"success": False, "error": "post not found"}
 
 
-def get_unverified_posts(user_id: str) -> list:
+def get_unverified_posts(user_id: Optional[str] = None) -> list:
     posts = [
         entry for entry in load_posts(user_id)
-        if not entry.get("posted_verified") and not entry.get("posted_declined")
+        if not entry.get("posted_verified") and not entry.get("posted_declined") and not entry.get("declined")
     ]
     return sorted(posts, key=lambda item: item.get("timestamp", ""), reverse=True)
 
 
-def get_streak(user_id: str) -> dict:
-    posts = [post for post in load_posts(user_id) if not post.get("posted_declined")]
+def get_streak(user_id: Optional[str] = None) -> dict:
+    posts = [post for post in load_posts(user_id) if not post.get("posted_declined") and not post.get("declined")]
     if not posts:
         return {"current_streak": 0, "best_streak": 0, "total_posts": 0, "last_post_date": ""}
 
@@ -205,4 +211,4 @@ def get_streak(user_id: str) -> dict:
 
 
 if __name__ == "__main__":
-    print("[Logger] Supabase logger module loaded")
+    print("[Logger] Storage logger module loaded")

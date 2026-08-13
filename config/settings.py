@@ -55,13 +55,14 @@ def get_active_env_path(for_write: bool = False) -> Path:
 
 load_all_dotenvs()
 STORAGE_DIR = BASE_DIR / "storage" / "data"
+
+# create on import so it always exists
+STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+(STORAGE_DIR / "screenshots").mkdir(
+    parents=True, exist_ok=True)
+
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", "")
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
-SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 WAITLIST_FILE = STORAGE_DIR / "waitlist.txt"
 METRICS_LOG = STORAGE_DIR / "metrics_log.json"
@@ -75,7 +76,9 @@ ENCRYPTION_KEY_PATH = CONFIG_DIR / ".secret_key"
 SETTINGS_FILE = CONFIG_DIR / "user_settings.json"
 screenshot_retention_hours = 24
 
-STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+BYOK_KEY = os.getenv("BYOK_KEY", "")
+BYOK_PROVIDER = os.getenv("BYOK_PROVIDER", "groq")
+GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com")
 
 
 API_KEY_ENV_MAP = {
@@ -114,11 +117,9 @@ def reload_api_keys() -> None:
     global GEMINI_MODEL
     global CEREBRAS_MODEL
     global OPENROUTER_MODEL
-    global SUPABASE_URL
-    global SUPABASE_SERVICE_KEY
-    global SUPABASE_ANON_KEY
-    global SUPABASE_JWT_SECRET
-    global SUPABASE_JWT_AUDIENCE
+    global BYOK_KEY
+    global BYOK_PROVIDER
+    global GITCAST_API_URL
 
     load_all_dotenvs(override=True)
     
@@ -141,17 +142,23 @@ def reload_api_keys() -> None:
         not os.getenv("GROQ_API_KEY") and bool(_BASE_GROQ)
     )
 
+    BYOK_KEY = (
+        os.getenv("BYOK_KEY", "")
+        or os.getenv("GROQ_API_KEY", "")
+        or os.getenv("GEMINI_API_KEY", "")
+        or os.getenv("DEEPSEEK_API_KEY", "")
+        or os.getenv("MOONSHOT_API_KEY", "")
+        or os.getenv("OPENROUTER_API_KEY", "")
+        or os.getenv("CEREBRAS_API_KEY", "")
+    )
+    BYOK_PROVIDER = os.getenv("BYOK_PROVIDER", "groq")
+    GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com")
+
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-8k")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
     OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
-    
-    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
-    SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
-    SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 
 
 reload_api_keys()

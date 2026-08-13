@@ -161,3 +161,37 @@ def check_server_health() -> dict:
         return res.json()
     except Exception:
         return {"status": "unreachable"}
+
+
+async def cloud_generate_article(payload: dict) -> str:
+    url = f"{GITCAST_API_URL}/api/article/generate"
+    headers = get_headers()
+
+    # only send fields the server expects
+    clean_payload = {
+        "narrative": payload.get("narrative", ""),
+        "readme_content": payload.get("readme_content", ""),
+        "sprint_log": payload.get("sprint_log", []),
+        "project_context": payload.get("project_context", ""),
+    }
+    if BYOK_KEY:
+        clean_payload["byok_key"] = BYOK_KEY
+        clean_payload["byok_provider"] = BYOK_PROVIDER
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            res = await client.post(
+                url,
+                headers=headers,
+                json=clean_payload,
+            )
+            if res.status_code == 400:
+                print(f"[Cloud] Article 400: {res.text[:200]}")
+                return ""
+            res.raise_for_status()
+            data = res.json()
+            return data.get("article", "")
+    except Exception as e:
+        print(f"[Cloud] Article error: {e}")
+        return ""
+

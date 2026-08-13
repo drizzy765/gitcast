@@ -4,8 +4,7 @@ from typing import Optional
 from fastapi import Header, Query, HTTPException
 from jose import JWTError, jwt
 
-from config.settings import CONFIG_DIR, SUPABASE_JWT_AUDIENCE, SUPABASE_JWT_SECRET
-from storage.supabase_client import get_client
+from config.settings import CONFIG_DIR
 
 LOCAL_USER_ID = "local_user"
 KNOWN_SESSIONS: dict[str, str] = {}
@@ -53,34 +52,7 @@ def verify_jwt(token: str) -> dict:
         KNOWN_SESSIONS[token] = cached_user_id
         return {"user_id": cached_user_id, "sub": cached_user_id}
 
-    if SUPABASE_JWT_SECRET:
-        try:
-            payload = jwt.decode(
-                token,
-                SUPABASE_JWT_SECRET,
-                algorithms=["HS256"],
-                audience=SUPABASE_JWT_AUDIENCE,
-            )
-        except JWTError as exc:
-            raise _unauthorized("Invalid bearer token") from exc
-
-        user_id = payload.get("sub")
-        if not user_id:
-            raise _unauthorized("Invalid bearer token")
-        payload["user_id"] = user_id
-        return payload
-
-    try:
-        response = get_client().auth.get_user(token)
-        user = getattr(response, "user", None)
-        user_id = getattr(user, "id", None)
-        if not user_id:
-            raise _unauthorized("Invalid bearer token")
-        return {"user_id": str(user_id), "sub": str(user_id)}
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise _unauthorized("Invalid bearer token") from exc
+    return {"user_id": LOCAL_USER_ID, "sub": LOCAL_USER_ID}
 
 
 def register_session(access_token: str, user_id: str) -> None:

@@ -17,7 +17,6 @@ from storage.metrics import get_metrics, save_metrics
 from storage.insights import calculate_insights
 from storage.tone_memory import save_rating
 from storage.key_manager import encrypt_key, mask_key
-from storage.supabase_client import get_client
 from core.codebase_reader import summarise_for_prompt
 from config.settings import (
     DEFAULTS,
@@ -248,98 +247,61 @@ def save_local_posts(posts: list) -> None:
 
 
 async def safe_get_posts() -> list:
-    try:
-        from storage.supabase_client import get_client
-        client = get_client()
-        result = client.table("posts").select("*").order("timestamp", desc=True).execute()
-        if result.data:
-            from storage.logger import _normalize_entry
-            return [_normalize_entry(entry) for entry in result.data]
-        return []
-    except Exception as e:
-        stream_log("Storage", "WARN", f"Supabase get_posts failed: {e}. Falling back to local JSON.")
-        return load_local_posts()
+    return load_local_posts()
 
 
 async def safe_save_post(post_data: dict) -> bool:
-    try:
-        from storage.supabase_client import get_client
-        client = get_client()
-        payload = {
-            "post_text": post_data.get("post_text"),
-            "format_key": post_data.get("format_key", "deep_tech"),
-            "tweet_url": post_data.get("tweet_url", "") or post_data.get("post_url", ""),
-            "tweet_id": post_data.get("tweet_id", ""),
-            "provider_used": post_data.get("provider_used", ""),
-            "platform": post_data.get("platform", "twitter"),
-            "user_id": post_data.get("user_id"),
-        }
-        if "timestamp" in post_data and post_data["timestamp"]:
-            payload["timestamp"] = post_data["timestamp"]
-        client.table("posts").insert(payload).execute()
-        return True
-    except Exception as e:
-        stream_log("Storage", "WARN", f"Supabase save_post failed: {e}. Falling back to local JSON.")
-        posts = load_local_posts()
-        from uuid import uuid4
-        new_entry = {
-            "id": post_data.get("id") or str(uuid4()),
-            "post_text": post_data.get("post_text"),
-            "format_key": post_data.get("format_key", "deep_tech"),
-            "screenshot_path": post_data.get("screenshot_path", ""),
-            "tweet_url": post_data.get("tweet_url", "") or post_data.get("post_url", ""),
-            "tweet_id": post_data.get("tweet_id", ""),
-            "fallback": post_data.get("fallback", False),
-            "timestamp": post_data.get("timestamp") or datetime.now().isoformat(),
-            "user_id": post_data.get("user_id", LOCAL_USER_ID),
-            "posted_verified": post_data.get("posted_verified", False),
-            "declined": post_data.get("declined", False) or post_data.get("posted_declined", False),
-            "verified_at": post_data.get("verified_at", ""),
-            "metrics_saved": post_data.get("metrics_saved", False),
-            "metrics_saved_at": post_data.get("metrics_saved_at", ""),
-            "impressions": post_data.get("impressions", 0),
-            "likes": post_data.get("likes", 0),
-            "comments": post_data.get("comments", 0),
-            "reposts": post_data.get("reposts", 0),
-            "hashtags": post_data.get("hashtags", []),
-            "platform": post_data.get("platform", "twitter"),
-            "days_after_post": post_data.get("days_after_post", 0),
-        }
-        posts.append(new_entry)
-        save_local_posts(posts)
-        return True
+    posts = load_local_posts()
+    from uuid import uuid4
+    new_entry = {
+        "id": post_data.get("id") or str(uuid4()),
+        "post_text": post_data.get("post_text"),
+        "format_key": post_data.get("format_key", "deep_tech"),
+        "screenshot_path": post_data.get("screenshot_path", ""),
+        "tweet_url": post_data.get("tweet_url", "") or post_data.get("post_url", ""),
+        "tweet_id": post_data.get("tweet_id", ""),
+        "fallback": post_data.get("fallback", False),
+        "timestamp": post_data.get("timestamp") or datetime.now().isoformat(),
+        "user_id": post_data.get("user_id", LOCAL_USER_ID),
+        "posted_verified": post_data.get("posted_verified", False),
+        "declined": post_data.get("declined", False) or post_data.get("posted_declined", False),
+        "verified_at": post_data.get("verified_at", ""),
+        "metrics_saved": post_data.get("metrics_saved", False),
+        "metrics_saved_at": post_data.get("metrics_saved_at", ""),
+        "impressions": post_data.get("impressions", 0),
+        "likes": post_data.get("likes", 0),
+        "comments": post_data.get("comments", 0),
+        "reposts": post_data.get("reposts", 0),
+        "hashtags": post_data.get("hashtags", []),
+        "platform": post_data.get("platform", "twitter"),
+        "days_after_post": post_data.get("days_after_post", 0),
+    }
+    posts.append(new_entry)
+    save_local_posts(posts)
+    return True
 
 
 async def safe_update_post(post_id: str, updates: dict) -> bool:
-    try:
-        from storage.supabase_client import get_client
-        client = get_client()
-        result = client.table("posts").update(updates).eq("id", post_id).execute()
-        if result.data:
-            return True
-        raise Exception("Post not found in Supabase")
-    except Exception as e:
-        stream_log("Storage", "WARN", f"Supabase update post failed: {e}. Updating local JSON.")
-        posts = load_local_posts()
-        found = False
-        for post in posts:
-            if post.get("id") == post_id:
-                for k, v in updates.items():
-                    if k == "declined":
-                        post["declined"] = v
-                        post["posted_declined"] = v
-                    elif k == "posted_verified":
-                        post["posted_verified"] = v
-                        post["posted_declined"] = False
-                        post["declined"] = False
-                    else:
-                        post[k] = v
-                found = True
-                break
-        if found:
-            save_local_posts(posts)
-            return True
-        return False
+    posts = load_local_posts()
+    found = False
+    for post in posts:
+        if post.get("id") == post_id:
+            for k, v in updates.items():
+                if k == "declined":
+                    post["declined"] = v
+                    post["posted_declined"] = v
+                elif k == "posted_verified":
+                    post["posted_verified"] = v
+                    post["posted_declined"] = False
+                    post["declined"] = False
+                else:
+                    post[k] = v
+            found = True
+            break
+    if found:
+        save_local_posts(posts)
+        return True
+    return False
 
 
 async def safe_get_unverified() -> list:
@@ -363,48 +325,40 @@ async def safe_save_metrics(post_id: str, metrics: dict) -> dict:
         "metrics_saved": True,
         "metrics_saved_at": datetime.now().isoformat(),
     }
-    try:
-        from storage.supabase_client import get_client
-        client = get_client()
-        result = client.table("posts").update(payload).eq("id", post_id).execute()
-        if result.data:
-            return {"success": True}
-        raise Exception("Post not found in Supabase")
-    except Exception as e:
-        stream_log("Storage", "WARN", f"Supabase save metrics failed: {e}. Saving to local JSON.")
-        posts = load_local_posts()
-        found = False
-        for post in posts:
-            if post.get("id") == post_id:
-                for k, v in payload.items():
-                    post[k] = v
-                found = True
-                break
-        if found:
-            save_local_posts(posts)
-            from config.settings import METRICS_LOG
-            try:
-                metrics_log = []
-                if METRICS_LOG.exists() and METRICS_LOG.stat().st_size > 0:
-                    with open(METRICS_LOG, "r", encoding="utf-8") as f:
-                        metrics_log = json.load(f)
-                existing = False
-                for m in metrics_log:
-                    if m.get("post_id") == post_id:
-                        m.update(payload)
-                        existing = True
-                        break
-                if not existing:
-                    metrics_log.append({
-                        "post_id": post_id,
-                        **payload
-                    })
-                with open(METRICS_LOG, "w", encoding="utf-8") as f:
-                    json.dump(metrics_log, f, indent=4)
-            except Exception as e_log:
-                stream_log("Storage", "ERROR", f"Failed to save metrics_log: {e_log}")
-            return {"success": True}
-        return {"success": False, "error": "post not found"}
+    posts = load_local_posts()
+    found = False
+    for post in posts:
+        if post.get("id") == post_id:
+            for k, v in payload.items():
+                post[k] = v
+            found = True
+            break
+    if found:
+        save_local_posts(posts)
+        from config.settings import METRICS_LOG
+        try:
+            metrics_log = []
+            if METRICS_LOG.exists() and METRICS_LOG.stat().st_size > 0:
+                with open(METRICS_LOG, "r", encoding="utf-8") as f:
+                    metrics_log = json.load(f)
+            existing = False
+            for m in metrics_log:
+                if m.get("post_id") == post_id:
+                    m.update(payload)
+                    existing = True
+                    break
+            if not existing:
+                metrics_log.append({
+                    "post_id": post_id,
+                    **payload
+                })
+            METRICS_LOG.parent.mkdir(parents=True, exist_ok=True)
+            with open(METRICS_LOG, "w", encoding="utf-8") as f:
+                json.dump(metrics_log, f, indent=4)
+        except Exception:
+            pass
+        return {"success": True}
+    return {"success": False, "error": "Post not found"}
 
 
 KEY_GUIDE = {
@@ -475,71 +429,19 @@ def _reload_key_runtime() -> None:
 
 
 def _settings_for_user(user_id: str) -> dict:
-    def local_settings() -> dict:
-        settings = load_settings()
-        return {**DEFAULTS, **settings, "user_id": user_id}
-
-    if _is_local_user(user_id):
-        return local_settings()
-
-    try:
-        client = get_client()
-    except RuntimeError as exc:
-        if "SUPABASE_URL and SUPABASE_SERVICE_KEY" not in str(exc):
-            raise
-        stream_log("Settings", "WARN", "Supabase not configured; using local settings")
-        return local_settings()
-
-    try:
-        response = (
-            client
-            .table("user_settings")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if response.data:
-            return response.data[0]
-        created = client.table("user_settings").insert({"user_id": user_id}).execute()
-        return created.data[0] if created.data else {"user_id": user_id}
-    except Exception as exc:
-        stream_log("Settings", "WARN", f"Supabase settings unavailable; using local settings: {exc}")
-        return local_settings()
+    settings = load_settings()
+    return {**DEFAULTS, **settings, "user_id": user_id}
 
 
 def _update_settings_for_user(user_id: str, values: dict) -> dict:
-    def save_local_settings(payload: dict) -> dict:
-        settings = {**load_settings(), **payload}
-        settings.pop("updated_at", None)
-        save_settings(settings)
-        return {**DEFAULTS, **settings, "user_id": user_id}
-
     payload = {key: value for key, value in values.items() if value is not None}
     if not payload:
         return _settings_for_user(user_id)
     payload["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-    if _is_local_user(user_id):
-        return save_local_settings(payload)
-
-    try:
-        client = get_client()
-    except RuntimeError as exc:
-        if "SUPABASE_URL and SUPABASE_SERVICE_KEY" not in str(exc):
-            raise
-        stream_log("Settings", "WARN", "Supabase not configured; saving local settings")
-        return save_local_settings(payload)
-
-    try:
-        response = (
-            client
-            .table("user_settings")
-            .upsert({"user_id": user_id, **payload}, on_conflict="user_id")
-            .execute()
-        )
-        return response.data[0] if response.data else _settings_for_user(user_id)
-    except Exception as exc:
-        stream_log("Settings", "WARN", f"Supabase settings unavailable; saving local settings: {exc}")
-        return save_local_settings(payload)
+    settings = {**load_settings(), **payload}
+    settings.pop("updated_at", None)
+    save_settings(settings)
+    return {**DEFAULTS, **settings, "user_id": user_id}
 
 
 @router.get("/keys/status")
@@ -1226,42 +1128,18 @@ async def diagnose_connectivity(user_id: str = Depends(get_current_user)):
     return {"results": results}
 
 
+@router.post("/api/article/generate")
 @router.post("/article/generate")
-@limiter.limit("5/minute")
-async def generate_article(request: Request, body: ArticleGenerateRequest, user_id: str = Depends(get_current_user)):
-    """Generates a full technical article from sprint context."""
-    if not CURRENT_DRAFT.exists():
-        raise HTTPException(status_code=400, detail="No active draft to generate article from.")
-
-    try:
-        with open(CURRENT_DRAFT, "r", encoding="utf-8") as f:
-            draft = json.load(f)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading draft: {e}")
-
-    codebase_summary = ""
-    if body.include_codebase:
-        codebase_summary = await asyncio.to_thread(summarise_for_prompt, sanitize_text(body.repo_path))
-
-    sys_prompt = article_prompt(codebase_summary)
-    
-    sprint_context = ""
-    if SPRINT_LOG.exists():
-        with open(SPRINT_LOG, "r", encoding="utf-8") as f:
-            sprint_context = f.read()
-
-    user_msg = (
-        f"Raw Thoughts: {draft['payload'].get('user_message', '')}\n\n"
-        f"OCR Context: {draft['payload'].get('ocr_text', '')}\n\n"
-        f"Git Diff: {draft['payload'].get('git_diff', '')}\n\n"
-        f"Sprint Context: {sprint_context}"
-    )
-
-    try:
-        article = await _ai_call("article", sys_prompt, user_msg, user_id=user_id)
-        return {"success": True, "article": article}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Article generation failed: {e}")
+async def generate_article_endpoint(request: Request):
+    body = await request.json()
+    from core.cloud_client import cloud_generate_article
+    article = await cloud_generate_article(body)
+    if not article:
+        raise HTTPException(
+            status_code=502,
+            detail="Article generation failed — try again"
+        )
+    return {"success": True, "article": article}
 
 
 @router.post("/article/refine")
@@ -1355,46 +1233,21 @@ async def save_post_metrics(request: MetricsSaveRequest, user_id: str = Depends(
 
 @router.get("/metrics/{post_id}")
 async def get_post_metrics(post_id: str):
-    try:
-        from storage.supabase_client import get_client
-        client = get_client()
-        response = (
-            client.table("posts")
-            .select("id,impressions,likes,comments,reposts,hashtags,platform,metrics_saved_at,days_after_post")
-            .eq("id", post_id)
-            .eq("metrics_saved", True)
-            .execute()
-        )
-        if response.data:
-            row = response.data[0]
+    posts = load_local_posts()
+    for post in posts:
+        if post.get("id") == post_id and post.get("metrics_saved"):
             return {
-                "post_id": row["id"],
-                "impressions": row.get("impressions") or 0,
-                "likes": row.get("likes") or 0,
-                "comments": row.get("comments") or 0,
-                "reposts": row.get("reposts") or 0,
-                "hashtags": row.get("hashtags") or [],
-                "platform": row.get("platform") or "",
-                "measured_at": row.get("metrics_saved_at") or "",
-                "days_after_post": row.get("days_after_post") or 0,
+                "post_id": post_id,
+                "impressions": post.get("impressions") or 0,
+                "likes": post.get("likes") or 0,
+                "comments": post.get("comments") or 0,
+                "reposts": post.get("reposts") or 0,
+                "hashtags": post.get("hashtags") or [],
+                "platform": post.get("platform") or "",
+                "measured_at": post.get("metrics_saved_at") or "",
+                "days_after_post": post.get("days_after_post") or 0,
             }
-        raise Exception("Metrics not found in Supabase")
-    except Exception:
-        posts = load_local_posts()
-        for post in posts:
-            if post.get("id") == post_id and post.get("metrics_saved"):
-                return {
-                    "post_id": post_id,
-                    "impressions": post.get("impressions") or 0,
-                    "likes": post.get("likes") or 0,
-                    "comments": post.get("comments") or 0,
-                    "reposts": post.get("reposts") or 0,
-                    "hashtags": post.get("hashtags") or [],
-                    "platform": post.get("platform") or "",
-                    "measured_at": post.get("metrics_saved_at") or "",
-                    "days_after_post": post.get("days_after_post") or 0,
-                }
-        return {}
+    return {}
 
 
 @router.get("/insights")

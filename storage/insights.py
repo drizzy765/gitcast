@@ -200,4 +200,4 @@ def calculate_insights(user_id: str) -> dict:
 
 
 if __name__ == "__main__":
-    print("[Insights] Supabase insights module loaded")
+    print("[Insights] Insights module loaded")

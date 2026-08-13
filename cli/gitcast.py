@@ -48,6 +48,32 @@ def main():
         import time
         import urllib.request
 
+        # ensure storage exists before server starts
+        from pathlib import Path
+        import os
+
+        def ensure_storage_dirs():
+            home = Path.home() / ".gitcast"
+            home.mkdir(parents=True, exist_ok=True)
+
+            # try to create in package location
+            try:
+                from config.settings import STORAGE_DIR
+                dirs = [
+                    STORAGE_DIR,
+                    STORAGE_DIR / "screenshots",
+                    STORAGE_DIR / "drafts",
+                    STORAGE_DIR / "data",
+                ]
+                for d in dirs:
+                    d.mkdir(parents=True, exist_ok=True)
+                print("> [OK] Storage directories ready")
+            except Exception as e:
+                print(f"> [!!] Storage setup warning: {e}")
+
+        # call before starting server thread:
+        ensure_storage_dirs()
+
         def start_server():
             from api.server import start_server as run
             run()
@@ -80,15 +106,14 @@ def main():
         print("╚██████╔╝██║   ██║   ╚██████╗ ██║  ██║ ███████║   ██║   ")
         print(" ╚═════╝ ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚══════╝   ╚═╝   ")
 
-        from config.settings import USING_BASE_KEYS
+        from config.settings import BYOK_KEY, GITCAST_API_URL
 
-        if USING_BASE_KEYS:
-            print("> [OK] using Gitcast shared API key")
-            print("> // want your own key? run: "
-                  "gitcast --setup")
-            print("> // get free key: console.groq.com")
+        if BYOK_KEY:
+            print("> [OK] Using your own API key")
         else:
-            print("> [OK] using your configured API keys")
+            print("> [OK] Using Gitcast shared key")
+            print(">      Add your own for unlimited:")
+            print(">      gitcast --setup")
 
         print("[OK] server running at http://localhost:8000")
         print("[OK] browser opened")

@@ -63,11 +63,30 @@ try:
 except Exception:
     pass
 
-# Serve captured images without exposing local data files or Python modules.
+from pathlib import Path
+
+# create ALL required directories before mounting
+_required_dirs = [
+    STORAGE_DIR,
+    STORAGE_DIR / "screenshots",
+    STORAGE_DIR / "drafts",
+    STORAGE_DIR / "data",
+]
+for _dir in _required_dirs:
+    _dir.mkdir(parents=True, exist_ok=True)
+
+# now safe to mount
+app.mount(
+    "/screenshots",
+    StaticFiles(
+        directory=str(STORAGE_DIR / "screenshots")),
+    name="screenshots",
+)
 app.mount(
     "/storage/data/screenshots",
-    StaticFiles(directory=str(STORAGE_DIR / "screenshots")),
-    name="screenshots",
+    StaticFiles(
+        directory=str(STORAGE_DIR / "screenshots")),
+    name="storage_data_screenshots",
 )
 
 app.mount(
@@ -85,7 +104,16 @@ app.include_router(auth_router, prefix="/auth")
 # ── Startup Event ─────────────────────────────────────────────────────────────
 
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
+    dirs = [
+        STORAGE_DIR,
+        STORAGE_DIR / "screenshots",
+        STORAGE_DIR / "drafts",
+        STORAGE_DIR / "data",
+    ]
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
+    print("[Server] Storage directories verified")
     print(f"\n[Auth] Session Token: {get_auth_token()}")
     print("[Server] Starting Gitcast API on http://127.0.0.1:8000")
 
