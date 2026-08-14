@@ -169,7 +169,7 @@ def _run_trigger():
         print("[Gitcast] Sprint Mode — capture logged silently.")
         return
 
-    narrative = get_project_narrative()
+    narrative = get_project_narrative(working_dir)
     readme = project_ctx.get("readme_content", "")
     project_name = project_ctx.get("project_name", "")
 
@@ -189,7 +189,7 @@ def _run_trigger():
         # no narrative, no README — show popup
         def on_submit(thought):
             from config.settings import set_project_narrative
-            set_project_narrative(thought)
+            set_project_narrative(thought, working_dir)
             _generate_and_show(thought, capture, ocr, project_ctx)
 
         def on_dismiss():

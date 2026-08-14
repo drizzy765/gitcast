@@ -109,13 +109,14 @@ def capture_active_window(delay: float = 5.0) -> dict:
 
 def get_git_diff(cwd: str = None) -> dict:
     """
-    Runs git diff HEAD in the given directory.
-    Falls back to the user's home directory if no cwd is given.
-    Returns a dict with the diff text and a status flag.
+    Runs git diff in the given directory.
+    Falls back to staged changes, recent commits (HEAD~1 HEAD), or untracked files
+    so that already-committed changes are still detected cleanly.
     """
     target_dir = cwd or str(Path.home())
 
     try:
+        # 1. Uncommitted working tree diff vs HEAD
         diff_cmd = ["git", "diff", "HEAD", "--", ".", *GIT_DIFF_EXCLUDES]
         result = subprocess.run(
             diff_cmd,
@@ -137,8 +138,8 @@ def get_git_diff(cwd: str = None) -> dict:
                 "reason": "no_git",
             }
 
+        # 2. Try staged changes
         if not diff_text:
-            # try staged changes if working tree diff is empty
             staged = subprocess.run(
                 ["git", "diff", "--cached", "--", ".", *GIT_DIFF_EXCLUDES],
                 cwd=target_dir,
@@ -150,11 +151,57 @@ def get_git_diff(cwd: str = None) -> dict:
             )
             diff_text = staged.stdout.strip()
 
+        # 3. Fallback: If working tree is clean, check recent commit diff (HEAD~1 HEAD or HEAD show)
+        is_recent_commit = False
+        if not diff_text:
+            recent = subprocess.run(
+                ["git", "diff", "HEAD~1", "HEAD", "--", ".", *GIT_DIFF_EXCLUDES],
+                cwd=target_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=5,
+            )
+            diff_text = recent.stdout.strip()
+            if not diff_text:
+                show_cmd = subprocess.run(
+                    ["git", "show", "--stat", "-p", "HEAD", "--", ".", *GIT_DIFF_EXCLUDES],
+                    cwd=target_dir,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=5,
+                )
+                diff_text = show_cmd.stdout.strip()
+            if diff_text:
+                is_recent_commit = True
+
+        # 4. Check for untracked files if diff is still empty
+        if not diff_text:
+            status_cmd = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=target_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=5,
+            )
+            untracked = [line for line in status_cmd.stdout.splitlines() if line.startswith("??")]
+            if untracked:
+                diff_text = "New untracked files:\n" + "\n".join(untracked[:15])
+
+        prefix = "[Recent Commit Diff]\n" if is_recent_commit else ""
+        full_diff = (prefix + diff_text)[:3500]
+
         return {
             "success": True,
-            "diff": diff_text[:3000],  # cap at 3000 chars to stay inside token limits
+            "diff": full_diff,
+            "is_recent_commit": is_recent_commit,
             "error": "",
-            "reason": "ok" if diff_text else "no_changes",
+            "reason": "recent_commit" if is_recent_commit else ("ok" if full_diff else "no_changes"),
         }
 
     except FileNotFoundError:

@@ -156,9 +156,9 @@ def reload_api_keys() -> None:
 
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-8k")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
-    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
 
 
 reload_api_keys()
@@ -221,12 +221,24 @@ def set(key: str, value) -> None:
     save_settings(settings)
 
 
-def get_project_narrative() -> str:
-    return str(get("project_narrative") or "")
+def get_project_narrative(directory: str = None) -> str:
+    cwd_key = str(Path(directory or os.getcwd()).resolve())
+    narratives = load_settings().get("project_narratives", {})
+    if isinstance(narratives, dict) and cwd_key in narratives:
+        return str(narratives[cwd_key]).strip()
+    return ""
 
 
-def set_project_narrative(narrative: str) -> None:
-    set("project_narrative", narrative.strip())
+def set_project_narrative(narrative: str, directory: str = None) -> None:
+    cwd_key = str(Path(directory or os.getcwd()).resolve())
+    settings = load_settings()
+    narratives = settings.get("project_narratives", {})
+    if not isinstance(narratives, dict):
+        narratives = {}
+    narratives[cwd_key] = narrative.strip()
+    settings["project_narratives"] = narratives
+    settings["project_narrative"] = narrative.strip()
+    save_settings(settings)
 
 
 def is_sprint_mode() -> bool:

@@ -72,6 +72,9 @@ def build_payload(
         payload["tech_stack"] = project_ctx.get("tech_stack", "")
         payload["project_type"] = project_ctx.get("project_type", "")
         payload["main_language"] = project_ctx.get("main_language", "")
+        payload["package_info"] = project_ctx.get("package_info", "")
+        payload["doc_summaries"] = project_ctx.get("doc_summaries", "")
+        payload["recent_commits"] = project_ctx.get("recent_commits", "")
 
     # build the structured user message
     user_message = _build_user_message(
@@ -135,40 +138,37 @@ def _build_user_message(
     narrative = payload.get("narrative", "").strip()
     readme = payload.get("readme_content", "").strip()
     tech_stack = payload.get("tech_stack", "").strip()
-    project_name = payload.get(
-        "project_name", "").strip()
+    project_name = payload.get("project_name", "").strip()
+    package_info = payload.get("package_info", "").strip()
+    doc_summaries = payload.get("doc_summaries", "").strip()
+    recent_commits = payload.get("recent_commits", "").strip()
 
-    if narrative or readme or tech_stack:
+    if narrative or readme or tech_stack or package_info or recent_commits or doc_summaries:
         context_lines = [
-            "## BACKGROUND (use to understand the "
-            "project — do NOT reproduce these headers "
-            "or this section in your output):"
+            "## BACKGROUND (use to understand the project and create highly specific, technical posts — do NOT reproduce these headers or this section in your output):"
         ]
         if project_name:
-            context_lines.append(
-                f"Project name: {project_name}")
+            context_lines.append(f"Project name: {project_name}")
         if tech_stack:
-            context_lines.append(
-                f"Tech stack: {tech_stack}")
+            context_lines.append(f"Tech stack: {tech_stack}")
+        if package_info:
+            context_lines.append(f"Package info & dependencies:\n{package_info[:800]}")
+        if recent_commits:
+            context_lines.append(f"Recent git commits:\n{recent_commits[:400]}")
         if narrative:
-            # strip markdown headers from narrative
-            # before injecting so they don't leak
             clean_narrative = "\n".join(
                 line for line in narrative.splitlines()
                 if not line.strip().startswith("#")
             )
-            context_lines.append(
-                f"Project description: {clean_narrative[:600]}")
+            context_lines.append(f"Project description: {clean_narrative[:600]}")
         if readme:
-            # extract first 400 chars of README
-            # skip any markdown headers
             clean_readme = "\n".join(
                 line for line in readme.splitlines()
-                if not line.strip().startswith("#")
-                and line.strip()
+                if not line.strip().startswith("#") and line.strip()
             )
-            context_lines.append(
-                f"README summary: {clean_readme[:400]}")
+            context_lines.append(f"README summary: {clean_readme[:600]}")
+        if doc_summaries:
+            context_lines.append(f"Project docs:\n{doc_summaries[:600]}")
 
         parts.append("\n".join(context_lines))
 

@@ -29,6 +29,24 @@ PROVIDERS = {
         "model": GROQ_MODEL,
         "tasks": ["quick_win", "struggle", "linkedin", "deep_tech", "pr_generator", "x_post"]
     },
+    "cerebras": {
+        "base_url": "https://api.cerebras.ai/v1",
+        "api_key": CEREBRAS_API_KEY,
+        "model": CEREBRAS_MODEL,
+        "tasks": []  # fallback only
+    },
+    "gemini": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        "api_key": GEMINI_API_KEY,
+        "model": GEMINI_MODEL,
+        "tasks": []  # fallback only
+    },
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key": OPENROUTER_API_KEY,
+        "model": OPENROUTER_MODEL,
+        "tasks": []  # fallback only
+    },
     "kimi": {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key": MOONSHOT_API_KEY,
@@ -39,19 +57,7 @@ PROVIDERS = {
         "base_url": os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1"),
         "api_key": DEEPSEEK_API_KEY,
         "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "tasks": ["pr_generator", "pr_desc"]
-    },
-    "cerebras": {
-        "base_url": "https://api.cerebras.ai/v1",
-        "api_key": CEREBRAS_API_KEY,
-        "model": CEREBRAS_MODEL,
-        "tasks": []  # fallback only
-    },
-    "openrouter": {
-        "base_url": "https://openrouter.ai/api/v1",
-        "api_key": OPENROUTER_API_KEY,
-        "model": OPENROUTER_MODEL,
-        "tasks": []  # fallback only
+        "tasks": ["pr_desc"]
     }
 }
 
@@ -87,13 +93,17 @@ def refresh_provider_keys(user_id: str = "") -> None:
     settings.reload_api_keys()
     user_keys = _load_user_provider_keys(user_id) if user_id else {}
     PROVIDERS["groq"]["api_key"] = settings.GROQ_API_KEY
-    PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
-    PROVIDERS["cerebras"]["api_key"] = settings.CEREBRAS_API_KEY
-    PROVIDERS["openrouter"]["api_key"] = settings.OPENROUTER_API_KEY
     PROVIDERS["groq"]["model"] = settings.GROQ_MODEL
-    PROVIDERS["kimi"]["model"] = settings.MOONSHOT_MODEL
+    PROVIDERS["cerebras"]["api_key"] = settings.CEREBRAS_API_KEY
     PROVIDERS["cerebras"]["model"] = settings.CEREBRAS_MODEL
+    PROVIDERS["gemini"]["api_key"] = settings.GEMINI_API_KEY
+    PROVIDERS["gemini"]["model"] = settings.GEMINI_MODEL
+    PROVIDERS["openrouter"]["api_key"] = settings.OPENROUTER_API_KEY
     PROVIDERS["openrouter"]["model"] = settings.OPENROUTER_MODEL
+    PROVIDERS["kimi"]["api_key"] = settings.MOONSHOT_API_KEY
+    PROVIDERS["kimi"]["model"] = settings.MOONSHOT_MODEL
+    PROVIDERS["deepseek"]["api_key"] = settings.DEEPSEEK_API_KEY
+    PROVIDERS["deepseek"]["model"] = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
     global GEMINI_API_KEY
     global GEMINI_URL
@@ -102,6 +112,7 @@ def refresh_provider_keys(user_id: str = "") -> None:
     for provider, api_key in user_keys.items():
         if provider == "gemini":
             GEMINI_API_KEY = api_key
+            PROVIDERS["gemini"]["api_key"] = api_key
         elif provider in PROVIDERS:
             PROVIDERS[provider]["api_key"] = api_key
 
@@ -259,9 +270,9 @@ async def _ai_call(
             break
             
     # 2. Build the fallback chain
-    # Standard order: Primary -> Groq -> Cerebras -> Kimi -> OpenRouter -> Gemini
+    # Preferred order: Primary -> Groq -> Cerebras -> Gemini -> OpenRouter -> Kimi -> DeepSeek
     chain = [primary]
-    for fallback in ["groq", "cerebras", "kimi", "openrouter"]:
+    for fallback in ["groq", "cerebras", "gemini", "openrouter", "kimi", "deepseek"]:
         if fallback not in chain:
             chain.append(fallback)
             
@@ -308,28 +319,6 @@ async def _ai_call(
                 stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
                 continue
 
-        # 4. Final attempt with Gemini
-        if GEMINI_API_KEY and "gemini" not in unavailable:
-            stream_log("GENERATOR", "INFO", f"generating {format_key} via gemini...")
-            t0 = asyncio.get_event_loop().time()
-            try:
-                if "gemini" != primary:
-                    stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini fallback")
-                result = await _gemini_text_call(system_prompt, user_message, client=active_client)
-                _last_call_meta.update({"provider_used": "gemini", "used_fallback": True})
-                if meta is not None:
-                    meta.update({"provider_used": "gemini", "used_fallback": True})
-                elapsed = asyncio.get_event_loop().time() - t0
-                stream_log("GENERATOR", "OK", f"{format_key} complete ({elapsed:.1f}s)")
-                return result
-            except Exception as e:
-                last_error = f"Gemini also failed: {e}"
-                unavailable["gemini"] = last_error
-                print(f"[Generator] {format_key} failed on gemini: {e}")
-                stream_log("GENERATOR", "WARN", f"{format_key} failed on gemini — trying fallback")
-        elif "gemini" in unavailable:
-            last_error = unavailable["gemini"]
-
         raise Exception(f"AI chain exhausted. Last error: {last_error}")
 
     if client:
@@ -347,8 +336,13 @@ async def _call_provider(
     client: httpx.AsyncClient = None,
 ) -> str:
     """
-    Single unified function for calling any OpenAI-compatible provider.
+    Single unified function for calling any provider (OpenAI-compatible or Gemini).
     """
+    if provider_name == "gemini":
+        if not GEMINI_API_KEY:
+            raise ValueError("Provider gemini not configured or missing API key.")
+        return await _gemini_text_call(system_prompt, user_message, client=client)
+
     config = PROVIDERS.get(provider_name)
     if not config or not config["api_key"]:
         raise ValueError(f"Provider {provider_name} not configured or missing API key.")

@@ -12,7 +12,7 @@ from config.settings import (
     MOONSHOT_API_KEY, CEREBRAS_API_KEY, OPENROUTER_API_KEY
 )
 
-async def test_provider(name, url, headers, body, is_gemini=False):
+async def check_provider(name, url, headers, body, is_gemini=False):
     print(f"Testing {name.upper()}...", end=" ", flush=True)
     async with httpx.AsyncClient(timeout=10) as client:
         try:
@@ -40,7 +40,7 @@ async def main():
     print("=== Context Engine API Key Connectivity Test ===\n")
     
     # 1. Groq
-    await test_provider(
+    await check_provider(
         "Groq", 
         "https://api.groq.com/openai/v1/chat/completions",
         {"Authorization": f"Bearer {GROQ_API_KEY}"},
@@ -48,15 +48,15 @@ async def main():
     )
 
     # 2. OpenRouter
-    await test_provider(
+    await check_provider(
         "OpenRouter",
         "https://openrouter.ai/api/v1/chat/completions",
         {"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
-        {"model": "qwen/qwen3-coder:free", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
+        {"model": "openrouter/free", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
     )
 
     # 3. Kimi (Moonshot)
-    await test_provider(
+    await check_provider(
         "Moonshot (Kimi)", 
         "https://api.moonshot.cn/v1/chat/completions",
         {"Authorization": f"Bearer {MOONSHOT_API_KEY}"},
@@ -64,23 +64,26 @@ async def main():
     )
 
     # 4. Cerebras
-    await test_provider(
+    await check_provider(
         "Cerebras", 
         "https://api.cerebras.ai/v1/chat/completions",
         {"Authorization": f"Bearer {CEREBRAS_API_KEY}"},
-        {"model": "llama3.3-70b", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
+        {"model": "gpt-oss-120b", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5}
     )
 
     # 5. Gemini
-    await test_provider(
+    await check_provider(
         "Gemini", 
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         {},
         {"contents": [{"parts": [{"text": "hi"}]}]},
         is_gemini=True
     )
 
     print("\nTest complete.")
+
+def test_api_keys_script():
+    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())
