@@ -54,7 +54,7 @@ if os.path.exists(requirements_path):
 
 setup(
     name="gitcast",
-    version="1.0.36",
+    version="1.0.38",
     description="git diff → published post. under 60 seconds.",
     long_description=long_description,
     long_description_content_type="text/markdown",

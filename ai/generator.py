@@ -122,6 +122,18 @@ def refresh_provider_keys(user_id: str = "") -> None:
 async def generate_posts(payload: dict, user_id: str = "") -> dict:
     async def _generate_all():
         refresh_provider_keys(user_id)
+        
+        # BYOK support: override key for requested BYOK provider if supplied
+        byok_key = payload.get("byok_key")
+        byok_provider = (payload.get("byok_provider") or "groq").lower()
+        if byok_key:
+            if byok_provider in PROVIDERS:
+                PROVIDERS[byok_provider]["api_key"] = byok_key
+            if byok_provider == "gemini":
+                global GEMINI_API_KEY, GEMINI_URL
+                GEMINI_API_KEY = byok_key
+                GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent"
+
         prompts = get_all_prompts()
         format_keys = payload.get("format_keys", list(prompts.keys()))
         user_message = payload.get("user_message", "")
@@ -134,7 +146,6 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
         selected_prompts = {k: v for k, v in prompts.items() if k in format_keys}
 
         output = {}
-        unavailable = {}
 
         async def run_one(format_key, system_prompt, client):
             started = asyncio.get_event_loop().time()
@@ -151,6 +162,7 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
                         active_user_message = prefix
             
             local_meta = {"provider_used": "", "used_fallback": False}
+            local_unavailable = {}
             try:
                 if use_vision and screenshots and format_key != "pr_generator":
                     stream_log("ROUTER", "ROUTER", f"{format_key} -> gemini vision fallback")
@@ -176,9 +188,10 @@ async def generate_posts(payload: dict, user_id: str = "") -> dict:
                         system_prompt,
                         active_user_message,
                         user_id=user_id,
-                        unavailable=unavailable,
+                        unavailable=local_unavailable,
                         client=client,
                         meta=local_meta,
+                        byok_provider=byok_provider if byok_key else "",
                     )
 
                 output[format_key] = result
@@ -256,6 +269,7 @@ async def _ai_call(
     unavailable: dict[str, str] | None = None,
     client: httpx.AsyncClient = None,
     meta: dict | None = None,
+    byok_provider: str = "",
 ) -> str:
     """
     Identifies primary provider for a task and falls back through available providers.
@@ -263,11 +277,12 @@ async def _ai_call(
     unavailable = unavailable if unavailable is not None else {}
 
     # 1. Identify primary provider
-    primary = "groq" # default
-    for name, config in PROVIDERS.items():
-        if format_key in config["tasks"]:
-            primary = name
-            break
+    primary = byok_provider.lower() if byok_provider and byok_provider.lower() in PROVIDERS else "groq"
+    if not byok_provider:
+        for name, config in PROVIDERS.items():
+            if format_key in config["tasks"]:
+                primary = name
+                break
             
     # 2. Build the fallback chain
     # Preferred order: Primary -> Groq -> Cerebras -> Gemini -> OpenRouter -> Kimi -> DeepSeek
@@ -278,6 +293,7 @@ async def _ai_call(
             
     # 3. Walk the chain
     last_error = None
+    attempted_errors = []
     stream_log("ROUTER", "ROUTER", f"{format_key} -> {primary}")
     
     async def run_chain(active_client: httpx.AsyncClient):
@@ -308,18 +324,21 @@ async def _ai_call(
                 return result
             except ProviderUnavailable as e:
                 last_error = str(e)
+                attempted_errors.append(f"{provider_name}: {e}")
                 unavailable[e.provider] = str(e)
                 print(f"[Generator] {format_key} failed on {provider_name}: {e}")
                 stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
                 continue
             except Exception as e:
                 last_error = str(e)
+                attempted_errors.append(f"{provider_name}: {e}")
                 unavailable[provider_name] = str(e)
                 print(f"[Generator] {format_key} failed on {provider_name}: {e}")
                 stream_log("GENERATOR", "WARN", f"{format_key} failed on {provider_name} — trying fallback")
                 continue
 
-        raise Exception(f"AI chain exhausted. Last error: {last_error}")
+        err_summary = "; ".join(attempted_errors) if attempted_errors else last_error
+        raise Exception(f"AI chain exhausted. ({err_summary})")
 
     if client:
         return await run_chain(client)

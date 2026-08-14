@@ -57,7 +57,7 @@ class TestRoutesIntegration(unittest.TestCase):
         data = response.json()
         self.assertIn("hot_take", data)
 
-    @patch("storage.logger._load_local_posts")
+    @patch("api.routes.load_local_posts")
     def test_history_endpoint(self, mock_load_posts):
         mock_load_posts.return_value = [
             {

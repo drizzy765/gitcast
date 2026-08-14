@@ -64,6 +64,8 @@ class GenerateRequest(BaseModel):
     ocr_confidence: Optional[float] = 0.0
     working_dir: Optional[str] = ""
     timestamp: Optional[str] = ""
+    byok_key: Optional[str] = None
+    byok_provider: Optional[str] = None
 
 
 class PostVariation(BaseModel):
@@ -680,6 +682,14 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
     for key, value in list(payload.items()):
         if isinstance(value, str):
             payload[key] = sanitize_text(value)
+
+    header_byok_key = request.headers.get("X-BYOK-Key")
+    header_byok_provider = request.headers.get("X-BYOK-Provider")
+    if not payload.get("byok_key") and header_byok_key:
+        payload["byok_key"] = header_byok_key
+    if not payload.get("byok_provider") and header_byok_provider:
+        payload["byok_provider"] = header_byok_provider
+
     injection = check_prompt_injection(body.raw_thought)
     if not injection["safe"]:
         payload["raw_thought"] = injection.get("sanitized", "")
@@ -1132,9 +1142,34 @@ async def diagnose_connectivity(user_id: str = Depends(get_current_user)):
 @router.post("/article/generate")
 async def generate_article_endpoint(request: Request):
     body = await request.json()
+    byok_key = body.get("byok_key") or request.headers.get("X-BYOK-Key")
+    byok_provider = body.get("byok_provider") or request.headers.get("X-BYOK-Provider", "groq")
+
+    async def _generate_direct():
+        if byok_key and byok_provider in ai.generator.PROVIDERS:
+            ai.generator.PROVIDERS[byok_provider]["api_key"] = byok_key
+        user_msg = f"Narrative: {body.get('narrative', '')}\nREADME: {body.get('readme_content', '')}\nContext: {body.get('project_context', '')}\nSprint Log: {body.get('sprint_log', [])}"
+        sys_prompt = article_prompt()
+        return await _ai_call("article", sys_prompt, user_msg, byok_provider=byok_provider if byok_key else "")
+
+    if os.getenv("RENDER") or os.getenv("GITCAST_CLOUD_SERVER"):
+        try:
+            article = await _generate_direct()
+            if article and not article.startswith("[Error]"):
+                return {"success": True, "article": article}
+        except Exception as e:
+            stream_log("API", "ERROR", f"Article generation endpoint error: {e}")
+        raise HTTPException(status_code=502, detail="Article generation failed — try again")
+
     from core.cloud_client import cloud_generate_article
     article = await cloud_generate_article(body)
     if not article:
+        try:
+            article = await _generate_direct()
+            if article and not article.startswith("[Error]"):
+                return {"success": True, "article": article}
+        except Exception:
+            pass
         raise HTTPException(
             status_code=502,
             detail="Article generation failed — try again"
