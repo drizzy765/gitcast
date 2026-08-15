@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
 from dotenv import dotenv_values, load_dotenv, set_key, unset_key
-from ai.generator import generate_posts, generate_sprint_summary, _ai_call
+from ai.generator import generate_posts, generate_sprint_summary, refine_post, generate_article
 from ai.prompts import load_prompt_definitions, PROMPTS_FILE, article_prompt, article_refinement_prompt, get_prompt
 from ai.formatter import split_into_thread
 from ai.viral_patterns import get_all_patterns
@@ -449,21 +449,13 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
 @router.get("/keys/status")
 def get_ai_keys_status(user_id: str = Depends(get_current_user)):
     from config.settings import (
-        GROQ_API_KEY,
-        DEEPSEEK_API_KEY,
-        GEMINI_API_KEY,
-        MOONSHOT_API_KEY,
-        CEREBRAS_API_KEY,
-        OPENROUTER_API_KEY,
+        BYOK_KEY,
+        BYOK_PROVIDER,
         USING_BASE_KEYS,
     )
     return {
-        "groq": bool(GROQ_API_KEY),
-        "deepseek": bool(DEEPSEEK_API_KEY),
-        "gemini": bool(GEMINI_API_KEY),
-        "kimi": bool(MOONSHOT_API_KEY),
-        "cerebras": bool(CEREBRAS_API_KEY),
-        "openrouter": bool(OPENROUTER_API_KEY),
+        "has_byok": bool(BYOK_KEY),
+        "byok_provider": BYOK_PROVIDER,
         "using_base_keys": USING_BASE_KEYS,
     }
 
@@ -784,26 +776,11 @@ async def chat_refine(request: Request, body: ChatRequest, user_id: str = Depend
     current_post = body.current_post
     format_key = sanitize_text(body.format_key)
 
-    refinement_system = f"""You are refining a
-{format_key} post for a developer.
-The user's instruction is: {instruction}
-Apply it to the post below. Return ONLY the
-refined post text — no explanation, no preamble,
-no markdown wrapper. Just the improved post."""
-
-    refinement_user = f"""Current post:
-{current_post}
-
-Instruction: {instruction}
-
-Return the refined post now:"""
-
     try:
-        refined_text = await _ai_call(
-            format_key,
-            refinement_system,
-            refinement_user,
-            user_id=user_id,
+        refined_text = await refine_post(
+            current_post=current_post,
+            instruction=instruction,
+            format_key=format_key,
         )
         
         if CURRENT_DRAFT.exists():
@@ -968,7 +945,11 @@ async def recommend_screenshot(request: RecommendRequest, user_id: str = Depends
                     break
 
     try:
-        recommendation = await _ai_call("deep_tech", system_prompt, f"Context: {ocr_context}", user_id=user_id)
+        recommendation = await refine_post(
+            current_post=f"Context: {ocr_context}",
+            instruction="Analyze the provided context and recommend which platform (X, LinkedIn, or a Technical Article) this screenshot is best suited for and WHY. Keep it brief: 2-3 sentences max.",
+            format_key="quick_win",
+        )
         return {"success": True, "recommendation": recommendation}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Recommendation failed: {e}")
@@ -1071,108 +1052,20 @@ def get_keys_status(user_id: str = Depends(get_current_user)):
 
 @router.get("/diagnose")
 async def diagnose_connectivity(user_id: str = Depends(get_current_user)):
-    """Diagnoses network and authentication status of all configured AI providers."""
-    import ai.generator
-    import httpx
-    
-    ai.generator.refresh_provider_keys(user_id)
-    
-    results = {}
-    
-    async with httpx.AsyncClient(timeout=10) as client:
-        for provider_name, config in ai.generator.PROVIDERS.items():
-            if not config.get("api_key"):
-                results[provider_name] = {
-                    "configured": False,
-                    "status": "missing_key",
-                    "error": "No API key configured"
-                }
-                continue
-            
-            try:
-                test_prompt = "respond with 'ok'"
-                await ai.generator._call_provider(
-                    provider_name=provider_name,
-                    system_prompt="you are a connectivity tester",
-                    user_message=test_prompt,
-                    retries=0,
-                    client=client
-                )
-                results[provider_name] = {
-                    "configured": True,
-                    "status": "success",
-                    "error": ""
-                }
-            except Exception as e:
-                results[provider_name] = {
-                    "configured": True,
-                    "status": "error",
-                    "error": str(e)
-                }
-        
-        if not ai.generator.GEMINI_API_KEY:
-            results["gemini"] = {
-                "configured": False,
-                "status": "missing_key",
-                "error": "No API key configured"
-            }
-        else:
-            try:
-                await ai.generator._gemini_text_call(
-                    system_prompt="you are a connectivity tester",
-                    user_message="respond with 'ok'",
-                    client=client
-                )
-                results["gemini"] = {
-                    "configured": True,
-                    "status": "success",
-                    "error": ""
-                }
-            except Exception as e:
-                results["gemini"] = {
-                    "configured": True,
-                    "status": "error",
-                    "error": str(e)
-                }
-                
-    return {"results": results}
+    """Diagnoses network and connectivity status to Gitcast cloud server."""
+    from core.cloud_client import check_server_health
+    return {"results": check_server_health()}
 
 
 @router.post("/api/article/generate")
 @router.post("/article/generate")
 async def generate_article_endpoint(request: Request):
     body = await request.json()
-    byok_key = body.get("byok_key") or request.headers.get("X-BYOK-Key")
-    byok_provider = body.get("byok_provider") or request.headers.get("X-BYOK-Provider", "groq")
-
-    async def _generate_direct():
-        if byok_key and byok_provider in ai.generator.PROVIDERS:
-            ai.generator.PROVIDERS[byok_provider]["api_key"] = byok_key
-        user_msg = f"Narrative: {body.get('narrative', '')}\nREADME: {body.get('readme_content', '')}\nContext: {body.get('project_context', '')}\nSprint Log: {body.get('sprint_log', [])}"
-        sys_prompt = article_prompt()
-        return await _ai_call("article", sys_prompt, user_msg, byok_provider=byok_provider if byok_key else "")
-
-    if os.getenv("RENDER") or os.getenv("GITCAST_CLOUD_SERVER"):
-        try:
-            article = await _generate_direct()
-            if article and not article.startswith("[Error]"):
-                return {"success": True, "article": article}
-        except Exception as e:
-            stream_log("API", "ERROR", f"Article generation endpoint error: {e}")
-        raise HTTPException(status_code=502, detail="Article generation failed — try again")
-
-    from core.cloud_client import cloud_generate_article
-    article = await cloud_generate_article(body)
-    if not article:
-        try:
-            article = await _generate_direct()
-            if article and not article.startswith("[Error]"):
-                return {"success": True, "article": article}
-        except Exception:
-            pass
+    article = await generate_article(body)
+    if not article or article.startswith("[Error]"):
         raise HTTPException(
             status_code=502,
-            detail="Article generation failed — try again"
+            detail=article or "Article generation failed — try again"
         )
     return {"success": True, "article": article}
 
@@ -1185,9 +1078,12 @@ async def refine_article(request: ArticleRefineRequest, user_id: str = Depends(g
     injection = check_prompt_injection(instruction)
     if not injection["safe"]:
         instruction = injection.get("sanitized", "")
-    sys_prompt = article_refinement_prompt(current_article, instruction)
     try:
-        article = await _ai_call("article", sys_prompt, "Refine the article.", user_id=user_id)
+        article = await refine_post(
+            current_post=current_article,
+            instruction=instruction,
+            format_key="article",
+        )
         return {"success": True, "article": article}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Article refinement failed: {e}")

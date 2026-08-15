@@ -82,99 +82,29 @@ GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com
 
 
 API_KEY_ENV_MAP = {
-    "groq": "GROQ_API_KEY",
-    "gemini": "GEMINI_API_KEY",
-    "kimi": "MOONSHOT_API_KEY",
-    "cerebras": "CEREBRAS_API_KEY",
-    "openrouter": "OPENROUTER_API_KEY",
-    "deepseek": "DEEPSEEK_API_KEY",
+    "byok": "BYOK_KEY",
+    "byok_provider": "BYOK_PROVIDER",
 }
 
-GROQ_API_KEY = ""
-DEEPSEEK_API_KEY = ""
-MOONSHOT_API_KEY = ""
-GEMINI_API_KEY = ""
-CEREBRAS_API_KEY = ""
-OPENROUTER_API_KEY = ""
 USING_BASE_KEYS = False
-GROQ_MODEL = ""
-MOONSHOT_MODEL = ""
-GEMINI_MODEL = ""
-CEREBRAS_MODEL = ""
-OPENROUTER_MODEL = ""
 
 
 def reload_api_keys() -> None:
-    global GROQ_API_KEY
-    global DEEPSEEK_API_KEY
-    global MOONSHOT_API_KEY
-    global GEMINI_API_KEY
-    global CEREBRAS_API_KEY
-    global OPENROUTER_API_KEY
-    global USING_BASE_KEYS
-    global GROQ_MODEL
-    global MOONSHOT_MODEL
-    global GEMINI_MODEL
-    global CEREBRAS_MODEL
-    global OPENROUTER_MODEL
     global BYOK_KEY
     global BYOK_PROVIDER
     global GITCAST_API_URL
+    global USING_BASE_KEYS
 
     load_all_dotenvs(override=True)
-    
-    # Base keys — maintainer's keys as default fallback
-    # Users can override by setting their own in .env
-    _BASE_GROQ = os.getenv("GITCAST_BASE_GROQ_KEY", "")
-    _BASE_DEEPSEEK = os.getenv("GITCAST_BASE_DEEPSEEK_KEY", "")
-    _BASE_GEMINI = os.getenv("GITCAST_BASE_GEMINI_KEY", "")
 
-    # User key takes priority, falls back to base key
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY") or _BASE_GROQ
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY") or _BASE_DEEPSEEK
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or _BASE_GEMINI
-    MOONSHOT_API_KEY = os.getenv("MOONSHOT_API_KEY", "")
-    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-    CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
-
-    # Flag so the app knows which mode it's in
-    USING_BASE_KEYS = (
-        not os.getenv("GROQ_API_KEY") and bool(_BASE_GROQ)
-    )
-
-    BYOK_KEY = (
-        os.getenv("BYOK_KEY", "")
-        or os.getenv("GROQ_API_KEY", "")
-        or os.getenv("GEMINI_API_KEY", "")
-        or os.getenv("DEEPSEEK_API_KEY", "")
-        or os.getenv("MOONSHOT_API_KEY", "")
-        or os.getenv("OPENROUTER_API_KEY", "")
-        or os.getenv("CEREBRAS_API_KEY", "")
-    )
+    BYOK_KEY = os.getenv("BYOK_KEY", "")
     BYOK_PROVIDER = os.getenv("BYOK_PROVIDER", "groq")
     GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com")
-
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-    MOONSHOT_MODEL = os.getenv("MOONSHOT_MODEL", "moonshot-v1-8k")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
-    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
+    USING_BASE_KEYS = not bool(BYOK_KEY)
 
 
 reload_api_keys()
 
-# ── AI Provider Routing ───────────────────────────────────────────────────────
-
-# Maps format_key -> preferred provider alias
-# Providers: 'groq', 'kimi', 'gemini', 'cerebras', 'openrouter'
-AI_ROUTING_MAP = {
-    "article": "kimi",        # Better for long context
-    "linkedin": "groq",       # Fast
-    "deep_tech": "groq",      # Fast
-    "shitpost": "groq",       # Fast
-    "sprint_summary": "kimi",
-    "default": "groq"
-}
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY", "")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET", "")
 TWITTER_ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN", "")
@@ -285,11 +215,7 @@ def set_twitter_plan(plan: str) -> None:
 
 def validate_api_keys() -> dict:
     return {
-        "groq": bool(GROQ_API_KEY),
-        "kimi": bool(MOONSHOT_API_KEY),
-        "gemini": bool(GEMINI_API_KEY),
-        "cerebras": bool(CEREBRAS_API_KEY),
-        "openrouter": bool(OPENROUTER_API_KEY),
+        "byok_key": bool(BYOK_KEY),
         "twitter_api_key": bool(TWITTER_API_KEY),
         "twitter_api_secret": bool(TWITTER_API_SECRET),
         "twitter_access_token": bool(TWITTER_ACCESS_TOKEN),
@@ -299,7 +225,7 @@ def validate_api_keys() -> dict:
 
 
 def missing_api_keys() -> list:
-    return [key for key, present in validate_api_keys().items() if not present]
+    return [key for key, present in validate_api_keys().items() if not present and key != "byok_key"]
 
 
 def ai_provider_key_status() -> dict:
@@ -307,3 +233,4 @@ def ai_provider_key_status() -> dict:
         provider: bool(os.getenv(env_name, "").strip())
         for provider, env_name in API_KEY_ENV_MAP.items()
     }
+

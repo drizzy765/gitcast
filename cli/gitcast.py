@@ -23,7 +23,7 @@ def main():
             else:
                 # If neither is found, create an empty or minimal env file
                 with open(env_path, 'w') as f:
-                    f.write("# Gitcast Environment Variables\nGROQ_API_KEY=\nGEMINI_API_KEY=\n")
+                    f.write("# Gitcast Environment Variables\nBYOK_KEY=\nBYOK_PROVIDER=groq\n")
         
         try:
             if sys.platform == "win32":

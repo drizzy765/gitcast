@@ -167,28 +167,26 @@ async def cloud_generate_article(payload: dict) -> str:
     url = f"{GITCAST_API_URL}/api/article/generate"
     headers = get_headers()
 
-    # only send fields the server expects
-    clean_payload = {
+    clean = {
         "narrative": payload.get("narrative", ""),
         "readme_content": payload.get("readme_content", ""),
+        "all_docs": payload.get("all_docs", ""),
+        "tech_stack": payload.get("tech_stack", ""),
+        "project_name": payload.get("project_name", ""),
         "sprint_log": payload.get("sprint_log", []),
         "project_context": payload.get("project_context", ""),
     }
-    if BYOK_KEY:
-        clean_payload["byok_key"] = BYOK_KEY
-        clean_payload["byok_provider"] = BYOK_PROVIDER
+    key = _byok_key()
+    if key:
+        clean["byok_key"] = key
+        clean["byok_provider"] = _byok_provider()
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            res = await client.post(
-                url,
-                headers=headers,
-                json=clean_payload,
-            )
-            if res.status_code == 400:
-                print(f"[Cloud] Article 400: {res.text[:200]}")
+            res = await client.post(url, headers=headers, json=clean)
+            if not res.is_success:
+                print(f"[Cloud] Article error: {res.status_code} {res.text[:100]}")
                 return ""
-            res.raise_for_status()
             data = res.json()
             return data.get("article", "")
     except Exception as e:
