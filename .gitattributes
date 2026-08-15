@@ -1,0 +1,6 @@
+# Exclude bundled web UI & frontend files from GitHub language statistics
+*.html linguist-detectable=false
+*.html linguist-vendored
+web/* linguist-vendored
+web/** linguist-vendored
+assets/* linguist-vendored
