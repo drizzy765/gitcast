@@ -4,10 +4,45 @@ import shutil
 import subprocess
 import httpx
 import webbrowser
+from importlib.metadata import PackageNotFoundError, version
 
 _browser_opened = False
 
+
+def _package_version() -> str:
+    try:
+        return version("gitcast")
+    except PackageNotFoundError:
+        return "development"
+
+
+def _run_doctor() -> None:
+    from core.cloud_client import check_server_health
+    from core.ocr import get_tesseract_status
+    from config.settings import BYOK_KEY
+
+    tesseract = get_tesseract_status()
+    cloud = check_server_health()
+    cloud_ready = cloud.get("status") == "ok"
+
+    print(f"Gitcast {_package_version()} diagnostic")
+    print(f"Cloud generation: {'OK' if cloud_ready else 'UNREACHABLE'}")
+    print(f"Generation mode: {'BYOK' if BYOK_KEY else 'Gitcast shared cloud'}")
+    print(f"Tesseract OCR: {'OK' if tesseract['available'] else 'MISSING'}")
+    if not tesseract["available"]:
+        print(f"  {tesseract['message']}")
+    print("Publishing: configure Twitter keys only when you are ready to post directly to X")
+
+
 def main():
+    if "--version" in sys.argv or "-V" in sys.argv:
+        print(_package_version())
+        return
+
+    if "doctor" in sys.argv:
+        _run_doctor()
+        return
+
     if "--setup" in sys.argv:
         from config.settings import get_active_env_path
         env_path = str(get_active_env_path(for_write=True))
@@ -27,13 +62,12 @@ def main():
         
         try:
             if sys.platform == "win32":
-                subprocess.run(["notepad", env_path])
+                subprocess.run(["notepad", env_path], check=False)
             elif sys.platform == "darwin":
-                subprocess.run(["open", "-t", env_path])
+                subprocess.run(["open", "-t", env_path], check=False)
             else:
-                try:
-                    subprocess.run(["xdg-open", env_path])
-                except Exception:
+                result = subprocess.run(["xdg-open", env_path], check=False)
+                if result.returncode != 0:
                     print(f"[Gitcast] Created/configured .env at: {env_path}")
                     print("Please open it in an editor to add your API keys.")
         except Exception as e:
@@ -50,8 +84,6 @@ def main():
 
         # ensure storage exists before server starts
         from pathlib import Path
-        import os
-
         def ensure_storage_dirs():
             home = Path.home() / ".gitcast"
             home.mkdir(parents=True, exist_ok=True)
@@ -120,9 +152,18 @@ def main():
         print("\n> [OK] Gitcast daemon is listening globally.")
         print("> Press Ctrl+Alt+S (or Ctrl+Shift+P) while coding to capture a screenshot + git diff and generate posts.\n")
 
-        from core.tray import run_tray
-        from core.trigger import on_trigger
-        run_tray(trigger_callback=on_trigger)
+        try:
+            from core.tray import run_tray
+            from core.trigger import on_trigger
+            run_tray(trigger_callback=on_trigger)
+        except Exception as exc:
+            print(f"> [!!] System tray unavailable: {exc}")
+            print("> [OK] Gitcast is still available at http://localhost:8000/app")
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                return
         return
 
     command = sys.argv[1]

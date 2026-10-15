@@ -1,8 +1,9 @@
 import os
+import shutil
 import pytesseract
 from PIL import Image
 from pathlib import Path
-from config.settings import get_ocr_threshold
+from config.settings import get_ocr_threshold, get_tesseract_cmd
 from core.log_stream import stream_log
 
 # ── Tesseract path (Windows) ──────────────────────────────────────────────────
@@ -11,11 +12,37 @@ from core.log_stream import stream_log
 # if installed elsewhere, update this path
 TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-if Path(TESSERACT_PATH).exists():
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+
+def get_tesseract_status() -> dict:
+    """Return the resolved Tesseract command without invoking OCR."""
+    configured = get_tesseract_cmd().strip()
+    candidates = [configured]
+    if TESSERACT_PATH not in candidates:
+        candidates.append(TESSERACT_PATH)
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate)
+        if path.is_file():
+            return {"available": True, "command": str(path), "source": "configured_path"}
+        resolved = shutil.which(candidate)
+        if resolved:
+            return {"available": True, "command": resolved, "source": "path"}
+
+    return {
+        "available": False,
+        "command": "",
+        "source": "missing",
+        "message": "Install Tesseract and add it to PATH, or set TESSERACT_CMD.",
+    }
+
+
+_tesseract_status = get_tesseract_status()
+if _tesseract_status["available"]:
+    pytesseract.pytesseract.tesseract_cmd = _tesseract_status["command"]
 else:
-    # fallback — rely on PATH
-    stream_log("OCR", "WARN", "Tesseract not found at default path. Relying on PATH.")
+    stream_log("OCR", "WARN", "Tesseract not found. Install it or set TESSERACT_CMD.")
 
 
 # ── OCR runner ────────────────────────────────────────────────────────────────
@@ -30,6 +57,11 @@ def run_ocr(image_path: str) -> dict:
     raw screenshot to the Gemini vision endpoint instead.
     """
     threshold = get_ocr_threshold()  # default 60, set in config/settings.py
+    tesseract = get_tesseract_status()
+    if not tesseract["available"]:
+        return _error_result(tesseract["message"])
+
+    pytesseract.pytesseract.tesseract_cmd = tesseract["command"]
 
     try:
         from config.settings import BASE_DIR

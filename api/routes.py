@@ -703,7 +703,7 @@ async def generate(request: Request, body: GenerateRequest, user_id: str = Depen
         )
 
     try:
-        results = await generate_posts(payload, user_id=user_id)
+        results = await generate_posts(payload)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -824,7 +824,7 @@ async def cli_trigger(request: CliTriggerRequest, user_id: str = Depends(get_cur
         payload["use_vision_fallback"] = False
         payload["screenshot_b64"] = None
         
-        variations = await generate_posts(payload, user_id=user_id)
+        variations = await generate_posts(payload)
         
         draft_data = {
             "payload": payload,
@@ -871,7 +871,7 @@ async def ui_trigger_capture(request: CaptureTriggerRequest, user_id: str = Depe
         payload["screenshot_b64"] = None
         
         stream_log("API", "INFO", "Step 4/4: Requesting AI generation from providers...")
-        variations = await generate_posts(payload, user_id=user_id)
+        variations = await generate_posts(payload)
         stream_log("API", "INFO", "Step 4/4: AI generation returned.")
         
         draft_data = {

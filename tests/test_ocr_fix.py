@@ -1,14 +1,12 @@
-import json
 import asyncio
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from api.payload import build_payload
-from api.routes import generate_article_endpoint as generate_article, ArticleGenerateRequest
-from config.settings import CURRENT_DRAFT
-from fastapi import HTTPException
+from ai.generator import generate_article
 
 def test_ocr_text_in_payload():
     print("Testing ocr_text in build_payload...")
@@ -29,43 +27,13 @@ def test_ocr_text_in_payload():
     print("✅ build_payload includes ocr_text")
 
 def test_generate_article_robustness():
-    async def _test():
-        print("Testing generate_article robustness with missing ocr_text in draft...")
-        original_draft = CURRENT_DRAFT.read_text(encoding="utf-8") if CURRENT_DRAFT.exists() else None
-        draft_data = {
-            "payload": {
-                "user_message": "hello",
-                "git_diff": "diff"
-            },
-            "variations": {},
-            "timestamp": "123",
-            "status": "ready"
-        }
-        
-        try:
-            with open(CURRENT_DRAFT, "w", encoding="utf-8") as f:
-                json.dump(draft_data, f)
+    payload = {"git_diff": "diff --git a/app.py b/app.py"}
+    with patch("core.cloud_client.cloud_generate_article", new_callable=AsyncMock) as mock_cloud:
+        mock_cloud.return_value = "# Article"
+        article = asyncio.run(generate_article(payload))
 
-            request = ArticleGenerateRequest(include_codebase=False)
-
-            try:
-                await generate_article(request)
-            except HTTPException as e:
-                if "Article generation failed" in e.detail:
-                    print("✅ generate_article passed KeyError (failed at AI call as expected)")
-                else:
-                    print(f"❌ generate_article failed with: {e.detail}")
-            except KeyError as e:
-                print(f"❌ generate_article still has KeyError: {e}")
-            except Exception as e:
-                print(f"✅ generate_article passed KeyError (failed with: {e})")
-        finally:
-            if original_draft is None:
-                CURRENT_DRAFT.unlink(missing_ok=True)
-            else:
-                CURRENT_DRAFT.write_text(original_draft, encoding="utf-8")
-
-    asyncio.run(_test())
+    assert article == "# Article"
+    mock_cloud.assert_awaited_once()
 
 if __name__ == "__main__":
     test_ocr_text_in_payload()

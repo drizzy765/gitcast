@@ -94,6 +94,7 @@ class TestCloudClient(unittest.TestCase):
     def test_cloud_generate_article_400_handling(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 400
+        mock_response.is_success = False
         mock_response.text = "Bad Request: Missing required field"
         mock_post.return_value = mock_response
 
