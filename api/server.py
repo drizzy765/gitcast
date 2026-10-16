@@ -145,7 +145,7 @@ async def favicon():
 @app.get("/health")
 def health_check():
     from core.ocr import get_tesseract_status
-    from config.settings import BYOK_KEY
+    from config.settings import get_active_byok_key
 
     missing = missing_api_keys()
     tesseract = get_tesseract_status()
@@ -154,7 +154,7 @@ def health_check():
         "missing_api_keys": missing,
         "ready": True,
         "generation_ready": True,
-        "generation_mode": "byok" if BYOK_KEY else "gitcast_cloud",
+        "generation_mode": "byok" if get_active_byok_key() else "gitcast_cloud",
         "publishing_ready": len(missing) == 0,
         "ocr_ready": tesseract["available"],
         "ocr_message": "" if tesseract["available"] else tesseract["message"],

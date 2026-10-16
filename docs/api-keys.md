@@ -10,24 +10,29 @@ The shared key has rate limits shared across all
 users trying the demo. For regular use, add your
 own free key.
 
-## How key priority works
+## Select your provider key
 
-    1. Your own key (if configured) → always used first
-    2. Gitcast's shared key → automatic fallback
+Set `BYOK_PROVIDER` to the provider whose key Gitcast should use, such as
+`BYOK_PROVIDER=openrouter`. If `BYOK_KEY` is set, it overrides the selected
+provider-specific key. The hosted API uses your selected key when it reaches
+that provider in its fallback chain; other providers may use Gitcast's shared
+keys.
 
 Run `gitcast --setup` anytime to add your own key.
 It takes effect immediately on next run.
 
 ---
 
-Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. We never see them.
+The selected key stays in your local `.env` file at rest, but Gitcast sends it
+over HTTPS to the hosted Gitcast API with generation requests so that API can
+call the selected provider. Don't configure BYOK if you don't want to transmit
+your key to Gitcast Cloud.
 
 ## Why BYOK?
 
-- Your data stays private
-- You control your costs
+- Generations use your provider account and quota
+- You control provider billing
 - No subscription required
-- All listed providers have generous free tiers
 
 ## Getting each key
 
@@ -37,7 +42,7 @@ Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. 
 2. Sign up with GitHub or Google
 3. Click **API Keys** → **Create API Key**
 4. Copy the key starting with `gsk_`
-5. Add to `.env`: `GROQ_API_KEY=gsk_...`
+5. Add to `.env`: `GROQ_API_KEY=gsk_...` and set `BYOK_PROVIDER=groq`
 
 * Free tier: 12,000 tokens per minute
 * Used for: Quick Win, LinkedIn, Struggle posts
@@ -47,7 +52,7 @@ Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. 
 1. Go to platform.deepseek.com
 2. Sign up → **API Keys** → **Create**
 3. Copy the key starting with `sk-`
-4. Add to `.env`: `DEEPSEEK_API_KEY=sk-...`
+4. Add to `.env`: `DEEPSEEK_API_KEY=sk-...` and set `BYOK_PROVIDER=deepseek`
 
 * Free tier: $5 credit on signup
 * Used for: Deep Tech posts, PR descriptions
@@ -57,7 +62,7 @@ Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. 
 1. Go to aistudio.google.com
 2. Sign in with Google
 3. Click **Get API Key** → **Create API key**
-4. Add to `.env`: `GEMINI_API_KEY=...`
+4. Add to `.env`: `GEMINI_API_KEY=...` and set `BYOK_PROVIDER=gemini`
 
 * Free tier: 1 million tokens per day
 * Used for: Screenshots with low OCR confidence
@@ -67,7 +72,7 @@ Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. 
 1. Go to platform.moonshot.cn
 2. Sign up (use Chrome auto-translate if needed)
 3. **API Keys** → **Create**
-4. Add to `.env`: `MOONSHOT_API_KEY=...`
+4. Add to `.env`: `MOONSHOT_API_KEY=...` and set `BYOK_PROVIDER=kimi`
 
 * Free tier: 15 RPM
 * Used for: Article generation, Sprint Mode summaries
@@ -76,7 +81,7 @@ Gitcast uses a BYOK (Bring Your Own Key) model. Your keys stay on your machine. 
 
 1. Go to openrouter.ai
 2. Sign up → **Keys** → **Create Key**
-3. Add to `.env`: `OPENROUTER_API_KEY=sk-or-...`
+3. Add to `.env`: `OPENROUTER_API_KEY=sk-or-...` and set `BYOK_PROVIDER=openrouter`
 
 * Free tier: Access to 50+ free models
 * Used for: Automatic fallback when other providers hit rate limits

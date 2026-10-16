@@ -5,6 +5,7 @@ from unittest.mock import patch, AsyncMock, MagicMock
 import httpx
 
 from core.cloud_client import (
+    _byok_key,
     get_headers,
     cloud_generate,
     cloud_refine,
@@ -16,6 +17,56 @@ from core.cloud_client import (
 
 
 class TestCloudClient(unittest.TestCase):
+    def test_selected_provider_env_key_is_used_for_cloud_requests(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "BYOK_KEY": "",
+                "BYOK_PROVIDER": "openrouter",
+                "OPENROUTER_API_KEY": "provider-key-for-test",
+            },
+            clear=True,
+        ):
+            self.assertEqual(_byok_key(), "provider-key-for-test")
+
+    def test_explicit_byok_key_overrides_provider_env_key(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "BYOK_KEY": "explicit-key-for-test",
+                "BYOK_PROVIDER": "openrouter",
+                "OPENROUTER_API_KEY": "provider-key-for-test",
+            },
+            clear=True,
+        ):
+            self.assertEqual(_byok_key(), "explicit-key-for-test")
+
+    @patch("httpx.AsyncClient.post")
+    def test_cloud_generation_forwards_only_the_selected_provider_key(
+        self, mock_post
+    ):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"variations": {"linkedin": "draft"}}
+        mock_response.raise_for_status = MagicMock()
+        mock_post.return_value = mock_response
+
+        with patch.dict(
+            "os.environ",
+            {
+                "BYOK_KEY": "",
+                "BYOK_PROVIDER": "openrouter",
+                "OPENROUTER_API_KEY": "provider-key-for-test",
+                "GROQ_API_KEY": "other-provider-key-for-test",
+            },
+            clear=True,
+        ):
+            asyncio.run(cloud_generate({"raw_thought": "test"}))
+
+        sent_body = mock_post.call_args.kwargs["json"]
+        self.assertEqual(sent_body["byok_key"], "provider-key-for-test")
+        self.assertEqual(sent_body["byok_provider"], "openrouter")
+
     @patch("core.cloud_client._byok_key", return_value="test-key-123")
     @patch("core.cloud_client._byok_provider", return_value="groq")
     def test_get_headers_with_byok(self, mock_provider, mock_key):

@@ -82,9 +82,25 @@ GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com
 
 
 API_KEY_ENV_MAP = {
-    "byok": "BYOK_KEY",
-    "byok_provider": "BYOK_PROVIDER",
+    "groq": "GROQ_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",
+    "kimi": "MOONSHOT_API_KEY",
+    "gemini": "GEMINI_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
+
+
+def get_active_byok_key() -> str:
+    """Return the explicit BYOK key or the selected provider's env key."""
+    explicit_key = os.getenv("BYOK_KEY", BYOK_KEY).strip()
+    if explicit_key:
+        return explicit_key
+
+    provider = os.getenv("BYOK_PROVIDER", BYOK_PROVIDER).strip().lower()
+    env_name = API_KEY_ENV_MAP.get(provider)
+    return os.getenv(env_name, "").strip() if env_name else ""
+
 
 USING_BASE_KEYS = False
 
@@ -100,7 +116,7 @@ def reload_api_keys() -> None:
     BYOK_KEY = os.getenv("BYOK_KEY", "")
     BYOK_PROVIDER = os.getenv("BYOK_PROVIDER", "groq")
     GITCAST_API_URL = os.getenv("GITCAST_API_URL", "https://gitcast-api.onrender.com")
-    USING_BASE_KEYS = not bool(BYOK_KEY)
+    USING_BASE_KEYS = not bool(get_active_byok_key())
 
 
 reload_api_keys()
@@ -215,7 +231,7 @@ def set_twitter_plan(plan: str) -> None:
 
 def validate_api_keys() -> dict:
     return {
-        "byok_key": bool(BYOK_KEY),
+        "byok_key": bool(get_active_byok_key()),
         "twitter_api_key": bool(TWITTER_API_KEY),
         "twitter_api_secret": bool(TWITTER_API_SECRET),
         "twitter_access_token": bool(TWITTER_ACCESS_TOKEN),

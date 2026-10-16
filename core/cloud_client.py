@@ -2,7 +2,12 @@ import os
 
 import httpx
 
-from config.settings import GITCAST_API_URL, BYOK_KEY, BYOK_PROVIDER
+from config.settings import (
+    GITCAST_API_URL,
+    BYOK_KEY,
+    BYOK_PROVIDER,
+    get_active_byok_key,
+)
 
 TIMEOUT = 60
 SERVER_SLEEPING_MSG = (
@@ -12,11 +17,11 @@ SERVER_SLEEPING_MSG = (
 
 
 def _byok_key() -> str:
-    return os.getenv("BYOK_KEY", BYOK_KEY)
+    return get_active_byok_key()
 
 
 def _byok_provider() -> str:
-    return os.getenv("BYOK_PROVIDER", BYOK_PROVIDER)
+    return os.getenv("BYOK_PROVIDER", BYOK_PROVIDER).strip().lower()
 
 
 def get_headers() -> dict:

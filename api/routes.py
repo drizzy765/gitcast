@@ -449,12 +449,12 @@ def _update_settings_for_user(user_id: str, values: dict) -> dict:
 @router.get("/keys/status")
 def get_ai_keys_status(user_id: str = Depends(get_current_user)):
     from config.settings import (
-        BYOK_KEY,
         BYOK_PROVIDER,
         USING_BASE_KEYS,
+        get_active_byok_key,
     )
     return {
-        "has_byok": bool(BYOK_KEY),
+        "has_byok": bool(get_active_byok_key()),
         "byok_provider": BYOK_PROVIDER,
         "using_base_keys": USING_BASE_KEYS,
     }
@@ -470,7 +470,9 @@ def update_ai_key(request: Request, body: ProviderKeyUpdate, user_id: str = Depe
 
     try:
         if _is_local_user(user_id):
-            set_key(str(_env_path()), API_KEY_ENV_MAP[provider], key)
+            env_path = str(_env_path())
+            set_key(env_path, API_KEY_ENV_MAP[provider], key)
+            set_key(env_path, "BYOK_PROVIDER", provider)
             _reload_key_runtime()
             stream_log("Keys", "OK", f"{provider} key saved locally")
             track("api_key_added", {"provider": provider, "storage": "local"})

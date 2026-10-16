@@ -19,7 +19,7 @@ def _package_version() -> str:
 def _run_doctor() -> None:
     from core.cloud_client import check_server_health
     from core.ocr import get_tesseract_status
-    from config.settings import BYOK_KEY
+    from config.settings import get_active_byok_key
 
     tesseract = get_tesseract_status()
     cloud = check_server_health()
@@ -27,7 +27,7 @@ def _run_doctor() -> None:
 
     print(f"Gitcast {_package_version()} diagnostic")
     print(f"Cloud generation: {'OK' if cloud_ready else 'UNREACHABLE'}")
-    print(f"Generation mode: {'BYOK' if BYOK_KEY else 'Gitcast shared cloud'}")
+    print(f"Generation mode: {'BYOK' if get_active_byok_key() else 'Gitcast shared cloud'}")
     print(f"Tesseract OCR: {'OK' if tesseract['available'] else 'MISSING'}")
     if not tesseract["available"]:
         print(f"  {tesseract['message']}")
@@ -138,9 +138,9 @@ def main():
         print("╚██████╔╝██║   ██║   ╚██████╗ ██║  ██║ ███████║   ██║   ")
         print(" ╚═════╝ ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚══════╝   ╚═╝   ")
 
-        from config.settings import BYOK_KEY, GITCAST_API_URL
+        from config.settings import get_active_byok_key, GITCAST_API_URL
 
-        if BYOK_KEY:
+        if get_active_byok_key():
             print("> [OK] Using your own API key")
         else:
             print("> [OK] Using Gitcast shared key")
